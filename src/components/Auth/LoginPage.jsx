@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { signInWithGoogle, signInWithEmail, registerWithEmail, resetPassword } from '../../lib/auth.js'
+import logoUrl from '../../../CB331C5D-F5CD-452E-BD4F-02F8A307A4C7.png'
 
 function authErrorMessage(code) {
   switch (code) {
@@ -88,25 +89,7 @@ export default function LoginPage() {
     <div className="flex items-center justify-center w-full h-full bg-gradient-to-br from-violet-50 to-violet-100 p-4 overflow-auto">
       <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center gap-5 w-full max-w-sm my-auto">
         {/* Logo */}
-        <div className="w-16 h-16 bg-violet-600 rounded-2xl flex items-center justify-center shadow">
-          <svg viewBox="0 0 40 40" className="w-10 h-10" fill="none">
-            <rect x="15" y="4" width="10" height="7" rx="2" fill="white"/>
-            <rect x="4" y="17" width="10" height="7" rx="2" fill="white"/>
-            <rect x="26" y="17" width="10" height="7" rx="2" fill="white"/>
-            <rect x="4" y="30" width="10" height="7" rx="2" fill="#DDD6FE"/>
-            <rect x="26" y="30" width="10" height="7" rx="2" fill="#DDD6FE"/>
-            <line x1="20" y1="11" x2="20" y2="17" stroke="white" strokeWidth="1.5"/>
-            <line x1="20" y1="14" x2="9" y2="17" stroke="white" strokeWidth="1.5"/>
-            <line x1="20" y1="14" x2="31" y2="17" stroke="white" strokeWidth="1.5"/>
-            <line x1="9" y1="24" x2="9" y2="30" stroke="white" strokeWidth="1.5"/>
-            <line x1="31" y1="24" x2="31" y2="30" stroke="white" strokeWidth="1.5"/>
-          </svg>
-        </div>
-
-        <div className="text-center">
-          <h1 className="text-xl font-bold text-gray-800">Treevia</h1>
-          <p className="text-sm text-gray-500 mt-1">組織図管理アプリ</p>
-        </div>
+        <img src={logoUrl} alt="Treevia" className="w-full max-w-[260px] h-auto" />
 
         {/* Google */}
         <button
