@@ -104,7 +104,7 @@ export default function LoginPage() {
         </div>
 
         <div className="text-center">
-          <h1 className="text-xl font-bold text-gray-800">MLM Org Chart</h1>
+          <h1 className="text-xl font-bold text-gray-800">Treevia</h1>
           <p className="text-sm text-gray-500 mt-1">組織図管理アプリ</p>
         </div>
 

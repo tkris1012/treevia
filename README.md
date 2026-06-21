@@ -1,6 +1,6 @@
-# MLM Org Chart
+# Treevia
 
-バイナリツリー構造のMLM組織図管理アプリ。Googleログインで複数端末から同じデータにアクセスできます。
+バイナリツリー構造の組織図管理アプリ（MLM・ネットワーク組織向け）。Google／メールでログインし、複数端末から同じデータにアクセスできます。
 
 ## 機能
 
@@ -19,8 +19,8 @@
 ### 1. リポジトリをクローン
 
 ```bash
-git clone https://github.com/<your-username>/mlm-org-chart.git
-cd mlm-org-chart
+git clone https://github.com/<your-username>/treevia.git
+cd treevia
 npm install
 ```
 
@@ -67,7 +67,7 @@ firebase deploy --only firestore:rules
 npm run dev
 ```
 
-ブラウザで `http://localhost:5173/mlm-org-chart/` を開く。
+ブラウザで `http://localhost:5173/treevia/` を開く。
 
 ---
 
@@ -101,7 +101,7 @@ git push origin main
 Actions タブで自動ビルド&デプロイが走ります。完了後は以下のURLでアクセス可能：
 
 ```
-https://<your-username>.github.io/mlm-org-chart/
+https://<your-username>.github.io/treevia/
 ```
 
 ### 4. Firebase の承認済みドメインに追加
