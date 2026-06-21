@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useStore } from '../../store/useStore.js'
-import { ROLE_RANK } from '../../constants/roles.js'
+import { buildRoleRank } from '../../constants/roles.js'
 
 export const NODE_W = 200
 export const NODE_H = 72
@@ -12,6 +12,7 @@ export function useTreeLayout() {
   const roleFilter     = useStore((s) => s.roleFilter)
   const viewMode       = useStore((s) => s.viewMode)
   const viewerCollapse = useStore((s) => s.viewerCollapse)
+  const roles          = useStore((s) => s.roles)
 
   // 閲覧モードでは viewerCollapse のオーバーライドを適用
   const effective = useMemo(() => {
@@ -25,13 +26,15 @@ export function useTreeLayout() {
     return result
   }, [members, viewMode, viewerCollapse])
 
-  return useMemo(() => computeLayout(effective, roleFilter), [effective, roleFilter])
+  const roleRank = useMemo(() => buildRoleRank(roles), [roles])
+
+  return useMemo(() => computeLayout(effective, roleFilter, roleRank), [effective, roleFilter, roleRank])
 }
 
-export function computeLayout(members, roleFilter = 'ALL') {
+export function computeLayout(members, roleFilter = 'ALL', roleRank = {}) {
   // タイトルフィルター適用：マッチするメンバー＋その祖先を残す（組織の連結性を維持）
   if (roleFilter && roleFilter !== 'ALL') {
-    const minRank = ROLE_RANK[roleFilter] ?? 0
+    const minRank = roleRank[roleFilter] ?? 0
     // 親→子のマップを構築
     const childList = {}
     Object.values(members).forEach((m) => {
@@ -44,7 +47,7 @@ export function computeLayout(members, roleFilter = 'ALL') {
     const visible = new Set()
     function visit(id) {
       const m = members[id]
-      const rank = ROLE_RANK[m.role] ?? 0
+      const rank = roleRank[m.role] ?? 0
       let hasMatchDesc = false
       for (const c of childList[id] || []) {
         if (visit(c)) hasMatchDesc = true

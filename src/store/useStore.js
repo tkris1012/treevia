@@ -4,6 +4,8 @@ import {
   createChart, renameChart, deleteChart,
 } from '../lib/firestore.js'
 import { undoLimit, canAddMoreMembers } from '../constants/plans.js'
+import { MAX_ROLES, genRoleId } from '../constants/roles.js'
+import { saveUserRoles } from '../lib/firestore.js'
 
 // 子孫IDを全取得
 function collectDescendants(members, rootId) {
@@ -33,6 +35,49 @@ export const useStore = create((set, get) => ({
   upgrade: null,                       // { feature } | null
   showUpgrade: (feature) => set({ upgrade: { feature } }),
   closeUpgrade: () => set({ upgrade: null }),
+
+  // --- Roles（カスタム役職・アカウント共通） ---
+  roles: [],                           // [{ id, name, color }]（最大10）
+  setRoles: (roles) => set({ roles: Array.isArray(roles) ? roles : [] }),
+  roleManagerOpen: false,
+  openRoleManager: () => set({ roleManagerOpen: true }),
+  closeRoleManager: () => set({ roleManagerOpen: false }),
+
+  // 役職リストを保存（楽観更新＋Firestore）
+  persistRoles: async (next) => {
+    const { user, roles } = get()
+    if (!user) return
+    const prev = roles
+    set({ roles: next })
+    try {
+      await saveUserRoles(user.uid, next)
+    } catch (e) {
+      console.error('saveUserRoles failed', e)
+      set({ roles: prev })
+    }
+  },
+  addRole: (name, color) => {
+    const { roles, persistRoles } = get()
+    if (roles.length >= MAX_ROLES) return
+    persistRoles([...roles, { id: genRoleId(), name: name || '新しい役職', color: color || '#8B5CF6' }])
+  },
+  updateRole: (id, patch) => {
+    const { roles, persistRoles } = get()
+    persistRoles(roles.map((r) => (r.id === id ? { ...r, ...patch } : r)))
+  },
+  deleteRole: (id) => {
+    const { roles, persistRoles } = get()
+    persistRoles(roles.filter((r) => r.id !== id))
+  },
+  moveRole: (id, dir) => {
+    const { roles, persistRoles } = get()
+    const i = roles.findIndex((r) => r.id === id)
+    const j = i + dir
+    if (i < 0 || j < 0 || j >= roles.length) return
+    const next = [...roles]
+    ;[next[i], next[j]] = [next[j], next[i]]
+    persistRoles(next)
+  },
 
   // --- Charts (組織図リスト) ---
   charts: [],                          // [{ id, title, createdAt, updatedAt }]

@@ -1,10 +1,13 @@
-import { getRoleStyle } from '../../constants/roles.js'
+import { getRoleStyle, roleName } from '../../constants/roles.js'
+import { useStore } from '../../store/useStore.js'
 import { NODE_W, NODE_H } from './useTreeLayout.js'
 
 export default function TreeNode({ member, isRoot, isDragging }) {
+  const roles = useStore((s) => s.roles)
   if (!member) return null
-  const style = getRoleStyle(member.role)
-  const hasRole = !!member.role
+  const style = getRoleStyle(member.role, roles)
+  const roleLabel = roleName(member.role, roles)
+  const hasRole = !!roleLabel
   const hasJob  = !!member.job
 
   return (
@@ -91,7 +94,7 @@ export default function TreeNode({ member, isRoot, isDragging }) {
               lineHeight: 1.2,
             }}
           >
-            {member.role}
+            {roleLabel}
           </div>
         )}
         <div

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useStore } from '../../store/useStore.js'
-import { ROLE_OPTIONS, getRoleStyle } from '../../constants/roles.js'
+import { getRoleStyle, roleName } from '../../constants/roles.js'
 import { resizeToBase64 } from '../../lib/imageUtils.js'
 
 export default function DetailPanel() {
@@ -11,6 +11,8 @@ export default function DetailPanel() {
   const saveNode = useStore((s) => s.saveNode)
   const addNode = useStore((s) => s.addNode)
   const deleteNode = useStore((s) => s.deleteNode)
+  const roles = useStore((s) => s.roles)
+  const openRoleManager = useStore((s) => s.openRoleManager)
 
   const member = selectedId ? members[selectedId] : null
 
@@ -44,7 +46,7 @@ export default function DetailPanel() {
 
   if (!panelOpen || !member) return null
 
-  const style = getRoleStyle(role)
+  const style = getRoleStyle(role, roles)
 
   async function handlePhotoChange(e) {
     const file = e.target.files?.[0]
@@ -213,9 +215,18 @@ export default function DetailPanel() {
             />
           </label>
 
-          {/* Title (旧 役職) */}
+          {/* 役職 */}
           <label style={{ display: 'block', marginBottom: 24 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 6 }}>タイトル</div>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', flex: 1 }}>役職</div>
+              <button
+                type="button"
+                onClick={openRoleManager}
+                style={{ fontSize: 11, color: '#7C3AED', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+              >
+                役職を管理
+              </button>
+            </div>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
@@ -225,11 +236,14 @@ export default function DetailPanel() {
                 background: 'white', cursor: 'pointer', boxSizing: 'border-box',
               }}
             >
-              {ROLE_OPTIONS.map((r) => (
-                <option key={r} value={r}>
-                  {r || '（タイトルなし）'}
-                </option>
+              <option value="">（役職なし）</option>
+              {roles.map((r) => (
+                <option key={r.id} value={r.id}>{r.name}</option>
               ))}
+              {/* 既存の値がリストに無い場合も選択を保持 */}
+              {role && !roles.some((r) => r.id === role) && (
+                <option value={role}>{role}（削除済み）</option>
+              )}
             </select>
           </label>
 
@@ -242,7 +256,7 @@ export default function DetailPanel() {
               border: `2px solid ${style.border}`,
               background: style.fill,
             }}>
-              {role && <span style={{ fontSize: 11, color: style.sub, fontWeight: 600 }}>{role}</span>}
+              {roleName(role, roles) && <span style={{ fontSize: 11, color: style.sub, fontWeight: 600 }}>{roleName(role, roles)}</span>}
               <span style={{ fontSize: 14, color: style.text, fontWeight: 500 }}>{name || '（名前なし）'}</span>
             </div>
           </div>

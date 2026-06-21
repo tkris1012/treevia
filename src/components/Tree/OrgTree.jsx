@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useMemo, useReducer } from 'react'
 import { useStore } from '../../store/useStore.js'
 import { navigateToList } from '../../store/useSync.js'
 import { useTreeLayout, NODE_W, collectDescendants, getSlotPos } from './useTreeLayout.js'
-import { ROLE_RANK, FILTER_OPTIONS } from '../../constants/roles.js'
+import { buildFilterOptions } from '../../constants/roles.js'
 import TreeNode from './TreeNode.jsx'
 import DropZone from './DropZone.jsx'
 
@@ -28,6 +28,8 @@ export default function OrgTree() {
   const toggleCollapsed = useStore((s) => s.toggleCollapsed)
   const roleFilter      = useStore((s) => s.roleFilter)
   const setRoleFilter   = useStore((s) => s.setRoleFilter)
+  const roles           = useStore((s) => s.roles)
+  const openRoleManager = useStore((s) => s.openRoleManager)
   const viewMode        = useStore((s) => s.viewMode)
   const isReadOnly      = viewMode === 'view'
   const charts          = useStore((s) => s.charts)
@@ -36,11 +38,9 @@ export default function OrgTree() {
   const currentChart    = charts.find((c) => c.id === currentChartId)
   const chartTitle      = isReadOnly ? (viewerChartTitle || '') : (currentChart?.title || '')
 
-  const { positions, childMap, hiddenChildrenMap } = useTreeLayout()
+  const filterOptions   = buildFilterOptions(roles)
 
-  // 折りたたみトグル可能なロール
-  const COLLAPSIBLE_ROLES = ['PDCM', 'DCM', 'ECM']
-  const isCollapsible = (m) => m && COLLAPSIBLE_ROLES.includes(m.role)
+  const { positions, childMap, hiddenChildrenMap } = useTreeLayout()
   const containerRef = useRef(null)
   const svgRef       = useRef(null)
 
@@ -485,11 +485,27 @@ export default function OrgTree() {
               borderRadius: 6, background: 'white', cursor: 'pointer', outline: 'none',
             }}
           >
-            {FILTER_OPTIONS.map((opt) => (
+            {filterOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
         </div>
+
+        {/* 役職管理（オーナーのみ） */}
+        {!isReadOnly && (
+          <button
+            onClick={openRoleManager}
+            title="役職を管理"
+            style={{
+              display: 'flex', alignItems: 'center', gap: 4,
+              background: 'white', border: '1px solid #D1D5DB', borderRadius: 8,
+              padding: '6px 10px', boxShadow: '0 1px 4px rgba(0,0,0,.10)',
+              cursor: 'pointer', fontSize: 13, color: '#374151', fontWeight: 600,
+            }}
+          >
+            🎨 役職
+          </button>
+        )}
       </div>
 
       {/* 全体表示（右下） */}
@@ -575,7 +591,7 @@ export default function OrgTree() {
             const m   = members[id]
             const pos = positions[id]
             const cm  = childMap[id] || {}
-            const collapsible = isCollapsible(m)
+            const collapsible = true  // 全ノードで折りたたみ可
             const isCollapsed = !!m?.collapsed
             // 折りたたみ中 or 閲覧モードでは子追加・削除できない
             const showAddButtons = !isCollapsed && !isReadOnly

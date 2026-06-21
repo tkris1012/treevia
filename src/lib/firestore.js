@@ -31,6 +31,30 @@ function generateToken() {
   return token
 }
 
+// === 役職（アカウント共通・users/{uid}/_meta/roles）=========
+const rolesDoc = (uid) => doc(db, 'users', uid, '_meta', 'roles')
+
+export function subscribeUserRoles(uid, callback) {
+  return onSnapshot(
+    rolesDoc(uid),
+    (snap) => callback(snap.exists() && Array.isArray(snap.data().list) ? snap.data().list : []),
+    (err) => { console.warn('roles subscribe failed', err); callback([]) },
+  )
+}
+
+export async function saveUserRoles(uid, list) {
+  await setDoc(rolesDoc(uid), { list, updatedAt: serverTimestamp() })
+}
+
+// 既存アカウント（組織図を持つ）には初回のみデフォルト役職をseed。新規は空のまま。
+export async function seedDefaultRolesIfNeeded(uid, defaultRoles) {
+  const snap = await getDoc(rolesDoc(uid))
+  if (snap.exists()) return
+  const chartsSnap = await getDocs(chartsCol(uid))
+  if (chartsSnap.empty) return
+  await setDoc(rolesDoc(uid), { list: defaultRoles, updatedAt: serverTimestamp() })
+}
+
 // === ユーザープラン購読 =====================================
 // users/{uid} ドキュメントの plan フィールドを購読（無ければ 'free'）
 export function subscribeUserPlan(uid, callback) {
