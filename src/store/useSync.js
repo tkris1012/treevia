@@ -6,6 +6,7 @@ import { useStore } from './useStore.js'
 import {
   migrateLegacyDataIfNeeded,
   subscribeCharts,
+  subscribeUserPlan,
   getShareTokenInfo,
   getShareConfig,
   subscribePublicMembers,
@@ -46,10 +47,12 @@ export function useSync() {
   const setViewMode        = useStore((s) => s.setViewMode)
   const setShareConfig     = useStore((s) => s.setShareConfig)
   const setViewerChartTitle = useStore((s) => s.setViewerChartTitle)
+  const setPlan            = useStore((s) => s.setPlan)
 
   // ----- 1. 認証 + 組織図リストの購読、URL 解釈 -----
   useEffect(() => {
     let unsubCharts = null
+    let unsubPlan = null
     let viewerCleanup = null
 
     async function startShareView(token) {
@@ -79,17 +82,20 @@ export function useSync() {
       const unsubAuth = onAuthStateChanged(auth, async (user) => {
         setUser(user)
         if (unsubCharts) { unsubCharts(); unsubCharts = null }
+        if (unsubPlan)   { unsubPlan();   unsubPlan = null }
         if (!user) {
           setCharts([])
           setMembers({})
+          setPlan('free')
           return
         }
         // ログイン履歴に記録（この端末のみ・アカウント切替メニュー用）
         recordAccount(user)
         // 自動移行（旧スキーマ → 新スキーマ）
         try { await migrateLegacyDataIfNeeded(user.uid) } catch (e) { console.warn('migrate skipped', e) }
-        // 組織図リストを購読
+        // 組織図リストとプランを購読
         unsubCharts = subscribeCharts(user.uid, setCharts)
+        unsubPlan   = subscribeUserPlan(user.uid, setPlan)
       })
       return unsubAuth
     }
@@ -102,6 +108,7 @@ export function useSync() {
       if (viewerCleanup) { viewerCleanup(); viewerCleanup = null }
       if (unsubAuth)     { unsubAuth();     unsubAuth = null }
       if (unsubCharts)   { unsubCharts();   unsubCharts = null }
+      if (unsubPlan)     { unsubPlan();     unsubPlan = null }
 
       if (shareToken) {
         startShareView(shareToken)
@@ -118,8 +125,9 @@ export function useSync() {
       if (viewerCleanup) viewerCleanup()
       if (unsubAuth)     unsubAuth()
       if (unsubCharts)   unsubCharts()
+      if (unsubPlan)     unsubPlan()
     }
-  }, [setUser, setMembers, setCharts, setViewMode, setViewerChartTitle])
+  }, [setUser, setMembers, setCharts, setViewMode, setViewerChartTitle, setPlan])
 
   // ----- 2. URLの ?c=<chartId> を store の currentChartId に反映 -----
   useEffect(() => {

@@ -3,8 +3,7 @@ import {
   addMember, updateMember, deleteMember, deleteMembers, restoreMember,
   createChart, renameChart, deleteChart,
 } from '../lib/firestore.js'
-
-const MAX_UNDO = 20
+import { undoLimit, canAddMoreMembers } from '../constants/plans.js'
 
 // 子孫IDを全取得
 function collectDescendants(members, rootId) {
@@ -25,6 +24,15 @@ export const useStore = create((set, get) => ({
   // --- Auth ---
   user: null,
   setUser: (user) => set({ user }),
+
+  // --- Plan（料金プラン） ---
+  plan: 'free',                        // 'free' | 'light' | 'pro'
+  setPlan: (plan) => set({ plan: plan || 'free' }),
+
+  // --- Upgrade Prompt（有料機能のロック表示） ---
+  upgrade: null,                       // { feature } | null
+  showUpgrade: (feature) => set({ upgrade: { feature } }),
+  closeUpgrade: () => set({ upgrade: null }),
 
   // --- Charts (組織図リスト) ---
   charts: [],                          // [{ id, title, createdAt, updatedAt }]
@@ -79,9 +87,9 @@ export const useStore = create((set, get) => ({
   // --- Undo Stack ---
   undoStack: [],
   pushUndo: () => {
-    const { members, undoStack } = get()
+    const { members, undoStack, plan } = get()
     const snapshot = JSON.parse(JSON.stringify(members))
-    const next = [snapshot, ...undoStack].slice(0, MAX_UNDO)
+    const next = [snapshot, ...undoStack].slice(0, undoLimit(plan))
     set({ undoStack: next })
   },
   undo: async () => {
@@ -177,8 +185,14 @@ export const useStore = create((set, get) => ({
   // --- Member Actions ---
 
   addNode: async (parentId, position) => {
-    const { user, currentChartId, pushUndo, setSyncStatus } = get()
+    const { user, currentChartId, plan, members, pushUndo, setSyncStatus } = get()
     if (!user || !currentChartId) return
+
+    // 無料プランのメンバー上限チェック
+    if (!canAddMoreMembers(plan, Object.keys(members).length)) {
+      get().showUpgrade('members')
+      return
+    }
 
     pushUndo()
     setSyncStatus('syncing')
@@ -338,8 +352,14 @@ export const useStore = create((set, get) => ({
   },
 
   addRootNode: async () => {
-    const { user, currentChartId, pushUndo, setSyncStatus } = get()
+    const { user, currentChartId, plan, members, pushUndo, setSyncStatus } = get()
     if (!user || !currentChartId) return
+
+    // 無料プランのメンバー上限チェック
+    if (!canAddMoreMembers(plan, Object.keys(members).length)) {
+      get().showUpgrade('members')
+      return
+    }
 
     pushUndo()
     setSyncStatus('syncing')

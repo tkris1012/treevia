@@ -31,6 +31,16 @@ function generateToken() {
   return token
 }
 
+// === ユーザープラン購読 =====================================
+// users/{uid} ドキュメントの plan フィールドを購読（無ければ 'free'）
+export function subscribeUserPlan(uid, callback) {
+  return onSnapshot(
+    doc(db, 'users', uid),
+    (snap) => callback(snap.exists() ? (snap.data().plan || 'free') : 'free'),
+    (err) => { console.warn('plan subscribe failed', err); callback('free') },
+  )
+}
+
 // === 組織図（Chart）操作 ====================================
 
 export async function createChart(uid, title) {

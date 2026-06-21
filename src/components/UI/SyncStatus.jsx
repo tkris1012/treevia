@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useStore } from '../../store/useStore.js'
 import { auth } from '../../lib/firebase.js'
 import { signOut } from 'firebase/auth'
+import { canUseShare } from '../../constants/plans.js'
 import ShareModal from './ShareModal.jsx'
 
 export default function SyncStatus() {
@@ -10,11 +11,19 @@ export default function SyncStatus() {
   const undo = useStore((s) => s.undo)
   const undoStack = useStore((s) => s.undoStack)
   const shareConfig = useStore((s) => s.shareConfig)
+  const plan = useStore((s) => s.plan)
+  const showUpgrade = useStore((s) => s.showUpgrade)
 
   const [shareOpen, setShareOpen] = useState(false)
 
   const isSyncing = syncStatus === 'syncing'
   const isShared  = !!shareConfig?.enabled
+  const shareAllowed = canUseShare(plan)
+
+  function handleShareClick() {
+    if (shareAllowed) setShareOpen(true)
+    else showUpgrade('share')
+  }
 
   return (
     <>
@@ -34,15 +43,15 @@ export default function SyncStatus() {
 
         {/* Share */}
         <button
-          onClick={() => setShareOpen(true)}
-          title="共有リンク"
+          onClick={handleShareClick}
+          title={shareAllowed ? '共有リンク' : '共有リンク（プロプラン）'}
           className={`flex items-center gap-1 px-2 py-1 rounded-lg shadow-sm text-xs transition border ${
             isShared
               ? 'bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100'
               : 'bg-white border-gray-200 text-gray-600 hover:bg-gray-50'
           }`}
         >
-          🔗 {isShared ? '共有中' : '共有'}
+          {shareAllowed ? '🔗' : '🔒'} {isShared ? '共有中' : '共有'}
         </button>
 
         {/* Sync status */}

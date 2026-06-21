@@ -2,6 +2,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ユーザードキュメント（plan を保持）。本人のみ閲覧可、書込みはサーバー（決済Webhook）のみ。
+    match /users/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow write: if false;
+    }
+
     // 組織図メタ情報（タイトル等）
     match /users/{uid}/charts/{chartId} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
@@ -14,10 +20,12 @@ service cloud.firestore {
         allow write: if request.auth != null && request.auth.uid == uid;
       }
 
-      // 各組織図の共有設定
+      // 各組織図の共有設定（共有リンクはプロプランのみ）
       match /_meta/share {
         allow read: if true;
-        allow write: if request.auth != null && request.auth.uid == uid;
+        allow write: if request.auth != null && request.auth.uid == uid
+                     && exists(/databases/$(database)/documents/users/$(uid))
+                     && get(/databases/$(database)/documents/users/$(uid)).data.plan == 'pro';
       }
     }
 

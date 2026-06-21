@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useStore } from '../../store/useStore.js'
 import { navigateToChart } from '../../store/useSync.js'
+import { canCreateMoreCharts } from '../../constants/plans.js'
 import AccountMenu from '../Auth/AccountMenu.jsx'
 import CreateChartModal from './CreateChartModal.jsx'
 import RenameChartModal from './RenameChartModal.jsx'
@@ -9,10 +10,17 @@ export default function ChartListPage() {
   const charts = useStore((s) => s.charts)
   const createNewChart = useStore((s) => s.createNewChart)
   const deleteChartById = useStore((s) => s.deleteChartById)
+  const plan = useStore((s) => s.plan)
+  const showUpgrade = useStore((s) => s.showUpgrade)
 
   const [createOpen, setCreateOpen] = useState(false)
   const [renameTarget, setRenameTarget] = useState(null) // { id, title }
   const [menuOpenId, setMenuOpenId] = useState(null)
+
+  function handleNewClick() {
+    if (canCreateMoreCharts(plan, charts.length)) setCreateOpen(true)
+    else showUpgrade('charts')
+  }
 
   async function handleCreate(title) {
     const id = await createNewChart(title)
@@ -61,7 +69,7 @@ export default function ChartListPage() {
         }}>
           {/* 新規作成カード */}
           <button
-            onClick={() => setCreateOpen(true)}
+            onClick={handleNewClick}
             style={{
               minHeight: 140, borderRadius: 12,
               border: '2px dashed #C4B5FD',
