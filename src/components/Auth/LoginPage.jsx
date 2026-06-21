@@ -87,7 +87,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex items-center justify-center w-full h-full bg-gradient-to-br from-violet-50 to-violet-100 p-4 overflow-auto">
-      <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center gap-5 w-full max-w-sm my-auto">
+      <div className="p-8 flex flex-col items-center gap-5 w-full max-w-sm my-auto">
         {/* Logo */}
         <img src={logoUrl} alt="Treevia" className="w-full max-w-[260px] h-auto" />
 
