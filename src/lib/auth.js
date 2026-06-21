@@ -1,5 +1,14 @@
-import { GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth'
+import {
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  updateProfile,
+  sendPasswordResetEmail,
+} from 'firebase/auth'
 import { auth } from './firebase.js'
+import { useStore } from '../store/useStore.js'
 
 // === ログイン履歴（この端末/ブラウザのみ・localStorage）=====
 const RECENT_KEY = 'mlm_recent_accounts'
@@ -64,4 +73,28 @@ export async function logout() {
 export async function switchAccount(email) {
   await signOut(auth)
   return signInWithPopup(auth, buildProvider({ loginHint: email, forceSelect: !email }))
+}
+
+// === メールアドレス認証（Gmail を持たないユーザー向け）=========
+export async function registerWithEmail({ email, password, displayName }) {
+  const cred = await createUserWithEmailAndPassword(auth, email.trim(), password)
+  const name = displayName?.trim()
+  if (name) {
+    await updateProfile(cred.user, { displayName: name })
+    // updateProfile では onAuthStateChanged が再発火しないため、表示用に手動反映
+    const u = auth.currentUser
+    useStore.getState().setUser({
+      uid: u.uid, email: u.email, displayName: u.displayName, photoURL: u.photoURL,
+    })
+    recordAccount(u)
+  }
+  return cred
+}
+
+export async function signInWithEmail(email, password) {
+  return signInWithEmailAndPassword(auth, email.trim(), password)
+}
+
+export async function resetPassword(email) {
+  return sendPasswordResetEmail(auth, email.trim())
 }

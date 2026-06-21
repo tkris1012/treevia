@@ -1,18 +1,92 @@
-import { signInWithPopup } from 'firebase/auth'
-import { auth, googleProvider } from '../../lib/firebase.js'
+import { useState } from 'react'
+import { signInWithGoogle, signInWithEmail, registerWithEmail, resetPassword } from '../../lib/auth.js'
+
+function authErrorMessage(code) {
+  switch (code) {
+    case 'auth/invalid-email':        return 'メールアドレスの形式が正しくありません。'
+    case 'auth/user-not-found':
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential':   return 'メールアドレスまたはパスワードが違います。'
+    case 'auth/email-already-in-use': return 'このメールアドレスは既に登録されています。'
+    case 'auth/weak-password':        return 'パスワードは6文字以上にしてください。'
+    case 'auth/too-many-requests':    return '試行回数が多すぎます。しばらく待ってからお試しください。'
+    case 'auth/operation-not-allowed':return 'メール認証が有効になっていません（管理者に連絡してください）。'
+    default:                          return 'エラーが発生しました。時間をおいて再度お試しください。'
+  }
+}
 
 export default function LoginPage() {
-  const handleLogin = async () => {
+  const [mode, setMode]       = useState('login') // 'login' | 'register'
+  const [name, setName]       = useState('')
+  const [email, setEmail]     = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError]     = useState('')
+  const [notice, setNotice]   = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const isRegister = mode === 'register'
+
+  const handleGoogle = async () => {
+    setError(''); setNotice('')
     try {
-      await signInWithPopup(auth, googleProvider)
+      await signInWithGoogle()
     } catch (e) {
-      console.error('ログイン失敗:', e)
+      console.error('Googleログイン失敗:', e)
+      if (e?.code !== 'auth/popup-closed-by-user' && e?.code !== 'auth/cancelled-popup-request') {
+        setError('Googleログインに失敗しました。')
+      }
     }
   }
 
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError(''); setNotice('')
+    if (!email.trim() || !password) {
+      setError('メールアドレスとパスワードを入力してください。')
+      return
+    }
+    if (isRegister && password.length < 6) {
+      setError('パスワードは6文字以上にしてください。')
+      return
+    }
+    setLoading(true)
+    try {
+      if (isRegister) {
+        await registerWithEmail({ email, password, displayName: name })
+      } else {
+        await signInWithEmail(email, password)
+      }
+      // 成功すると onAuthStateChanged で自動的に画面が切り替わる
+    } catch (err) {
+      console.error('メール認証失敗:', err)
+      setError(authErrorMessage(err?.code))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleReset = async () => {
+    setError(''); setNotice('')
+    if (!email.trim()) {
+      setError('パスワード再設定にはメールアドレスを入力してください。')
+      return
+    }
+    try {
+      await resetPassword(email)
+      setNotice('パスワード再設定用のメールを送信しました。受信箱をご確認ください。')
+    } catch (err) {
+      console.error('パスワード再設定失敗:', err)
+      setError(authErrorMessage(err?.code))
+    }
+  }
+
+  const switchMode = (next) => {
+    setMode(next); setError(''); setNotice('')
+  }
+
   return (
-    <div className="flex items-center justify-center w-full h-full bg-gradient-to-br from-violet-50 to-violet-100">
-      <div className="bg-white rounded-2xl shadow-lg p-10 flex flex-col items-center gap-6 w-80">
+    <div className="flex items-center justify-center w-full h-full bg-gradient-to-br from-violet-50 to-violet-100 p-4 overflow-auto">
+      <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center gap-5 w-full max-w-sm my-auto">
         {/* Logo */}
         <div className="w-16 h-16 bg-violet-600 rounded-2xl flex items-center justify-center shadow">
           <svg viewBox="0 0 40 40" className="w-10 h-10" fill="none">
@@ -34,13 +108,89 @@ export default function LoginPage() {
           <p className="text-sm text-gray-500 mt-1">組織図管理アプリ</p>
         </div>
 
+        {/* Google */}
         <button
-          onClick={handleLogin}
+          onClick={handleGoogle}
           className="flex items-center gap-3 bg-white border border-gray-300 rounded-lg px-5 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all shadow-sm w-full justify-center"
         >
           <GoogleIcon />
           Googleでログイン
         </button>
+
+        {/* Divider */}
+        <div className="flex items-center gap-3 w-full">
+          <div className="flex-1 h-px bg-gray-200" />
+          <span className="text-xs text-gray-400">または メールアドレスで</span>
+          <div className="flex-1 h-px bg-gray-200" />
+        </div>
+
+        {/* Tabs */}
+        <div className="flex w-full bg-gray-100 rounded-lg p-1">
+          <button
+            type="button"
+            onClick={() => switchMode('login')}
+            className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${!isRegister ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-500'}`}
+          >
+            ログイン
+          </button>
+          <button
+            type="button"
+            onClick={() => switchMode('register')}
+            className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${isRegister ? 'bg-white text-violet-700 shadow-sm' : 'text-gray-500'}`}
+          >
+            新規登録
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3 w-full">
+          {isRegister && (
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="お名前（任意）"
+              className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm outline-none focus:border-violet-500"
+            />
+          )}
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="メールアドレス"
+            autoComplete="email"
+            className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm outline-none focus:border-violet-500"
+          />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder={isRegister ? 'パスワード（6文字以上）' : 'パスワード'}
+            autoComplete={isRegister ? 'new-password' : 'current-password'}
+            className="w-full px-3 py-2.5 rounded-lg border border-gray-300 text-sm outline-none focus:border-violet-500"
+          />
+
+          {error && <p className="text-xs text-red-500">{error}</p>}
+          {notice && <p className="text-xs text-green-600">{notice}</p>}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full py-2.5 rounded-lg bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700 transition-all disabled:opacity-60"
+          >
+            {loading ? '処理中...' : isRegister ? '登録してログイン' : 'ログイン'}
+          </button>
+        </form>
+
+        {!isRegister && (
+          <button
+            type="button"
+            onClick={handleReset}
+            className="text-xs text-gray-400 hover:text-violet-600 transition-colors"
+          >
+            パスワードを忘れた方
+          </button>
+        )}
 
         <p className="text-xs text-gray-400 text-center">
           ログインすることで、複数端末から<br />同じデータにアクセスできます。

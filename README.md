@@ -5,7 +5,7 @@
 ## 機能
 
 - **バイナリツリー表示** — 左右2分木の組織図をビジュアルで管理
-- **Googleログイン** — Firebase Authenticationによる認証
+- **ログイン** — Googleログイン／メールアドレス登録（Gmailを持たない人向け）の2方式
 - **リアルタイム同期** — Firestoreでスマホ・PCのデータを自動同期
 - **ドラッグ&ドロップ** — サブツリーごと移動可能
 - **元に戻す** — 最大20回分の操作を記録（メモリ上）
@@ -27,7 +27,7 @@ npm install
 ### 2. Firebase プロジェクトを作成
 
 1. [Firebase Console](https://console.firebase.google.com/) でプロジェクト新規作成
-2. **Authentication** → ログイン方法 → **Google** を有効化
+2. **Authentication** → ログイン方法 → **Google** と **メール/パスワード** を有効化
 3. **Firestore Database** → データベース作成（本番モードで開始）
 4. **プロジェクト設定** → マイアプリ → ウェブアプリ追加 → SDK設定をコピー
 
