@@ -3,11 +3,33 @@ import { useStore } from '../../store/useStore.js'
 import { navigateToList } from '../../store/useSync.js'
 import { useTreeLayout, NODE_W, collectDescendants, getSlotPos } from './useTreeLayout.js'
 import { buildFilterOptions } from '../../constants/roles.js'
+import { canUseShare } from '../../constants/plans.js'
+import ShareModal from '../UI/ShareModal.jsx'
 import TreeNode from './TreeNode.jsx'
 import DropZone from './DropZone.jsx'
 
 const MIN_SCALE = 0.15
 const MAX_SCALE = 3
+
+// トップバー用スタイル
+const BAR_BTN = {
+  display: 'flex', alignItems: 'center', gap: 4,
+  background: 'white', border: '1px solid #D1D5DB', borderRadius: 8,
+  padding: '6px 10px', boxShadow: '0 1px 4px rgba(0,0,0,.10)',
+  cursor: 'pointer', fontSize: 13, color: '#374151', fontWeight: 600,
+  pointerEvents: 'auto', whiteSpace: 'nowrap', flexShrink: 0,
+}
+const BAR_CHIP = {
+  background: 'white', border: '1px solid #D1D5DB', borderRadius: 8,
+  padding: '6px 10px', boxShadow: '0 1px 4px rgba(0,0,0,.10)',
+  fontSize: 13, color: '#1F2937', fontWeight: 700,
+}
+const ICON_BTN = {
+  display: 'flex', alignItems: 'center', justifyContent: 'center',
+  width: 34, height: 34, background: 'white', border: '1px solid #D1D5DB',
+  borderRadius: 8, boxShadow: '0 1px 4px rgba(0,0,0,.10)', cursor: 'pointer',
+  fontSize: 15, color: '#374151', padding: 0, pointerEvents: 'auto', flexShrink: 0,
+}
 const DRAG_THRESHOLD = 6
 const LONG_PRESS_MS = 500
 const DROP_SNAP_DIST = NODE_W * 0.7
@@ -30,6 +52,11 @@ export default function OrgTree() {
   const setRoleFilter   = useStore((s) => s.setRoleFilter)
   const roles           = useStore((s) => s.roles)
   const openRoleManager = useStore((s) => s.openRoleManager)
+  const undoStack       = useStore((s) => s.undoStack)
+  const syncStatus      = useStore((s) => s.syncStatus)
+  const shareConfig     = useStore((s) => s.shareConfig)
+  const plan            = useStore((s) => s.plan)
+  const showUpgrade     = useStore((s) => s.showUpgrade)
   const viewMode        = useStore((s) => s.viewMode)
   const isReadOnly      = viewMode === 'view'
   const charts          = useStore((s) => s.charts)
@@ -39,6 +66,15 @@ export default function OrgTree() {
   const chartTitle      = isReadOnly ? (viewerChartTitle || '') : (currentChart?.title || '')
 
   const filterOptions   = buildFilterOptions(roles)
+
+  const [shareOpen, setShareOpen] = useState(false)
+  const shareAllowed = canUseShare(plan)
+  const isShared     = !!shareConfig?.enabled
+  const isSyncing    = syncStatus === 'syncing'
+  function handleShareClick() {
+    if (shareAllowed) setShareOpen(true)
+    else showUpgrade('share')
+  }
 
   const { positions, childMap, hiddenChildrenMap } = useTreeLayout()
   const containerRef = useRef(null)
@@ -438,74 +474,63 @@ export default function OrgTree() {
         </div>
       )}
 
-      {/* 左上ツールバー：一覧ボタン＋タイトル＋フィルター */}
+      {/* トップバー（全幅・2段構成。縦画面でも重ならない） */}
       <div style={{
-        position: 'absolute', top: 16, left: 16, zIndex: 10,
-        display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap',
+        position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
+        padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8,
+        pointerEvents: 'none',
       }}>
-        {/* 一覧へ戻るボタン（オーナーモードのみ） */}
-        {!isReadOnly && (
-          <button
-            onClick={navigateToList}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 4,
-              background: 'white', border: '1px solid #D1D5DB', borderRadius: 8,
-              padding: '6px 10px', boxShadow: '0 1px 4px rgba(0,0,0,.10)',
-              cursor: 'pointer', fontSize: 13, color: '#374151', fontWeight: 600,
-            }}
-          >
-            ← 一覧
-          </button>
-        )}
+        {/* 1段目：戻る＋タイトル ｜ 操作 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          {!isReadOnly && (
+            <button onClick={navigateToList} title="一覧へ戻る"
+              style={{ ...ICON_BTN, fontWeight: 700 }}>←</button>
+          )}
+          {chartTitle ? (
+            <div style={{
+              ...BAR_CHIP, flex: 1, minWidth: 0,
+              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            }}>🌳 {chartTitle}</div>
+          ) : <div style={{ flex: 1 }} />}
 
-        {/* 現在の組織図タイトル */}
-        {chartTitle && (
-          <div style={{
-            background: 'white', border: '1px solid #D1D5DB', borderRadius: 8,
-            padding: '6px 12px', boxShadow: '0 1px 4px rgba(0,0,0,.10)',
-            fontSize: 14, fontWeight: 700, color: '#1F2937',
-            maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-          }}>
-            🌳 {chartTitle}
-          </div>
-        )}
-
-        {/* フィルター */}
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          background: 'white', border: '1px solid #D1D5DB', borderRadius: 8,
-          padding: '6px 10px', boxShadow: '0 1px 4px rgba(0,0,0,.10)',
-        }}>
-          <span style={{ fontSize: 12, color: '#6B7280', fontWeight: 600 }}>フィルター</span>
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            style={{
-              fontSize: 13, padding: '3px 6px', border: '1px solid #E5E7EB',
-              borderRadius: 6, background: 'white', cursor: 'pointer', outline: 'none',
-            }}
-          >
-            {filterOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
+          {!isReadOnly && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+              <button onClick={undo} disabled={undoStack.length === 0} title="元に戻す"
+                style={{ ...ICON_BTN, opacity: undoStack.length ? 1 : 0.4,
+                  cursor: undoStack.length ? 'pointer' : 'not-allowed' }}>↩</button>
+              <button onClick={handleShareClick}
+                title={shareAllowed ? '共有リンク' : '共有リンク（プロ）'}
+                style={{ ...ICON_BTN, ...(isShared ? { background: '#ECFDF5', borderColor: '#A7F3D0' } : {}) }}>
+                {shareAllowed ? '🔗' : '🔒'}
+              </button>
+              <span title={isSyncing ? '同期中' : '同期済み'}
+                style={{ width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
+                  background: isSyncing ? '#FBBF24' : '#22C55E' }} />
+            </div>
+          )}
         </div>
 
-        {/* 役職管理（オーナーのみ） */}
-        {!isReadOnly && (
-          <button
-            onClick={openRoleManager}
-            title="役職を管理"
-            style={{
-              display: 'flex', alignItems: 'center', gap: 4,
-              background: 'white', border: '1px solid #D1D5DB', borderRadius: 8,
-              padding: '6px 10px', boxShadow: '0 1px 4px rgba(0,0,0,.10)',
-              cursor: 'pointer', fontSize: 13, color: '#374151', fontWeight: 600,
-            }}
-          >
-            🎨 役職
-          </button>
-        )}
+        {/* 2段目：フィルタ ＋ 役職 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <div style={{ ...BAR_CHIP, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, pointerEvents: 'auto' }}>
+            <span style={{ fontSize: 12, color: '#6B7280', fontWeight: 600 }}>フィルタ</span>
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              style={{
+                fontSize: 13, padding: '3px 6px', border: '1px solid #E5E7EB',
+                borderRadius: 6, background: 'white', cursor: 'pointer', outline: 'none',
+              }}
+            >
+              {filterOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+          {!isReadOnly && (
+            <button onClick={openRoleManager} title="役職を管理" style={BAR_BTN}>🎨 役職</button>
+          )}
+        </div>
       </div>
 
       {/* 全体表示（右下） */}
@@ -706,6 +731,9 @@ export default function OrgTree() {
           )}
         </div>
       </div>
+
+      {/* 共有モーダル */}
+      {shareOpen && <ShareModal onClose={() => setShareOpen(false)} />}
     </div>
   )
 }
