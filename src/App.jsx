@@ -4,7 +4,6 @@ import LoginPage from './components/Auth/LoginPage.jsx'
 import OrgTree from './components/Tree/OrgTree.jsx'
 import DetailPanel from './components/Panel/DetailPanel.jsx'
 import ConfirmDialog from './components/UI/ConfirmDialog.jsx'
-import SyncStatus from './components/UI/SyncStatus.jsx'
 import ViewModeBanner from './components/UI/ViewModeBanner.jsx'
 import UpgradeModal from './components/UI/UpgradeModal.jsx'
 import RoleManager from './components/UI/RoleManager.jsx'
@@ -49,7 +48,6 @@ export default function App() {
     <div className="relative w-full h-full">
       <OrgTree />
       <DetailPanel />
-      <SyncStatus />
       {confirm && <ConfirmDialog />}
       <UpgradeModal />
       <RoleManager />
