@@ -16,6 +16,10 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    # Workload Identity Federation に必要
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -32,11 +36,12 @@ jobs:
       - name: Install functions deps
         run: npm install --prefix functions
 
-      # サービスアカウントで Google 認証（GOOGLE_APPLICATION_CREDENTIALS が設定される）
+      # Workload Identity Federation で Google 認証（鍵ファイル不要）
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
