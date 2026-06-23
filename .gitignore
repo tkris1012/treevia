@@ -6,3 +6,8 @@ dist
 .DS_Store
 Thumbs.db
 .claude
+
+# Cloud Functions
+functions/node_modules
+functions/.env
+.firebase
