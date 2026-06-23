@@ -1,0 +1,45 @@
+name: Deploy Cloud Functions
+
+# functions 配下が変わって push されたら自動デプロイ。
+# 手動実行 (workflow_dispatch) も可能。
+on:
+  push:
+    branches:
+      - claude/mlm-org-chart-setup-imou7e
+      - main
+    paths:
+      - 'functions/**'
+      - 'firebase.json'
+      - '.github/workflows/deploy-functions.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # price ID（機密ではない）を .env.example から用意
+      - name: Prepare functions env
+        run: cp functions/.env.example functions/.env
+
+      - name: Install functions deps
+        run: npm install --prefix functions
+
+      # サービスアカウントで Google 認証（GOOGLE_APPLICATION_CREDENTIALS が設定される）
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+      - name: Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Deploy functions
+        run: firebase deploy --only functions --project "${{ secrets.FIREBASE_PROJECT_ID }}" --non-interactive
