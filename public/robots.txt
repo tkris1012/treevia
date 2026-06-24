@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://tkris1012.github.io/treevia/sitemap.xml
