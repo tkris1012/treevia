@@ -118,3 +118,66 @@ async function handleSubscriptionEnded(subscription) {
   )
   console.log(`プラン解約: ${snap.docs[0].id} → free`)
 }
+
+// === 顧客ポータル（プラン管理・解約） ============================
+// アプリにログイン中のユーザーが、自分の Stripe サブスクを管理/解約できる。
+// Firebase ID トークンで本人確認し、保存済みの stripeCustomerId から
+// Billing Portal セッションを発行して URL を返す。
+// 解約自体は Stripe 側で行われ、最終的に customer.subscription.deleted が
+// 上の Webhook に届いて plan が free に戻る。
+functions.http('createPortalSession', async (req, res) => {
+  // CORS（ブラウザから直接呼ぶため）
+  res.set('Access-Control-Allow-Origin', '*')
+  res.set('Access-Control-Allow-Methods', 'POST, OPTIONS')
+  res.set('Access-Control-Allow-Headers', 'Authorization, Content-Type')
+  if (req.method === 'OPTIONS') {
+    res.status(204).send('')
+    return
+  }
+  if (req.method !== 'POST') {
+    res.status(405).send('Method Not Allowed')
+    return
+  }
+
+  // Firebase ID トークンで本人確認
+  const authHeader = req.headers.authorization || ''
+  const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
+  if (!idToken) {
+    res.status(401).json({ error: 'unauthenticated' })
+    return
+  }
+
+  let uid
+  try {
+    const decoded = await admin.auth().verifyIdToken(idToken)
+    uid = decoded.uid
+  } catch (err) {
+    res.status(401).json({ error: 'invalid_token' })
+    return
+  }
+
+  // 保存済みの Stripe 顧客 ID を取得（支払い時に Webhook が書き込む）
+  const snap = await db.collection('users').doc(uid).get()
+  const customerId = snap.exists ? snap.data().stripeCustomerId : null
+  if (!customerId) {
+    res.status(404).json({ error: 'no_customer' })
+    return
+  }
+
+  // 戻り先 URL（アプリ）。リクエストで受け取り、無ければ既定値。
+  const returnUrl =
+    (req.body && typeof req.body.returnUrl === 'string' && req.body.returnUrl) ||
+    'https://tkris1012.github.io/treevia/'
+
+  try {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+    const session = await stripe.billingPortal.sessions.create({
+      customer: customerId,
+      return_url: returnUrl,
+    })
+    res.status(200).json({ url: session.url })
+  } catch (err) {
+    console.error('ポータルセッション発行に失敗:', err)
+    res.status(500).json({ error: 'portal_failed' })
+  }
+})

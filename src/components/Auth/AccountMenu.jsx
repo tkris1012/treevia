@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import { useStore } from '../../store/useStore.js'
+import { auth } from '../../lib/firebase.js'
+import { openBillingPortal } from '../../constants/billing.js'
 import {
   logout,
   switchAccount,
   getRecentAccounts,
   removeRecentAccount,
 } from '../../lib/auth.js'
+
+const PLAN_LABEL = { free: '無料', light: 'ライト', pro: 'プロ' }
 
 function Avatar({ photoURL, displayName, email, size = 32 }) {
   const initial = (displayName || email || '?').trim().charAt(0).toUpperCase()
@@ -32,12 +36,34 @@ function Avatar({ photoURL, displayName, email, size = 32 }) {
 
 export default function AccountMenu() {
   const user = useStore((s) => s.user)
+  const plan = useStore((s) => s.plan)
+  const showUpgrade = useStore((s) => s.showUpgrade)
   const [open, setOpen] = useState(false)
   const [accounts, setAccounts] = useState(() => getRecentAccounts())
+  const [portalBusy, setPortalBusy] = useState(false)
 
   if (!user) return null
 
   const others = accounts.filter((a) => a.uid !== user.uid)
+  const isPaid = plan === 'light' || plan === 'pro'
+  const planLabel = PLAN_LABEL[plan] || '無料'
+
+  async function handleManagePlan() {
+    setPortalBusy(true)
+    try {
+      const idToken = await auth.currentUser.getIdToken()
+      await openBillingPortal(idToken) // 成功時はポータルへ遷移
+    } catch (e) {
+      console.error('プラン管理画面を開けませんでした:', e)
+      alert('プラン管理画面を開けませんでした。時間をおいて再度お試しください。')
+      setPortalBusy(false)
+    }
+  }
+
+  function handleUpgrade() {
+    setOpen(false)
+    showUpgrade('plan')
+  }
 
   async function handleSwitch(email) {
     setOpen(false)
@@ -111,6 +137,46 @@ export default function AccountMenu() {
                   {user.email}
                 </div>
               </div>
+            </div>
+
+            {/* プラン */}
+            <div style={{ borderBottom: '1px solid #F0F0F0', padding: '12px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                <span style={{ fontSize: 12, color: '#6B7280' }}>現在のプラン</span>
+                <span style={{
+                  fontSize: 11, fontWeight: 700,
+                  color: isPaid ? '#7C3AED' : '#6B7280',
+                  background: isPaid ? '#FAF5FF' : '#F3F4F6',
+                  borderRadius: 6, padding: '2px 8px',
+                }}>
+                  {planLabel}
+                </span>
+              </div>
+              {isPaid ? (
+                <button
+                  onClick={handleManagePlan}
+                  disabled={portalBusy}
+                  style={{
+                    width: '100%', padding: '9px', borderRadius: 8,
+                    border: '1px solid #E5E7EB', background: 'white',
+                    color: '#374151', fontSize: 13, fontWeight: 600,
+                    cursor: portalBusy ? 'wait' : 'pointer', opacity: portalBusy ? 0.6 : 1,
+                  }}
+                >
+                  {portalBusy ? '開いています…' : 'プランを管理・解約'}
+                </button>
+              ) : (
+                <button
+                  onClick={handleUpgrade}
+                  style={{
+                    width: '100%', padding: '9px', borderRadius: 8, border: 'none',
+                    background: '#7C3AED', color: 'white', fontSize: 13, fontWeight: 700,
+                    cursor: 'pointer',
+                  }}
+                >
+                  プランをアップグレード
+                </button>
+              )}
             </div>
 
             {/* 他アカウントへ切替 */}

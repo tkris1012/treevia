@@ -38,3 +38,28 @@ export function buildCheckoutUrl(plan, user) {
 export function isBillingConfigured() {
   return Boolean(PAYMENT_LINKS.light || PAYMENT_LINKS.pro)
 }
+
+// === 顧客ポータル（プラン管理・解約） ============================
+// Cloud Functions の createPortalSession を叩いて、Stripe カスタマーポータルの
+// URL を取得し遷移する。プランの解約・支払い方法変更・領収書取得ができる。
+export const PORTAL_FUNCTION_URL =
+  'https://asia-northeast1-mlm-org-chart.cloudfunctions.net/createPortalSession'
+
+// idToken は Firebase の auth.currentUser.getIdToken() を渡す。
+export async function openBillingPortal(idToken) {
+  const res = await fetch(PORTAL_FUNCTION_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${idToken}`,
+    },
+    body: JSON.stringify({ returnUrl: window.location.href }),
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data.error || `portal_failed_${res.status}`)
+  }
+  const { url } = await res.json()
+  if (!url) throw new Error('portal_no_url')
+  window.location.href = url
+}
