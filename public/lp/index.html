@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Treevia — バイナリーの組織図を、3分で。左右が一目でわかる</title>
+  <meta name="description" content="バイナリー（左右ツリー）の組織図をかんたん作成・共有。Excelや手書きをやめて、左右のラインをスマホでサクサク管理。無料で写真もOK。" />
+  <link rel="icon" type="image/svg+xml" href="/treevia/favicon.svg" />
+
+  <!-- OGP（SNS共有時の見た目） -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Treevia — バイナリーの組織図を、3分で。" />
+  <meta property="og:description" content="左右のラインが一目でわかる組織図ツール。チームに共有もかんたん。無料で始められます。" />
+  <meta property="og:url" content="https://tkris1012.github.io/treevia/lp/" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <style>
+    :root {
+      --purple: #7C3AED;
+      --purple-dark: #6D28D9;
+      --ink: #1F2937;
+      --gray: #6B7280;
+      --line: #E5E7EB;
+      --bg: #FAF5FF;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Segoe UI", Meiryo, sans-serif;
+      color: var(--ink);
+      line-height: 1.7;
+      background: #fff;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
+    .btn {
+      display: inline-block;
+      background: var(--purple);
+      color: #fff;
+      font-weight: 700;
+      font-size: 16px;
+      padding: 15px 30px;
+      border-radius: 12px;
+      box-shadow: 0 6px 20px rgba(124,58,237,0.35);
+      transition: transform .12s, background .12s;
+    }
+    .btn:hover { background: var(--purple-dark); transform: translateY(-1px); }
+    .btn.secondary {
+      background: #fff; color: var(--purple);
+      border: 1.5px solid #C4B5FD; box-shadow: none;
+    }
+    .section { padding: 72px 0; }
+    .eyebrow { color: var(--purple); font-weight: 700; font-size: 13px; letter-spacing: .08em; }
+    h2.title { font-size: 28px; font-weight: 800; margin: 8px 0 36px; line-height: 1.4; }
+
+    /* ===== Header ===== */
+    header {
+      position: sticky; top: 0; z-index: 50;
+      background: rgba(255,255,255,0.9); backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--line);
+    }
+    .nav { display: flex; align-items: center; height: 60px; }
+    .logo { font-weight: 800; font-size: 19px; display: flex; align-items: center; gap: 6px; }
+    .nav .spacer { flex: 1; }
+    .nav .btn { padding: 9px 18px; font-size: 14px; }
+
+    /* ===== Hero ===== */
+    .hero { background: linear-gradient(180deg, var(--bg) 0%, #fff 100%); padding: 72px 0 64px; }
+    .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; align-items: center; }
+    .hero h1 { font-size: 40px; font-weight: 900; line-height: 1.3; letter-spacing: -0.01em; }
+    .hero h1 .hl { color: var(--purple); }
+    .hero p.lead { font-size: 17px; color: var(--gray); margin: 20px 0 28px; }
+    .hero .cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
+    .hero .note { font-size: 12.5px; color: var(--gray); margin-top: 14px; }
+
+    /* ===== CSS ツリーモック ===== */
+    .mock {
+      background: #EBEBEB; border-radius: 16px; padding: 28px 16px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.12); border: 1px solid #ddd;
+    }
+    .tree { display: flex; flex-direction: column; align-items: center; }
+    .node {
+      background: #fff; border-radius: 10px; padding: 8px 6px; width: 96px;
+      text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+      border-top: 4px solid var(--purple); font-size: 12px; font-weight: 700;
+    }
+    .node .av { font-size: 20px; }
+    .node small { display: block; font-weight: 600; color: var(--gray); font-size: 10px; }
+    .row { display: flex; gap: 28px; margin-top: 22px; position: relative; }
+    .row::before {
+      content: ""; position: absolute; top: -22px; left: 25%; right: 25%;
+      border-top: 2px solid #C4C4C4;
+    }
+    .branch { display: flex; flex-direction: column; align-items: center; position: relative; }
+    .branch::before {
+      content: ""; position: absolute; top: -22px; height: 22px; border-left: 2px solid #C4C4C4;
+    }
+    .leg-badge {
+      display: inline-block; font-size: 10px; font-weight: 700; color: var(--purple);
+      background: #fff; border: 1px solid #C4B5FD; border-radius: 999px;
+      padding: 2px 8px; margin-bottom: 8px;
+    }
+
+    /* ===== Problem ===== */
+    .problem { background: #fff; }
+    .prob-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+    .prob-card { border: 1px solid var(--line); border-radius: 14px; padding: 22px; background: #FCFCFD; }
+    .prob-card .ic { font-size: 26px; }
+    .prob-card h3 { font-size: 15px; margin: 10px 0 6px; }
+    .prob-card p { font-size: 13px; color: var(--gray); }
+
+    /* ===== Features ===== */
+    .features { background: var(--bg); }
+    .feat { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: center; margin-bottom: 40px; }
+    .feat:last-child { margin-bottom: 0; }
+    .feat.rev .feat-text { order: 2; }
+    .feat-ic { font-size: 40px; }
+    .feat h3 { font-size: 22px; font-weight: 800; margin: 8px 0 10px; }
+    .feat p { font-size: 15px; color: var(--gray); }
+    .feat-visual {
+      background: #fff; border-radius: 14px; min-height: 180px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 56px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); border: 1px solid var(--line);
+    }
+
+    /* ===== Steps ===== */
+    .steps-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; }
+    .step { text-align: center; padding: 10px; }
+    .step .num {
+      width: 44px; height: 44px; border-radius: 50%; background: var(--purple); color: #fff;
+      font-weight: 800; font-size: 18px; display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 14px;
+    }
+    .step h3 { font-size: 16px; margin-bottom: 6px; }
+    .step p { font-size: 13px; color: var(--gray); }
+
+    /* ===== Pricing ===== */
+    .pricing { background: var(--bg); }
+    .price-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+    .plan {
+      background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 26px 22px;
+      display: flex; flex-direction: column;
+    }
+    .plan.feat-plan { border: 2px solid var(--purple); box-shadow: 0 10px 30px rgba(124,58,237,0.15); }
+    .plan .pname { font-weight: 800; font-size: 17px; }
+    .plan .pprice { font-size: 30px; font-weight: 900; margin: 8px 0 4px; }
+    .plan .pprice small { font-size: 13px; font-weight: 600; color: var(--gray); }
+    .plan ul { list-style: none; margin: 16px 0 0; }
+    .plan li { font-size: 13.5px; padding: 6px 0 6px 24px; position: relative; color: #374151; }
+    .plan li::before { content: "✓"; position: absolute; left: 0; color: var(--purple); font-weight: 800; }
+    .plan .tag {
+      align-self: flex-start; font-size: 11px; font-weight: 700; color: var(--purple);
+      background: #F3E8FF; border-radius: 6px; padding: 2px 8px; margin-bottom: 10px;
+    }
+
+    /* ===== FAQ ===== */
+    .faq details {
+      border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; background: #fff;
+    }
+    .faq summary { font-weight: 700; font-size: 15px; cursor: pointer; list-style: none; }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary::after { content: "＋"; float: right; color: var(--purple); }
+    .faq details[open] summary::after { content: "−"; }
+    .faq p { font-size: 14px; color: var(--gray); margin-top: 10px; }
+
+    /* ===== Final CTA ===== */
+    .final {
+      background: linear-gradient(135deg, var(--purple) 0%, #9333EA 100%); color: #fff; text-align: center;
+    }
+    .final h2 { font-size: 28px; font-weight: 800; }
+    .final p { font-size: 16px; opacity: .92; margin: 14px 0 28px; }
+    .final .btn { background: #fff; color: var(--purple); box-shadow: 0 6px 24px rgba(0,0,0,0.2); }
+
+    footer { background: #1F2937; color: #9CA3AF; font-size: 13px; padding: 28px 0; text-align: center; }
+    footer a { color: #C4B5FD; }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 760px) {
+      .hero-grid, .feat, .feat.rev .feat-text { grid-template-columns: 1fr; order: 0; }
+      .hero h1 { font-size: 30px; }
+      .prob-grid, .steps-grid, .price-grid { grid-template-columns: 1fr; }
+      h2.title { font-size: 23px; }
+      .section { padding: 52px 0; }
+      .hero-mock { order: -1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header>
+    <div class="wrap nav">
+      <div class="logo">🌳 Treevia</div>
+      <div class="spacer"></div>
+      <a class="btn" href="/treevia/?from=lp">無料で始める</a>
+    </div>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="hero-text">
+        <h1>バイナリーの組織図を、<br><span class="hl">3分で。</span></h1>
+        <p class="lead">
+          左右のラインが一目でわかる組織図ツール。<br>
+          Excelや手書きをやめて、スマホでサクサク管理・共有。
+        </p>
+        <div class="cta-row">
+          <a class="btn" href="/treevia/?from=lp">無料で始める</a>
+          <a class="btn secondary" href="#how">使い方を見る</a>
+        </div>
+        <p class="note">クレカ登録不要 ・ 無料プランで写真もOK ・ チームに共有できます</p>
+      </div>
+
+      <!-- CSS ツリーモック（実スクショは後で差し替え可能） -->
+      <div class="hero-mock">
+        <div class="mock">
+          <div class="tree">
+            <div class="node"><div class="av">🧑‍💼</div>あなた<small>リーダー</small></div>
+            <div class="row">
+              <div class="branch">
+                <span class="leg-badge">左ライン</span>
+                <div class="node"><div class="av">👩</div>紹介者A</div>
+              </div>
+              <div class="branch">
+                <span class="leg-badge">右ライン</span>
+                <div class="node"><div class="av">🧑</div>紹介者B</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Problem -->
+  <section class="section problem">
+    <div class="wrap">
+      <div class="eyebrow">こんな悩みありませんか？</div>
+      <h2 class="title">組織管理、こうなりがち。</h2>
+      <div class="prob-grid">
+        <div class="prob-card">
+          <div class="ic">📄</div>
+          <h3>Excel・手書きが限界</h3>
+          <p>人が増えるたびに作り直し。最新版がどれか分からなくなる。</p>
+        </div>
+        <div class="prob-card">
+          <div class="ic">⚖️</div>
+          <h3>左右のバランスが見えない</h3>
+          <p>どちらのラインが伸びているか、ぱっと把握できない。</p>
+        </div>
+        <div class="prob-card">
+          <div class="ic">📤</div>
+          <h3>チームに共有しづらい</h3>
+          <p>毎回スクショや口頭説明。みんなが同じ図を見られない。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section features">
+    <div class="wrap">
+      <div class="eyebrow">TREEVIA でできること</div>
+      <h2 class="title">バイナリーのための、シンプルな組織図。</h2>
+
+      <div class="feat">
+        <div class="feat-text">
+          <div class="feat-ic">🌲</div>
+          <h3>左右ツリーで直感的に</h3>
+          <p>バイナリーそのままの左右構造。＋ボタンで下の人を追加、ドラッグで組み替え。頭の中の組織図がそのまま形になります。</p>
+        </div>
+        <div class="feat-visual">🌲</div>
+      </div>
+
+      <div class="feat rev">
+        <div class="feat-text">
+          <div class="feat-ic">🔗</div>
+          <h3>チームに共有できる</h3>
+          <p>共有リンクを送るだけで、ダウンラインの誰もが同じ組織図を閲覧可能。全員の認識がそろいます。</p>
+        </div>
+        <div class="feat-visual">🔗</div>
+      </div>
+
+      <div class="feat">
+        <div class="feat-text">
+          <div class="feat-ic">📱</div>
+          <h3>スマホでサクサク</h3>
+          <p>移動中でも外出先でも、スマホからそのまま編集・確認。写真付きで顔が分かる組織図に。</p>
+        </div>
+        <div class="feat-visual">📱</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How / Steps -->
+  <section class="section" id="how">
+    <div class="wrap">
+      <div class="eyebrow">かんたん3ステップ</div>
+      <h2 class="title">登録して、すぐ作れます。</h2>
+      <div class="steps-grid">
+        <div class="step">
+          <div class="num">1</div>
+          <h3>無料登録</h3>
+          <p>メールでログインするだけ。クレカ登録は不要です。</p>
+        </div>
+        <div class="step">
+          <div class="num">2</div>
+          <h3>メンバーを追加</h3>
+          <p>＋ボタンで左右に追加。まずはサンプルから始めてもOK。</p>
+        </div>
+        <div class="step">
+          <div class="num">3</div>
+          <h3>チームに共有</h3>
+          <p>リンクを送るだけ。みんなが同じ組織図を見られます。</p>
+        </div>
+      </div>
+      <div style="text-align:center; margin-top:36px;">
+        <a class="btn" href="/treevia/?from=lp">無料で始める</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="section pricing">
+    <div class="wrap">
+      <div class="eyebrow">料金プラン</div>
+      <h2 class="title">まずは無料で。必要になったら拡張。</h2>
+      <div class="price-grid">
+        <div class="plan">
+          <div class="pname">無料</div>
+          <div class="pprice">¥0</div>
+          <ul>
+            <li>組織図 1つ</li>
+            <li>メンバー 25人まで</li>
+            <li>写真OK</li>
+            <li>共有リンク</li>
+          </ul>
+        </div>
+        <div class="plan feat-plan">
+          <div class="tag">人気</div>
+          <div class="pname">ライト</div>
+          <div class="pprice">¥480<small> /月</small></div>
+          <ul>
+            <li>組織図 2つ</li>
+            <li>メンバー 無制限</li>
+            <li>写真OK</li>
+            <li>共有リンク</li>
+          </ul>
+        </div>
+        <div class="plan">
+          <div class="pname">プロ</div>
+          <div class="pprice">¥980<small> /月</small></div>
+          <ul>
+            <li>組織図 無制限</li>
+            <li>メンバー 無制限</li>
+            <li>透かしなし共有</li>
+            <li>エクスポート</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="section faq">
+    <div class="wrap">
+      <div class="eyebrow">よくある質問</div>
+      <h2 class="title">FAQ</h2>
+      <details>
+        <summary>本当に無料で使えますか？</summary>
+        <p>はい。無料プランでも組織図の作成・写真・共有リンクまで使えます。クレジットカードの登録も不要です。</p>
+      </details>
+      <details>
+        <summary>バイナリー以外の組織でも使えますか？</summary>
+        <p>使えます。左右2つのラインで枝分かれする構造なので、バイナリー型の組織と特に相性が良い設計です。</p>
+      </details>
+      <details>
+        <summary>スマホだけで使えますか？</summary>
+        <p>はい。ブラウザで動くのでアプリのインストールは不要。スマホ・PCどちらからでも同じデータを編集できます。</p>
+      </details>
+      <details>
+        <summary>チームのメンバーに見せるには？</summary>
+        <p>共有リンクを発行して送るだけです。受け取った人はログイン不要で組織図を閲覧できます。</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="section final">
+    <div class="wrap">
+      <h2>組織図づくり、今日から軽くなる。</h2>
+      <p>登録は1分。まずは無料で試してみてください。</p>
+      <a class="btn" href="/treevia/?from=lp">無料で始める</a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      🌳 Treevia ・ バイナリーの組織図ツール<br>
+      <a href="/treevia/?from=lp">アプリを開く</a>
+    </div>
+  </footer>
+
+</body>
+</html>
