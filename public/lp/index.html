@@ -18,12 +18,16 @@
 
   <style>
     :root {
-      --purple: #7C3AED;
-      --purple-dark: #6D28D9;
-      --ink: #1F2937;
-      --gray: #6B7280;
-      --line: #E5E7EB;
-      --bg: #FAF5FF;
+      --purple: #15A24A;        /* 互換のため名前は残しつつブランド緑に */
+      --purple-dark: #0E7C39;
+      --ink: #0F3D2E;           /* ロゴのワードマーク濃緑 */
+      --gray: #5B6B62;
+      --line: #E3EAE5;
+      --bg: #EFFBF3;            /* 薄緑 */
+      --soft: #BBE8CC;          /* 薄緑ボーダー */
+      --tag: #E3F8EC;           /* タグ背景 */
+      --shadow: rgba(21,162,74,0.32);
+      --blue: #0066C2;          /* ロゴのノード青（アクセント） */
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
@@ -44,13 +48,13 @@
       font-size: 16px;
       padding: 15px 30px;
       border-radius: 12px;
-      box-shadow: 0 6px 20px rgba(124,58,237,0.35);
+      box-shadow: 0 6px 20px var(--shadow);
       transition: transform .12s, background .12s;
     }
     .btn:hover { background: var(--purple-dark); transform: translateY(-1px); }
     .btn.secondary {
       background: #fff; color: var(--purple);
-      border: 1.5px solid #C4B5FD; box-shadow: none;
+      border: 1.5px solid var(--soft); box-shadow: none;
     }
     .section { padding: 72px 0; }
     .eyebrow { color: var(--purple); font-weight: 700; font-size: 13px; letter-spacing: .08em; }
@@ -89,6 +93,8 @@
       text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.12);
       border-top: 4px solid var(--purple); font-size: 12px; font-weight: 700;
     }
+    .node.blue { border-top-color: var(--blue); }
+    .leg-badge.blue { color: var(--blue); border-color: #BBD6F2; }
     .node .av { font-size: 20px; }
     .node small { display: block; font-weight: 600; color: var(--gray); font-size: 10px; }
     .row { display: flex; gap: 28px; margin-top: 22px; position: relative; }
@@ -102,7 +108,7 @@
     }
     .leg-badge {
       display: inline-block; font-size: 10px; font-weight: 700; color: var(--purple);
-      background: #fff; border: 1px solid #C4B5FD; border-radius: 999px;
+      background: #fff; border: 1px solid var(--soft); border-radius: 999px;
       padding: 2px 8px; margin-bottom: 8px;
     }
 
@@ -146,7 +152,7 @@
       background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 26px 22px;
       display: flex; flex-direction: column;
     }
-    .plan.feat-plan { border: 2px solid var(--purple); box-shadow: 0 10px 30px rgba(124,58,237,0.15); }
+    .plan.feat-plan { border: 2px solid var(--purple); box-shadow: 0 10px 30px rgba(21,162,74,0.15); }
     .plan .pname { font-weight: 800; font-size: 17px; }
     .plan .pprice { font-size: 30px; font-weight: 900; margin: 8px 0 4px; }
     .plan .pprice small { font-size: 13px; font-weight: 600; color: var(--gray); }
@@ -155,7 +161,7 @@
     .plan li::before { content: "✓"; position: absolute; left: 0; color: var(--purple); font-weight: 800; }
     .plan .tag {
       align-self: flex-start; font-size: 11px; font-weight: 700; color: var(--purple);
-      background: #F3E8FF; border-radius: 6px; padding: 2px 8px; margin-bottom: 10px;
+      background: var(--tag); border-radius: 6px; padding: 2px 8px; margin-bottom: 10px;
     }
 
     /* ===== FAQ ===== */
@@ -170,14 +176,14 @@
 
     /* ===== Final CTA ===== */
     .final {
-      background: linear-gradient(135deg, var(--purple) 0%, #9333EA 100%); color: #fff; text-align: center;
+      background: linear-gradient(135deg, var(--purple) 0%, var(--blue) 100%); color: #fff; text-align: center;
     }
     .final h2 { font-size: 28px; font-weight: 800; }
     .final p { font-size: 16px; opacity: .92; margin: 14px 0 28px; }
     .final .btn { background: #fff; color: var(--purple); box-shadow: 0 6px 24px rgba(0,0,0,0.2); }
 
     footer { background: #1F2937; color: #9CA3AF; font-size: 13px; padding: 28px 0; text-align: center; }
-    footer a { color: #C4B5FD; }
+    footer a { color: #8FE0AC; }
 
     /* ===== Responsive ===== */
     @media (max-width: 760px) {
@@ -228,8 +234,8 @@
                 <div class="node"><div class="av">👩</div>紹介者A</div>
               </div>
               <div class="branch">
-                <span class="leg-badge">右ライン</span>
-                <div class="node"><div class="av">🧑</div>紹介者B</div>
+                <span class="leg-badge blue">右ライン</span>
+                <div class="node blue"><div class="av">🧑</div>紹介者B</div>
               </div>
             </div>
           </div>
