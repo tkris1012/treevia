@@ -9,6 +9,7 @@ import RenameChartModal from './RenameChartModal.jsx'
 export default function ChartListPage() {
   const charts = useStore((s) => s.charts)
   const createNewChart = useStore((s) => s.createNewChart)
+  const createSampleChart = useStore((s) => s.createSampleChart)
   const deleteChartById = useStore((s) => s.deleteChartById)
   const plan = useStore((s) => s.plan)
   const showUpgrade = useStore((s) => s.showUpgrade)
@@ -17,10 +18,23 @@ export default function ChartListPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [renameTarget, setRenameTarget] = useState(null) // { id, title }
   const [menuOpenId, setMenuOpenId] = useState(null)
+  const [sampleBusy, setSampleBusy] = useState(false)
 
   function handleNewClick() {
     if (canCreateMoreCharts(plan, charts.length)) setCreateOpen(true)
     else showUpgrade('charts')
+  }
+
+  async function handleSampleClick() {
+    if (sampleBusy) return
+    if (!canCreateMoreCharts(plan, charts.length)) { showUpgrade('charts'); return }
+    setSampleBusy(true)
+    try {
+      const id = await createSampleChart()
+      if (id) navigateToChart(id)
+    } finally {
+      setSampleBusy(false)
+    }
   }
 
   async function handleCreate(title) {
@@ -73,6 +87,54 @@ export default function ChartListPage() {
 
       {/* Body */}
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: 24 }}>
+        {/* 初回ウェルカム（組織図ゼロのとき）— アクティブ化の入口 */}
+        {charts.length === 0 ? (
+          <div style={{
+            marginTop: 40,
+            background: 'white', borderRadius: 16,
+            border: '1px solid #E5E7EB',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+            padding: '40px 28px', textAlign: 'center',
+            maxWidth: 560, marginLeft: 'auto', marginRight: 'auto',
+          }}>
+            <div style={{ fontSize: 52 }}>🌳</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: '#1F2937', marginTop: 8 }}>
+              Treevia へようこそ
+            </div>
+            <div style={{ fontSize: 14, color: '#6B7280', marginTop: 10, lineHeight: 1.7 }}>
+              バイナリーの組織図を、左右ツリーでかんたんに作成・共有。<br />
+              まずはサンプルを開いて、操作感を見てみましょう。
+            </div>
+            <div style={{
+              display: 'flex', flexDirection: 'column', gap: 10,
+              marginTop: 24, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto',
+            }}>
+              <button
+                onClick={handleSampleClick}
+                disabled={sampleBusy}
+                style={{
+                  padding: '13px', borderRadius: 10, border: 'none',
+                  background: '#7C3AED', color: 'white',
+                  fontSize: 15, fontWeight: 700, cursor: 'pointer',
+                  opacity: sampleBusy ? 0.7 : 1,
+                  boxShadow: '0 2px 8px rgba(124,58,237,0.35)',
+                }}
+              >
+                {sampleBusy ? '作成中...' : '🌱 サンプル組織図を見る'}
+              </button>
+              <button
+                onClick={handleNewClick}
+                style={{
+                  padding: '13px', borderRadius: 10,
+                  border: '1px solid #D1D5DB', background: 'white',
+                  fontSize: 15, fontWeight: 600, color: '#374151', cursor: 'pointer',
+                }}
+              >
+                ＋ 自分の組織を作る
+              </button>
+            </div>
+          </div>
+        ) : (
         <div style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
@@ -199,14 +261,6 @@ export default function ChartListPage() {
             </div>
           ))}
         </div>
-
-        {/* 空状態 */}
-        {charts.length === 0 && (
-          <div style={{
-            marginTop: 60, textAlign: 'center', color: '#9CA3AF', fontSize: 13,
-          }}>
-            まだ組織図がありません。「＋ 新規作成」から始めてください。
-          </div>
         )}
       </div>
 

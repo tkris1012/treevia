@@ -550,13 +550,35 @@ export default function OrgTree() {
       {isEmpty && (
         <div style={{
           position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', gap: 16, zIndex: 5,
-          pointerEvents: 'none',
+          alignItems: 'center', justifyContent: 'center', gap: 14, zIndex: 5,
+          pointerEvents: 'none', padding: 24, textAlign: 'center',
         }}>
-          <div style={{ fontSize: 48, opacity: 0.2 }}>🌳</div>
-          <div style={{ fontSize: 15, color: '#9CA3AF', fontWeight: 500 }}>
-            左下の「＋ ルート追加」からメンバーを追加
-          </div>
+          <div style={{ fontSize: 48, opacity: 0.25 }}>🌳</div>
+          {isReadOnly ? (
+            <div style={{ fontSize: 15, color: '#9CA3AF', fontWeight: 500 }}>
+              まだメンバーがいません
+            </div>
+          ) : (
+            <>
+              <div style={{ fontSize: 16, color: '#6B7280', fontWeight: 600 }}>
+                さっそく組織図を作りましょう
+              </div>
+              <button
+                onClick={addRootNode}
+                style={{
+                  pointerEvents: 'auto',
+                  background: '#7C3AED', color: 'white', border: 'none', borderRadius: 10,
+                  padding: '12px 22px', fontSize: 15, fontWeight: 700, cursor: 'pointer',
+                  boxShadow: '0 2px 8px rgba(124,58,237,0.35)',
+                }}
+              >
+                ＋ 最初のメンバーを追加
+              </button>
+              <div style={{ fontSize: 12.5, color: '#9CA3AF', fontWeight: 500, lineHeight: 1.6 }}>
+                追加後、ノードにカーソルを乗せると<br />左右に「＋」が出て下の人を増やせます
+              </div>
+            </>
+          )}
         </div>
       )}
 

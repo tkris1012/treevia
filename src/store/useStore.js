@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import {
   addMember, updateMember, deleteMember, deleteMembers, restoreMember,
-  createChart, renameChart, deleteChart,
+  createChart, createSampleChart, renameChart, deleteChart,
 } from '../lib/firestore.js'
 import { undoLimit, canAddMoreMembers } from '../constants/plans.js'
 import { MAX_ROLES, genRoleId } from '../constants/roles.js'
@@ -184,6 +184,20 @@ export const useStore = create((set, get) => ({
       return id
     } catch (e) {
       console.error('createChart failed', e)
+      return null
+    } finally {
+      setSyncStatus('synced')
+    }
+  },
+
+  createSampleChart: async () => {
+    const { user, setSyncStatus } = get()
+    if (!user) return null
+    setSyncStatus('syncing')
+    try {
+      return await createSampleChart(user.uid)
+    } catch (e) {
+      console.error('createSampleChart failed', e)
       return null
     } finally {
       setSyncStatus('synced')

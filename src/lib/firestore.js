@@ -76,6 +76,38 @@ export async function createChart(uid, title) {
   return ref.id
 }
 
+// サンプル組織図を作成（バイナリー構造を即体感してもらうオンボーディング用）。
+// 新規ユーザーの「最初の1個を作って中身が見える」アクティブ化を狙う。
+export async function createSampleChart(uid) {
+  const chartRef = await addDoc(chartsCol(uid), {
+    title: 'サンプル組織図',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
+  const chartId = chartRef.id
+  const col = membersCol(uid, chartId)
+
+  // 親IDを参照し合うので、先に doc 参照(ID)を確保してからバッチ書き込み
+  const root = doc(col)
+  const aL   = doc(col)
+  const aR   = doc(col)
+  const aLL  = doc(col)
+  const aLR  = doc(col)
+  const aRL  = doc(col)
+
+  const base = { photo: null, collapsed: false, createdAt: serverTimestamp(), updatedAt: serverTimestamp() }
+  const batch = writeBatch(db)
+  batch.set(root, { ...base, name: 'あなた',     role: '', job: 'リーダー', parentId: null,    position: null    })
+  batch.set(aL,   { ...base, name: '紹介者A',   role: '', job: '左ライン', parentId: root.id, position: 'left'  })
+  batch.set(aR,   { ...base, name: '紹介者B',   role: '', job: '右ライン', parentId: root.id, position: 'right' })
+  batch.set(aLL,  { ...base, name: 'Aの紹介①', role: '', job: '',         parentId: aL.id,   position: 'left'  })
+  batch.set(aLR,  { ...base, name: 'Aの紹介②', role: '', job: '',         parentId: aL.id,   position: 'right' })
+  batch.set(aRL,  { ...base, name: 'Bの紹介①', role: '', job: '',         parentId: aR.id,   position: 'left'  })
+  await batch.commit()
+
+  return chartId
+}
+
 export async function renameChart(uid, chartId, title) {
   await updateDoc(chartDoc(uid, chartId), {
     title,
