@@ -12,7 +12,9 @@
   <meta property="og:title" content="Treevia — バイナリーの組織図を、3分で。" />
   <meta property="og:description" content="左右のラインが一目でわかる組織図ツール。チームに共有もかんたん。無料で始められます。" />
   <meta property="og:url" content="https://tkris1012.github.io/treevia/lp/" />
+  <meta property="og:image" content="https://tkris1012.github.io/treevia/lp/ogp.png" />
   <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image" content="https://tkris1012.github.io/treevia/lp/ogp.png" />
 
   <style>
     :root {
@@ -62,6 +64,8 @@
     }
     .nav { display: flex; align-items: center; height: 60px; }
     .logo { font-weight: 800; font-size: 19px; display: flex; align-items: center; gap: 6px; }
+    .logo-img { height: 30px; width: auto; display: block; }
+    .footer-logo { height: 34px; width: auto; margin-bottom: 12px; }
     .nav .spacer { flex: 1; }
     .nav .btn { padding: 9px 18px; font-size: 14px; }
 
@@ -191,7 +195,7 @@
   <!-- Header -->
   <header>
     <div class="wrap nav">
-      <div class="logo">🌳 Treevia</div>
+      <a href="/treevia/?from=lp" aria-label="Treevia"><img src="logo.png" alt="Treevia" class="logo-img" /></a>
       <div class="spacer"></div>
       <a class="btn" href="/treevia/?from=lp">無料で始める</a>
     </div>
@@ -398,8 +402,8 @@
 
   <footer>
     <div class="wrap">
-      🌳 Treevia ・ バイナリーの組織図ツール<br>
-      <a href="/treevia/?from=lp">アプリを開く</a>
+      <img src="logo-white.png" alt="Treevia" class="footer-logo" /><br>
+      バイナリーの組織図ツール ・ <a href="/treevia/?from=lp">アプリを開く</a>
     </div>
   </footer>
 
