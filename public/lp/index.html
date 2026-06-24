@@ -141,6 +141,11 @@
     .shot-mobile { max-width: 270px; margin: 0 auto; }
     .feat-visual.shot-wrap { background: transparent; border: none; box-shadow: none;
       min-height: auto; padding: 0; }
+    /* 特徴イラスト */
+    .feat-illus { width: 82%; height: auto; display: block; }
+    .feat-visual.img-cover { padding: 0; min-height: auto; border: none; box-shadow: none; background: transparent; }
+    .feat-cover { width: 100%; height: 240px; object-fit: cover; border-radius: 14px; display: block;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.12); border: 1px solid var(--line); }
 
     /* ===== Steps ===== */
     .steps-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; }
@@ -277,7 +282,7 @@
           <h3>左右ツリーで直感的に</h3>
           <p>バイナリーそのままの左右構造。＋ボタンで下の人を追加、ドラッグで組み替え。頭の中の組織図がそのまま形になります。</p>
         </div>
-        <div class="feat-visual">🌲</div>
+        <div class="feat-visual"><img src="illus-tree.png" alt="組織図を組み立てるイメージ" class="feat-illus" /></div>
       </div>
 
       <div class="feat rev">
@@ -286,7 +291,7 @@
           <h3>チームに共有できる</h3>
           <p>共有リンクを送るだけで、ダウンラインの誰もが同じ組織図を閲覧可能。全員の認識がそろいます。</p>
         </div>
-        <div class="feat-visual">🔗</div>
+        <div class="feat-visual img-cover"><img src="illus-share.jpg" alt="チームでスマホから組織図を共有するイメージ" class="feat-cover" /></div>
       </div>
 
       <div class="feat">
