@@ -10,15 +10,15 @@
 // 本番決済の準備が整ったら true にする。
 // false の間はアップグレードボタンを「準備中」表示にして、
 // 現在テストモードの Payment Link に実ユーザーが誤って進むのを防ぐ。
-export const BILLING_LIVE = false
+export const BILLING_LIVE = true
 
 export function isBillingLive() {
   return BILLING_LIVE
 }
 
 export const PAYMENT_LINKS = {
-  light: 'https://buy.stripe.com/test_fZu3co6MAah01S49qg4Ja01', // ライトプラン (¥480) ※現在テスト用
-  pro:   'https://buy.stripe.com/test_28E7sE5Iw60K0O0dGw4Ja00', // プロプラン (¥980) ※現在テスト用
+  light: 'https://buy.stripe.com/aFa9AV5V41nraRx5lNfnO00', // ライトプラン (¥480) 本番
+  pro:   'https://buy.stripe.com/bJe6oJ4R0aY1f7N8xZfnO01', // プロプラン (¥980) 本番
 }
 
 // 指定プランの決済 URL を組み立てる。リンク未設定なら null。
