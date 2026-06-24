@@ -1,0 +1,46 @@
+name: Security Audit
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  # 毎週月曜 09:00 JST (00:00 UTC) に定期実行
+  schedule:
+    - cron: '0 0 * * 1'
+  workflow_dispatch:
+
+jobs:
+  npm-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # --- 本番に配信される依存の脆弱性チェック（ビルドを止めるゲート）---
+      # ユーザーに届くコードに high 以上の既知脆弱性があれば失敗させる。
+      - name: Audit frontend (production deps)
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Audit functions (production deps)
+        working-directory: functions
+        run: npm audit --omit=dev --audit-level=high
+
+      # --- 開発時依存も含む全件チェック（参考表示・失敗させない）---
+      # vite/esbuild 等のビルドツールの脆弱性は配信物に含まれないため、
+      # ここでは可視化のみ行い、Dependabot の更新PRで順次対応する。
+      - name: Full audit (informational)
+        if: always()
+        continue-on-error: true
+        run: |
+          echo "::group::frontend full audit"
+          npm audit || true
+          echo "::endgroup::"
+          echo "::group::functions full audit"
+          (cd functions && npm audit) || true
+          echo "::endgroup::"
