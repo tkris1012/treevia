@@ -60,8 +60,8 @@ export default function UpgradeModal() {
 
         {/* プラン比較 */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
-          <PlanRow name={PLANS.free.name}  price="¥0"    note="組織図1つ・30人・共有可" current={plan === 'free'} />
-          <PlanRow name={PLANS.light.name} price="¥480"  note="組織図2つ・人数無制限・写真・共有" current={plan === 'light'} highlight />
+          <PlanRow name={PLANS.free.name}  price="¥0"    note="組織図1つ・25人・写真OK・共有可" current={plan === 'free'} />
+          <PlanRow name={PLANS.light.name} price="¥480"  note="組織図2つ・人数無制限・共有" current={plan === 'light'} highlight />
           <PlanRow name={PLANS.pro.name}   price="¥980"  note="組織図無制限・透かしなし共有・エクスポート" current={plan === 'pro'} highlight />
         </div>
 
