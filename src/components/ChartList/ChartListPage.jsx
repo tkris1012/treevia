@@ -136,72 +136,56 @@ export default function ChartListPage() {
           </div>
         ) : (
         <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))',
-          gap: 16,
+          display: 'flex', flexDirection: 'column', gap: 10,
+          maxWidth: 720, margin: '0 auto',
         }}>
-          {/* 新規作成カード */}
+          {/* 新規作成 */}
           <button
             onClick={handleNewClick}
             style={{
-              minHeight: 140, borderRadius: 12,
-              border: '2px dashed #C4B5FD',
-              background: 'white', cursor: 'pointer',
-              display: 'flex', flexDirection: 'column',
-              alignItems: 'center', justifyContent: 'center',
-              gap: 6, color: '#7C3AED',
-              fontSize: 14, fontWeight: 600,
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              padding: '14px', borderRadius: 10,
+              border: '2px dashed #C4B5FD', background: 'white',
+              color: '#7C3AED', fontSize: 14, fontWeight: 700, cursor: 'pointer',
               transition: 'background 0.15s',
             }}
             onMouseEnter={(e) => { e.currentTarget.style.background = '#FAF5FF' }}
             onMouseLeave={(e) => { e.currentTarget.style.background = 'white' }}
           >
-            <div style={{ fontSize: 32 }}>＋</div>
-            <div>新規作成</div>
+            <span style={{ fontSize: 18 }}>＋</span>新規作成
           </button>
 
-          {/* 既存の組織図カード */}
+          {/* 既存の組織図リスト */}
           {charts.map((c) => (
             <div
               key={c.id}
               style={{
                 position: 'relative',
-                minHeight: 140, borderRadius: 12,
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '14px 16px', borderRadius: 10,
                 background: 'white',
                 border: '1px solid #E5E7EB',
                 boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                 cursor: 'pointer',
-                overflow: 'hidden',
-                transition: 'box-shadow 0.15s, transform 0.15s',
+                transition: 'box-shadow 0.15s, background 0.15s',
               }}
               onClick={() => handleOpen(c.id)}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.10)'
-                e.currentTarget.style.transform = 'translateY(-1px)'
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)'
-                e.currentTarget.style.transform = 'translateY(0)'
-              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#F9FAFB' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'white' }}
             >
               <div style={{
-                padding: 20, height: '100%',
-                display: 'flex', flexDirection: 'column', gap: 10,
+                flex: 1, minWidth: 0,
+                fontSize: 15, fontWeight: 600, color: '#1F2937',
+                lineHeight: 1.4, wordBreak: 'break-word',
               }}>
-                <div style={{ fontSize: 28 }}>🌳</div>
-                <div style={{
-                  fontSize: 15, fontWeight: 600, color: '#1F2937',
-                  lineHeight: 1.4, wordBreak: 'break-word',
-                }}>
-                  {c.title || '無題'}
-                </div>
+                {c.title || '無題'}
               </div>
 
               {/* 三点メニュー */}
               <button
                 onClick={(e) => { e.stopPropagation(); setMenuOpenId(menuOpenId === c.id ? null : c.id) }}
                 style={{
-                  position: 'absolute', top: 8, right: 8,
+                  flexShrink: 0,
                   width: 28, height: 28, borderRadius: 6,
                   border: 'none', background: 'transparent',
                   cursor: 'pointer', fontSize: 18, color: '#9CA3AF',
@@ -222,7 +206,7 @@ export default function ChartListPage() {
                   <div
                     onClick={(e) => e.stopPropagation()}
                     style={{
-                      position: 'absolute', top: 40, right: 8,
+                      position: 'absolute', top: 44, right: 12,
                       background: 'white', borderRadius: 8,
                       boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
                       border: '1px solid #E5E7EB',
