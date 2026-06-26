@@ -7,7 +7,7 @@
   "main": "index.js",
   "private": true,
   "dependencies": {
-    "@google-cloud/functions-framework": "^3.4.0",
+    "@google-cloud/functions-framework": "^5.0.2",
     "firebase-admin": "^12.6.0",
     "stripe": "^16.12.0"
   }
