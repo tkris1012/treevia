@@ -44,6 +44,11 @@ export function canExport(plan) {
   return plan === 'pro'
 }
 
+// 印刷・PDF出力：ライト・プロで利用可（無料は不可）
+export function canPrint(plan) {
+  return plan === 'light' || plan === 'pro'
+}
+
 export function undoLimit(plan) {
   return UNDO_LIMIT[plan] ?? 5
 }

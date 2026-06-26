@@ -23,6 +23,10 @@ const FEATURE_COPY = {
     title: 'エクスポートを使うには',
     body: 'PDF / 画像でのエクスポートはプロプランでご利用いただけます。',
   },
+  print: {
+    title: '印刷・PDF出力を使うには',
+    body: '組織図の印刷・PDF出力（1枚に収める／大きな組織はポスター分割）は、ライトプラン以上でご利用いただけます。',
+  },
 }
 
 export default function UpgradeModal() {
@@ -61,8 +65,8 @@ export default function UpgradeModal() {
         {/* プラン比較 */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
           <PlanRow name={PLANS.free.name}  price="¥0"    note="組織図1つ・50人・写真OK・共有可" current={plan === 'free'} />
-          <PlanRow name={PLANS.light.name} price="¥380"  note="組織図2つ・人数無制限・共有" current={plan === 'light'} highlight />
-          <PlanRow name={PLANS.pro.name}   price="¥980"  note="組織図無制限・透かしなし共有・エクスポート" current={plan === 'pro'} highlight />
+          <PlanRow name={PLANS.light.name} price="¥380"  note="組織図2つ・人数無制限・共有・印刷/PDF" current={plan === 'light'} highlight />
+          <PlanRow name={PLANS.pro.name}   price="¥980"  note="組織図無制限・透かしなし共有・印刷/PDF・エクスポート" current={plan === 'pro'} highlight />
         </div>
 
         {/* アップグレードボタン（現プランより上のプランのみ） */}
