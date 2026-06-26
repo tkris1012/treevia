@@ -204,13 +204,15 @@ export async function setShareEnabled(uid, chartId, enabled, branding = true) {
     token = generateToken()
     await setDoc(shareTokenDoc(token), { uid, chartId, createdAt: serverTimestamp() })
   }
+  const allowCopy = cur?.allowCopy ?? false // 既定は複製不可。既存値は保持
   await setDoc(shareConfigDoc(uid, chartId), {
     enabled,
     token,
     branding,
+    allowCopy,
     updatedAt: serverTimestamp(),
   })
-  return { enabled, token, branding }
+  return { enabled, token, branding, allowCopy }
 }
 
 export async function regenerateShareToken(uid, chartId, branding = true) {
@@ -220,13 +222,100 @@ export async function regenerateShareToken(uid, chartId, branding = true) {
   }
   const token = generateToken()
   await setDoc(shareTokenDoc(token), { uid, chartId, createdAt: serverTimestamp() })
+  const allowCopy = cur?.allowCopy ?? false
   await setDoc(shareConfigDoc(uid, chartId), {
     enabled: true,
     token,
     branding,
+    allowCopy,
     updatedAt: serverTimestamp(),
   })
-  return { enabled: true, token, branding }
+  return { enabled: true, token, branding, allowCopy }
+}
+
+// 複製許可フラグの更新（共有設定の一部）。デフォルトは false（複製不可）。
+export async function setShareAllowCopy(uid, chartId, allowCopy) {
+  await setDoc(
+    shareConfigDoc(uid, chartId),
+    { allowCopy: !!allowCopy, updatedAt: serverTimestamp() },
+    { merge: true },
+  )
+  return getShareConfig(uid, chartId)
+}
+
+// === 共有組織図の複製（コピー方式） =========================
+// 共有トークンから、複製可能（enabled かつ allowCopy）な組織図のデータを取得。
+// 不可なら null を返す。役職は呼び出し側で引き継がない。
+export async function getSharedChartForCopy(token) {
+  const info = await getShareTokenInfo(token)
+  if (!info?.chartId) return null
+  const { uid, chartId } = info
+  const cfg = await getShareConfig(uid, chartId)
+  if (!cfg?.enabled || !cfg?.allowCopy) return null
+
+  const snap = await getDocs(membersCol(uid, chartId))
+  const members = []
+  snap.forEach((d) => members.push({ id: d.id, ...d.data() }))
+
+  let title = null
+  try {
+    const cs = await getDoc(chartDoc(uid, chartId))
+    if (cs.exists()) title = cs.data().title || null
+  } catch (_) { /* オーナー以外は chart 本体を読めない場合あり */ }
+
+  return { uid, chartId, title, members }
+}
+
+// プラン・組織図数の単発取得（閲覧モードでも使えるよう購読に依存しない）
+export async function getUserPlan(uid) {
+  try {
+    const s = await getDoc(doc(db, 'users', uid))
+    return s.exists() ? (s.data().plan || 'free') : 'free'
+  } catch (_) {
+    return 'free'
+  }
+}
+
+export async function getChartCount(uid) {
+  const s = await getDocs(chartsCol(uid))
+  return s.size
+}
+
+// 共有メンバー配列から、自分のアカウントに新しい組織図を複製作成する。
+// 親子(parentId)・左右(position)・名前・役割文字列(job)・写真は引き継ぎ、
+// 役職(role)は引き継がない（空にする）。ID は新規採番し parentId を張り替える。
+export async function createChartFromSharedMembers(uid, title, sourceMembers) {
+  const chartRef = await addDoc(chartsCol(uid), {
+    title: title || '複製した組織図',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
+  const chartId = chartRef.id
+  const col = membersCol(uid, chartId)
+
+  // 旧ID → 新doc参照 のマップを先に作り、parentId を張り替える
+  const idMap = new Map()
+  for (const m of sourceMembers) idMap.set(m.id, doc(col))
+
+  const batch = writeBatch(db)
+  for (const m of sourceMembers) {
+    const ref = idMap.get(m.id)
+    const newParentId =
+      m.parentId && idMap.has(m.parentId) ? idMap.get(m.parentId).id : null
+    batch.set(ref, {
+      name: m.name || '',
+      role: '', // 役職は引き継がない
+      job: m.job || '',
+      photo: m.photo ?? null,
+      parentId: newParentId,
+      position: m.position ?? null,
+      collapsed: !!m.collapsed,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    })
+  }
+  await batch.commit()
+  return chartId
 }
 
 export async function getShareTokenInfo(token) {

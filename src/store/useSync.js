@@ -107,6 +107,29 @@ export function useSync() {
         unsubCharts = subscribeCharts(user.uid, setCharts)
         unsubPlan   = subscribeUserPlan(user.uid, setPlan)
         unsubRoles  = subscribeUserRoles(user.uid, setRoles)
+
+        // 未ログイン状態で共有ページの「自分用に複製」を押した場合、
+        // ログイン後にここで複製を自動再開する。
+        try {
+          const pending = localStorage.getItem('treevia_pending_copy')
+          if (pending) {
+            localStorage.removeItem('treevia_pending_copy')
+            const store = useStore.getState()
+            const res = await store.importSharedChart(pending, user)
+            if (res?.ok) {
+              store.setPostCopyPrompt(true)
+              navigateToChart(res.newId)
+            } else if (res?.reason === 'chart_limit') {
+              alert('無料プランで持てる組織図は1つまでです。プランをアップグレードすると、もっと作成・複製できます。')
+            } else if (res?.reason === 'too_many') {
+              alert(`この組織図はメンバーが${res.total}人います。無料プランは50人までです。ライト以上のプランにアップグレードすると取り込めます。`)
+            } else if (res?.reason === 'not_allowed') {
+              alert('この組織図は複製が許可されていないか、共有が終了しています。')
+            } else {
+              alert('複製に失敗しました。時間をおいて再度お試しください。')
+            }
+          }
+        } catch (e) { console.warn('pending copy resume failed', e) }
       })
       return unsubAuth
     }

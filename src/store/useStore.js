@@ -2,8 +2,9 @@ import { create } from 'zustand'
 import {
   addMember, updateMember, deleteMember, deleteMembers, restoreMember,
   createChart, createSampleChart, renameChart, deleteChart,
+  getSharedChartForCopy, getUserPlan, getChartCount, createChartFromSharedMembers,
 } from '../lib/firestore.js'
-import { undoLimit, canAddMoreMembers } from '../constants/plans.js'
+import { undoLimit, canAddMoreMembers, canCreateMoreCharts, FREE_MEMBER_LIMIT } from '../constants/plans.js'
 import { MAX_ROLES, genRoleId } from '../constants/roles.js'
 import { saveUserRoles } from '../lib/firestore.js'
 
@@ -116,8 +117,39 @@ export const useStore = create((set, get) => ({
   setViewerChartTitle: (t) => set({ viewerChartTitle: t }),
 
   // --- Share ---
-  shareConfig: null,                   // { enabled, token } | null
+  shareConfig: null,                   // { enabled, token, branding, allowCopy } | null
   setShareConfig: (c) => set({ shareConfig: c }),
+
+  // --- 複製後の「次へ共有」ナビ ---
+  postCopyPrompt: false,
+  setPostCopyPrompt: (v) => set({ postCopyPrompt: !!v }),
+
+  // 共有された組織図を自分のアカウントに複製する（コピー方式）。
+  // user は auth.currentUser を渡す（閲覧モードでは store.user が未設定のため）。
+  // 戻り値: { ok, newId } または { ok:false, reason }
+  importSharedChart: async (token, user) => {
+    if (!user || !token) return { ok: false, reason: 'no_user' }
+    const { setSyncStatus } = get()
+    setSyncStatus('syncing')
+    try {
+      const data = await getSharedChartForCopy(token)
+      if (!data) return { ok: false, reason: 'not_allowed' }
+      const plan = await getUserPlan(user.uid)
+      const count = await getChartCount(user.uid)
+      if (!canCreateMoreCharts(plan, count)) return { ok: false, reason: 'chart_limit' }
+      if (plan === 'free' && data.members.length > FREE_MEMBER_LIMIT) {
+        return { ok: false, reason: 'too_many', total: data.members.length }
+      }
+      const title = data.title ? `${data.title}（コピー）` : '複製した組織図'
+      const newId = await createChartFromSharedMembers(user.uid, title, data.members)
+      return { ok: true, newId }
+    } catch (e) {
+      console.error('importSharedChart failed', e)
+      return { ok: false, reason: 'error' }
+    } finally {
+      setSyncStatus('synced')
+    }
+  },
 
   viewerCollapse: {},
   setViewerCollapse: (id, v) => set((s) => ({

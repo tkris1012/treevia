@@ -9,6 +9,8 @@ import ShareFooterCTA from './components/UI/ShareFooterCTA.jsx'
 import UpgradeModal from './components/UI/UpgradeModal.jsx'
 import RoleManager from './components/UI/RoleManager.jsx'
 import ChartListPage from './components/ChartList/ChartListPage.jsx'
+import CopySharedChartButton from './components/UI/CopySharedChartButton.jsx'
+import PostCopyShareModal from './components/UI/PostCopyShareModal.jsx'
 
 export default function App() {
   const user           = useStore((s) => s.user)
@@ -27,6 +29,7 @@ export default function App() {
       <div className="relative w-full h-full">
         <OrgTree />
         <ViewModeBanner />
+        {shareConfig?.allowCopy && <CopySharedChartButton />}
         {showCTA && <ShareFooterCTA />}
         {confirm && <ConfirmDialog />}
       </div>
@@ -56,6 +59,7 @@ export default function App() {
       {confirm && <ConfirmDialog />}
       <UpgradeModal />
       <RoleManager />
+      <PostCopyShareModal />
     </div>
   )
 }
