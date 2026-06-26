@@ -3,8 +3,9 @@ import { useStore } from '../../store/useStore.js'
 import { navigateToList } from '../../store/useSync.js'
 import { useTreeLayout, NODE_W, collectDescendants, getSlotPos } from './useTreeLayout.js'
 import { buildFilterOptions } from '../../constants/roles.js'
-import { canUseShare } from '../../constants/plans.js'
+import { canUseShare, canPrint } from '../../constants/plans.js'
 import ShareModal from '../UI/ShareModal.jsx'
+import PrintModal from '../UI/PrintModal.jsx'
 import TreeNode from './TreeNode.jsx'
 import DropZone from './DropZone.jsx'
 
@@ -68,12 +69,18 @@ export default function OrgTree() {
   const filterOptions   = buildFilterOptions(roles)
 
   const [shareOpen, setShareOpen] = useState(false)
+  const [printOpen, setPrintOpen] = useState(false)
   const shareAllowed = canUseShare(plan)
+  const printAllowed = canPrint(plan)
   const isShared     = !!shareConfig?.enabled
   const isSyncing    = syncStatus === 'syncing'
   function handleShareClick() {
     if (shareAllowed) setShareOpen(true)
     else showUpgrade('share')
+  }
+  function handlePrintClick() {
+    if (printAllowed) setPrintOpen(true)
+    else showUpgrade('print')
   }
 
   const { positions, childMap, hiddenChildrenMap } = useTreeLayout()
@@ -503,6 +510,11 @@ export default function OrgTree() {
                 style={{ ...ICON_BTN, ...(isShared ? { background: '#ECFDF5', borderColor: '#A7F3D0' } : {}) }}>
                 {shareAllowed ? '🔗' : '🔒'}
               </button>
+              <button onClick={handlePrintClick}
+                title={printAllowed ? '印刷・PDF出力' : '印刷・PDF出力（ライト/プロ）'}
+                style={ICON_BTN}>
+                {printAllowed ? '🖨' : '🔒'}
+              </button>
               <span title={isSyncing ? '同期中' : '同期済み'}
                 style={{ width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
                   background: isSyncing ? '#FBBF24' : '#22C55E' }} />
@@ -756,6 +768,7 @@ export default function OrgTree() {
 
       {/* 共有モーダル */}
       {shareOpen && <ShareModal onClose={() => setShareOpen(false)} />}
+      {printOpen && <PrintModal onClose={() => setPrintOpen(false)} />}
     </div>
   )
 }
