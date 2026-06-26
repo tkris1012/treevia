@@ -120,6 +120,7 @@ export default function TreeNode({ member, isRoot, isDragging, forPrint = false 
               fontWeight: 400,
               color: style.sub,
               lineHeight: lh,
+              paddingBottom: forPrint ? 2 : 0,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
