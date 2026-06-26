@@ -19,15 +19,38 @@ function pageContentMM(paper, orientation) {
   return { pageW: w, pageH: h, innerW: w - MARGIN_MM * 2, innerH: h - MARGIN_MM * 2 }
 }
 
+// ポスター分割のタイル数上限（全体図1枚を足して合計はこれ+1ページ）
+const MAX_POSTER_TILES = 9
+
+// ポスター分割のグリッドを計算。
+// f は「原寸(96dpi)に対する縮小率」。ページ数が MAX_POSTER_TILES を超える場合は
+// f を下げて（全体を縮小して）タイル数を上限内に収める。小さい図は f=1（原寸）。
+function posterGrid(contentW, contentH, innerW, innerH, maxTiles = MAX_POSTER_TILES) {
+  for (let f = 1.0; f >= 0.1 - 1e-9; f -= 0.02) {
+    const tilePxW = innerW / (PX_TO_MM * f)
+    const tilePxH = innerH / (PX_TO_MM * f)
+    const cols = Math.max(1, Math.ceil(contentW / tilePxW))
+    const rows = Math.max(1, Math.ceil(contentH / tilePxH))
+    if (cols * rows <= maxTiles) return { f, cols, rows, tilePxW, tilePxH }
+  }
+  // 極端に大きい図はこれ以上縮小しない（ページ数が上限を超えても出す）
+  const f = 0.1
+  const tilePxW = innerW / (PX_TO_MM * f)
+  const tilePxH = innerH / (PX_TO_MM * f)
+  return {
+    f,
+    cols: Math.max(1, Math.ceil(contentW / tilePxW)),
+    rows: Math.max(1, Math.ceil(contentH / tilePxH)),
+    tilePxW, tilePxH,
+  }
+}
+
 // 生成前の枚数見積り（プレビュー表示用）
 export function estimatePages(contentW, contentH, options) {
   const { mode = 'poster', paper = 'a4', orientation = 'landscape' } = options
   if (mode === 'fit') return 1
   const { innerW, innerH } = pageContentMM(paper, orientation)
-  const contentWmm = contentW * PX_TO_MM
-  const contentHmm = contentH * PX_TO_MM
-  const cols = Math.max(1, Math.ceil(contentWmm / innerW))
-  const rows = Math.max(1, Math.ceil(contentHmm / innerH))
+  const { cols, rows } = posterGrid(contentW, contentH, innerW, innerH)
   return cols * rows + 1 // +1 = 全体図ページ
 }
 
@@ -97,11 +120,8 @@ export async function generateChartPdf({ element, contentWidth, contentHeight, o
     return { pages: 1 }
   }
 
-  // ポスター分割
-  const tilePxW = innerW / PX_TO_MM
-  const tilePxH = innerH / PX_TO_MM
-  const cols = Math.max(1, Math.ceil(contentWidth / tilePxW))
-  const rows = Math.max(1, Math.ceil(contentHeight / tilePxH))
+  // ポスター分割（ページ数上限に収まるよう全体を自動縮小：係数 f）
+  const { f, cols, rows, tilePxW, tilePxH } = posterGrid(contentWidth, contentHeight, innerW, innerH)
 
   // 1ページ目：全体図（升目と番号つき）
   const overview = sliceDataURL(master, 0, 0, master.width, master.height)
@@ -135,7 +155,7 @@ export async function generateChartPdf({ element, contentWidth, contentHeight, o
       if (w <= 0 || h <= 0) continue
       const img = sliceDataURL(master, x * sx, y * sy, w * sx, h * sy)
       pdf.addPage(paper, orientation)
-      pdf.addImage(img, 'JPEG', MARGIN_MM, MARGIN_MM, w * PX_TO_MM, h * PX_TO_MM)
+      pdf.addImage(img, 'JPEG', MARGIN_MM, MARGIN_MM, w * PX_TO_MM * f, h * PX_TO_MM * f)
       pdf.setFontSize(9)
       pdf.setTextColor(120)
       pdf.text(`${String.fromCharCode(65 + c)}-${r + 1}`, MARGIN_MM, MARGIN_MM - 2.5)
