@@ -55,7 +55,14 @@ export default function AccountMenu() {
       await openBillingPortal(idToken) // 成功時はポータルへ遷移
     } catch (e) {
       console.error('プラン管理画面を開けませんでした:', e)
-      alert('プラン管理画面を開けませんでした。時間をおいて再度お試しください。')
+      const code = e?.message || ''
+      if (code.includes('no_customer')) {
+        alert('お支払い情報が見つかりませんでした。オンライン決済で登録したアカウントでログインしてからお試しください。')
+      } else if (code.includes('unauthenticated') || code.includes('invalid_token')) {
+        alert('ログイン情報の有効期限が切れている可能性があります。一度ログアウトして再ログイン後にお試しください。')
+      } else {
+        alert('プラン管理画面を開けませんでした。時間をおいて再度お試しください。')
+      }
       setPortalBusy(false)
     }
   }

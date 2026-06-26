@@ -143,6 +143,7 @@ functions.http('createPortalSession', async (req, res) => {
   const authHeader = req.headers.authorization || ''
   const idToken = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : ''
   if (!idToken) {
+    console.warn('ポータル: 認証トークンなし')
     res.status(401).json({ error: 'unauthenticated' })
     return
   }
@@ -152,6 +153,7 @@ functions.http('createPortalSession', async (req, res) => {
     const decoded = await admin.auth().verifyIdToken(idToken)
     uid = decoded.uid
   } catch (err) {
+    console.warn('ポータル: トークン検証に失敗:', err.message)
     res.status(401).json({ error: 'invalid_token' })
     return
   }
@@ -160,9 +162,11 @@ functions.http('createPortalSession', async (req, res) => {
   const snap = await db.collection('users').doc(uid).get()
   const customerId = snap.exists ? snap.data().stripeCustomerId : null
   if (!customerId) {
+    console.warn(`ポータル: stripeCustomerId なし（未決済アカウント） uid=${uid}`)
     res.status(404).json({ error: 'no_customer' })
     return
   }
+  console.log(`ポータル発行: uid=${uid} customer=${customerId}`)
 
   // 戻り先 URL（アプリ）。リクエストで受け取り、無ければ既定値。
   const returnUrl =
