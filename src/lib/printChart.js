@@ -3,7 +3,8 @@
 // CSS px ↔ mm（96dpi 基準）
 const PX_TO_MM = 25.4 / 96
 const MARGIN_MM = 8 // 各ページの余白
-const CAPTURE_SCALE = 2 // キャプチャ解像度（印刷用に高め）
+const CAPTURE_SCALE = 2 // 目標キャプチャ解像度（実際は上限内に自動調整）
+const JPEG_QUALITY = 0.85 // PDF埋め込み画像はJPEGで軽量化
 
 const PAPER_MM = {
   a4: { w: 210, h: 297 },
@@ -30,9 +31,9 @@ export function estimatePages(contentW, contentH, options) {
   return cols * rows + 1 // +1 = 全体図ページ
 }
 
-// キャンバスの安全上限（ブラウザの最大寸法/面積を考慮）
-const MAX_CANVAS_DIM = 16000
-const MAX_CANVAS_AREA = 256000000 // 256M px
+// キャンバスの安全上限（モバイル Safari の面積上限 ~16M px / 最大寸法に合わせる）
+const MAX_CANVAS_DIM = 8192
+const MAX_CANVAS_AREA = 16000000 // 16M px（iOSでも安全）
 
 // 全体を1回だけ描画して大きな master canvas を得る（安全上限内に収まるよう scale 自動調整）
 async function captureMaster(html2canvas, element, contentW, contentH) {
@@ -63,8 +64,11 @@ function sliceDataURL(master, sx, sy, sw, sh) {
   tmp.width = Math.max(1, Math.round(sw))
   tmp.height = Math.max(1, Math.round(sh))
   const ctx = tmp.getContext('2d')
+  // JPEGは透過不可なので白で塗ってから描画
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, tmp.width, tmp.height)
   ctx.drawImage(master, sx, sy, sw, sh, 0, 0, tmp.width, tmp.height)
-  return tmp.toDataURL('image/png')
+  return tmp.toDataURL('image/jpeg', JPEG_QUALITY)
 }
 
 // element（全体サイズで描画済みの非表示DOM）から PDF を生成して保存する。
@@ -88,7 +92,7 @@ export async function generateChartPdf({ element, contentWidth, contentHeight, o
     const scale = Math.min(innerW / (contentWidth * PX_TO_MM), innerH / (contentHeight * PX_TO_MM))
     const wmm = contentWidth * PX_TO_MM * scale
     const hmm = contentHeight * PX_TO_MM * scale
-    pdf.addImage(img, 'PNG', (pageW - wmm) / 2, (pageH - hmm) / 2, wmm, hmm)
+    pdf.addImage(img, 'JPEG', (pageW - wmm) / 2, (pageH - hmm) / 2, wmm, hmm)
     pdf.save(fileName)
     return { pages: 1 }
   }
@@ -106,7 +110,7 @@ export async function generateChartPdf({ element, contentWidth, contentHeight, o
   const ovH = contentHeight * PX_TO_MM * ovScale
   const ovX = (pageW - ovW) / 2
   const ovY = (pageH - ovH) / 2
-  pdf.addImage(overview, 'PNG', ovX, ovY, ovW, ovH)
+  pdf.addImage(overview, 'JPEG', ovX, ovY, ovW, ovH)
   pdf.setFontSize(10)
   pdf.text(`全体図（${cols}×${rows} 枚に分割／次ページから各ページ）`, MARGIN_MM, MARGIN_MM)
   pdf.setDrawColor(150)
@@ -131,7 +135,7 @@ export async function generateChartPdf({ element, contentWidth, contentHeight, o
       if (w <= 0 || h <= 0) continue
       const img = sliceDataURL(master, x * sx, y * sy, w * sx, h * sy)
       pdf.addPage(paper, orientation)
-      pdf.addImage(img, 'PNG', MARGIN_MM, MARGIN_MM, w * PX_TO_MM, h * PX_TO_MM)
+      pdf.addImage(img, 'JPEG', MARGIN_MM, MARGIN_MM, w * PX_TO_MM, h * PX_TO_MM)
       pdf.setFontSize(9)
       pdf.setTextColor(120)
       pdf.text(`${String.fromCharCode(65 + c)}-${r + 1}`, MARGIN_MM, MARGIN_MM - 2.5)
