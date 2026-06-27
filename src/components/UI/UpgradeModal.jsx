@@ -5,7 +5,7 @@ import { buildCheckoutUrl, isBillingLive } from '../../constants/billing.js'
 const FEATURE_COPY = {
   members: {
     title: 'メンバー数の上限に達しました',
-    body: `無料プランは1組織図あたり${FREE_MEMBER_LIMIT}人までです。ライトプラン以上で人数無制限になります。`,
+    body: `無料プランは1組織図あたり${FREE_MEMBER_LIMIT}人までです。ライトは500人、プロは無制限でご利用いただけます。`,
   },
   charts: {
     title: '組織図をもっと作るには',
@@ -65,8 +65,8 @@ export default function UpgradeModal() {
         {/* プラン比較 */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
           <PlanRow name={PLANS.free.name}  price="¥0"    note="組織図1つ・50人・写真OK・共有可" current={plan === 'free'} />
-          <PlanRow name={PLANS.light.name} price="¥380"  note="組織図2つ・人数無制限・共有・印刷/PDF" current={plan === 'light'} highlight />
-          <PlanRow name={PLANS.pro.name}   price="¥980"  note="組織図無制限・透かしなし共有・印刷/PDF・エクスポート" current={plan === 'pro'} highlight />
+          <PlanRow name={PLANS.light.name} price="¥380"  note="組織図2つ・500人まで・共有・印刷/PDF" current={plan === 'light'} highlight />
+          <PlanRow name={PLANS.pro.name}   price="¥980"  note="組織図無制限・人数無制限・透かしなし共有・印刷/PDF" current={plan === 'pro'} highlight />
         </div>
 
         {/* アップグレードボタン（現プランより上のプランのみ） */}
