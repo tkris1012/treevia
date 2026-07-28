@@ -91,6 +91,7 @@ export async function createChart(uid, title) {
 export async function createSampleChart(uid) {
   const chartRef = await addDoc(chartsCol(uid), {
     title: 'サンプル組織図',
+    isSample: true, // 無料枠のカウント対象外（オンボーディング用）
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   })
@@ -288,7 +289,9 @@ export async function getUserPlan(uid) {
 
 export async function getChartCount(uid) {
   const s = await getDocs(chartsCol(uid))
-  return s.size
+  let n = 0
+  s.forEach((d) => { if (!d.data().isSample) n++ }) // サンプルは数えない
+  return n
 }
 
 // 共有メンバー配列から、自分のアカウントに新しい組織図を複製作成する。
