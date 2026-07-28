@@ -20,14 +20,17 @@ export default function ChartListPage() {
   const [menuOpenId, setMenuOpenId] = useState(null)
   const [sampleBusy, setSampleBusy] = useState(false)
 
+  // サンプル組織図は無料枠のカウント対象外（オンボーディングで枠を使い切らないように）
+  const ownedCount = charts.filter((c) => !c.isSample).length
+
   function handleNewClick() {
-    if (canCreateMoreCharts(plan, charts.length)) setCreateOpen(true)
+    if (canCreateMoreCharts(plan, ownedCount)) setCreateOpen(true)
     else showUpgrade('charts')
   }
 
   async function handleSampleClick() {
     if (sampleBusy) return
-    if (!canCreateMoreCharts(plan, charts.length)) { showUpgrade('charts'); return }
+    if (!canCreateMoreCharts(plan, ownedCount)) { showUpgrade('charts'); return }
     setSampleBusy(true)
     try {
       const id = await createSampleChart()
