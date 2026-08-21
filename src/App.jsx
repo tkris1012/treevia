@@ -23,8 +23,10 @@ export default function App() {
 
   // 閲覧モード（共有リンクからのアクセス）
   if (viewMode === 'view') {
-    // branding が明示的に false（=Pro）のときだけ CTA を隠す
-    const showCTA = shareConfig?.branding !== false
+    // shareConfig は非同期で読み込まれる。読み込み中（null）に true 扱いすると
+    // Pro共有（branding:false が届く）で「一瞬表示→消える」チラつきが起きるため、
+    // 読み込み完了後（shareConfig が確定してから）だけ判定する。
+    const showCTA = shareConfig != null && shareConfig.branding !== false
     return (
       <div className="relative w-full h-full">
         <OrgTree />
