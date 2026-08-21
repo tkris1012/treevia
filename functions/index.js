@@ -21,6 +21,31 @@ const Stripe = require('stripe')
 admin.initializeApp()
 const db = admin.firestore()
 
+// 過去に事故を起こした「テンプレの仮値」。誤って本番デプロイに紛れ込んでいたら
+// 起動時に必ず気づけるよう明示的にブロックリスト化する。
+const KNOWN_STALE_PRICE_IDS = new Set([
+  'price_1TlLpN3PcHAXuuwfmxX3hsWD', // 旧 .env.example の仮ライト
+  'price_1TlLq33PcHAXuuwfa52GYCKj', // 旧 .env.example の仮プロ
+])
+
+// 起動時（コールドスタート時）に設定を必ずログへ出す。price ID は機密ではないので
+// そのまま出力してよい。デプロイ直後にログを見るだけで正誤を確認できる。
+;(function checkPriceConfigOnStartup() {
+  const light = process.env.STRIPE_PRICE_LIGHT
+  const pro = process.env.STRIPE_PRICE_PRO
+  console.log(`起動時設定: STRIPE_PRICE_LIGHT=${light} / STRIPE_PRICE_PRO=${pro}`)
+  if (!light || !pro) {
+    console.error('起動時エラー: STRIPE_PRICE_LIGHT/PRO が未設定です。functions/deploy.sh で正しくデプロイしてください。')
+    return
+  }
+  if (KNOWN_STALE_PRICE_IDS.has(light) || KNOWN_STALE_PRICE_IDS.has(pro)) {
+    console.error(
+      '起動時エラー: 過去に事故を起こした古いテンプレの price ID が設定されています。' +
+      '本番の購入が正しく処理されません。functions/deploy.sh で正しい値に再デプロイしてください。'
+    )
+  }
+})()
+
 // 購入された price ID からプラン名を判定する
 function planForPrice(priceId) {
   if (!priceId) return null
@@ -85,7 +110,9 @@ async function handleCheckoutCompleted(stripe, session) {
   const priceId = lineItems.data[0]?.price?.id
   const plan = planForPrice(priceId)
   if (!plan) {
-    console.warn('未知の price のため無視:', priceId)
+    // これは「購入されたのにプランが有効化されない」実害に直結するため error 扱いにする
+    // （warn だと見落としやすい。前回の事故はこれの見落としが一因）
+    console.error(`未知の price のため無視（購入者が救済されていません！要対応）: uid=${uid} price=${priceId}`)
     return
   }
 

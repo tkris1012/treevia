@@ -68,16 +68,25 @@ firebase functions:secrets:set STRIPE_WEBHOOK_SECRET  # ステップ7で取得�
 
 ## ステップ 6: Cloud Functions をデプロイ
 
+> ⚠️ **`firebase deploy --only functions` は使わないこと。**
+> ローカルの `functions/.env`（gitignore 対象・端末ごとにバラバラになりがち）を
+> 読み込むため、古い値のまま再デプロイして本番の price ID が巻き戻る事故が
+> 過去に実際に発生した（購入者のプランが反映されない、という実害が出た）。
+>
+> 本番デプロイは必ず **`functions/deploy.sh`** を使う。price ID・シークレット・
+> ランタイムがスクリプトに固定されているため、手動コピペによる事故が起きない。
+
 ```bash
 cd functions && npm install && cd ..
-firebase deploy --only functions
+bash functions/deploy.sh
 ```
 
 デプロイ後に表示される関数 URL を控える（例:
 `https://asia-northeast1-<project>.cloudfunctions.net/stripeWebhook`）。
+スクリプトの最後に現在の環境変数が表示されるので、price ID が正しいか必ず目視確認する。
 
 > 注: `STRIPE_WEBHOOK_SECRET` はステップ 7 で取得するため、初回は仮値でデプロイ →
-> 取得後に `secrets:set` で更新して再デプロイ、の順でもよい。
+> 取得後に `secrets:set` で更新して再度 `bash functions/deploy.sh`、の順でもよい。
 
 ## ステップ 7: Stripe に Webhook を登録
 
@@ -101,7 +110,9 @@ Stripe ダッシュボード →「開発者」→「Webhook」→「エンド�
 
 1. Stripe で本人確認・銀行口座登録を済ませ、本番モードへ
 2. 本番モードで商品 / Payment Link / Webhook を作り直す（テストとは別物）
-3. `PAYMENT_LINKS` を本番 URL に、シークレットを本番キーに差し替えて再デプロイ・再ビルド
+3. `PAYMENT_LINKS` を本番 URL に、シークレットを本番キーに差し替えて再ビルド
+4. **`functions/deploy.sh` の `STRIPE_PRICE_LIGHT` / `STRIPE_PRICE_PRO` を本番 price ID に更新**してから
+   `bash functions/deploy.sh` を実行（手動コマンドは使わない）
 
 ## セキュリティ / 課金面のポイント
 
