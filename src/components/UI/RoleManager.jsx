@@ -1,3 +1,4 @@
+import { X, ChevronUp, ChevronDown, Trash2 } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { MAX_ROLES, ROLE_COLOR_PRESETS, roleStyleFromColor } from '../../constants/roles.js'
 
@@ -30,7 +31,7 @@ export default function RoleManager() {
         <div style={{ padding: '16px 20px', borderBottom: '1px solid #F0F0F0', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ flex: 1, fontSize: 16, fontWeight: 700, color: '#1F2937' }}>役職の管理</div>
           <span style={{ fontSize: 12, color: '#9CA3AF' }}>{roles.length} / {MAX_ROLES}</span>
-          <button onClick={close} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#9CA3AF', lineHeight: 1 }}>✕</button>
+          <button onClick={close} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', lineHeight: 1, display: 'flex' }}><X size={18} /></button>
         </div>
 
         {/* Body */}
@@ -56,9 +57,9 @@ export default function RoleManager() {
                   {/* 並び替え */}
                   <div style={{ display: 'flex', flexDirection: 'column' }}>
                     <button onClick={() => moveRole(r.id, -1)} disabled={i === 0}
-                      style={arrowBtn(i === 0)}>▲</button>
+                      style={arrowBtn(i === 0)}><ChevronUp size={13} /></button>
                     <button onClick={() => moveRole(r.id, +1)} disabled={i === roles.length - 1}
-                      style={arrowBtn(i === roles.length - 1)}>▼</button>
+                      style={arrowBtn(i === roles.length - 1)}><ChevronDown size={13} /></button>
                   </div>
 
                   {/* 色 */}
@@ -86,8 +87,8 @@ export default function RoleManager() {
 
                   {/* 削除 */}
                   <button onClick={() => deleteRole(r.id)} title="削除"
-                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#EF4444', fontSize: 16, padding: 4 }}>
-                    🗑️
+                    style={{ border: 'none', background: 'transparent', cursor: 'pointer', color: '#EF4444', padding: 4, display: 'flex' }}>
+                    <Trash2 size={16} />
                   </button>
                 </div>
               )

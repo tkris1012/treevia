@@ -1,4 +1,8 @@
 import { useState, useRef, useEffect, useMemo, useReducer } from 'react'
+import {
+  ArrowLeft, TreeDeciduous, Undo2, Link2, Lock, Printer, Palette,
+  Trash2, ChevronRight, ChevronDown,
+} from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { navigateToList } from '../../store/useSync.js'
 import { useTreeLayout, NODE_W, collectDescendants, getSlotPos } from './useTreeLayout.js'
@@ -491,29 +495,30 @@ export default function OrgTree() {
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           {!isReadOnly && (
             <button onClick={navigateToList} title="一覧へ戻る"
-              style={{ ...ICON_BTN, fontWeight: 700 }}>←</button>
+              style={ICON_BTN}><ArrowLeft size={17} /></button>
           )}
           {chartTitle ? (
             <div style={{
               ...BAR_CHIP, flex: 1, minWidth: 0,
+              display: 'flex', alignItems: 'center', gap: 6,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            }}>🌳 {chartTitle}</div>
+            }}><TreeDeciduous size={15} style={{ flexShrink: 0, color: '#15A24A' }} /> {chartTitle}</div>
           ) : <div style={{ flex: 1 }} />}
 
           {!isReadOnly && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
               <button onClick={undo} disabled={undoStack.length === 0} title="元に戻す"
                 style={{ ...ICON_BTN, opacity: undoStack.length ? 1 : 0.4,
-                  cursor: undoStack.length ? 'pointer' : 'not-allowed' }}>↩</button>
+                  cursor: undoStack.length ? 'pointer' : 'not-allowed' }}><Undo2 size={16} /></button>
               <button onClick={handleShareClick}
                 title={shareAllowed ? '共有リンク' : '共有リンク（プロ）'}
                 style={{ ...ICON_BTN, ...(isShared ? { background: '#ECFDF5', borderColor: '#A7F3D0' } : {}) }}>
-                {shareAllowed ? '🔗' : '🔒'}
+                {shareAllowed ? <Link2 size={16} /> : <Lock size={16} />}
               </button>
               <button onClick={handlePrintClick}
                 title={printAllowed ? '印刷・PDF出力' : '印刷・PDF出力（ライト/プロ）'}
                 style={ICON_BTN}>
-                {printAllowed ? '🖨' : '🔒'}
+                {printAllowed ? <Printer size={16} /> : <Lock size={16} />}
               </button>
               <span title={isSyncing ? '同期中' : '同期済み'}
                 style={{ width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
@@ -540,7 +545,7 @@ export default function OrgTree() {
             </select>
           </div>
           {!isReadOnly && (
-            <button onClick={openRoleManager} title="役職を管理" style={BAR_BTN}>🎨 役職</button>
+            <button onClick={openRoleManager} title="役職を管理" style={BAR_BTN}><Palette size={14} /> 役職</button>
           )}
         </div>
       </div>
@@ -565,7 +570,7 @@ export default function OrgTree() {
           alignItems: 'center', justifyContent: 'center', gap: 14, zIndex: 5,
           pointerEvents: 'none', padding: 24, textAlign: 'center',
         }}>
-          <div style={{ fontSize: 48, opacity: 0.25 }}>🌳</div>
+          <div style={{ opacity: 0.25 }}><TreeDeciduous size={48} strokeWidth={1.5} /></div>
           {isReadOnly ? (
             <div style={{ fontSize: 15, color: '#9CA3AF', fontWeight: 500 }}>
               まだメンバーがいません
@@ -682,14 +687,13 @@ export default function OrgTree() {
                       style={{ pointerEvents: 'none' }}>+</text>
                   </g>
                 )}
-                {/* 🗑️ */}
+                {/* 削除ボタン */}
                 {showDeleteButton && (
                   <g style={{ cursor: 'pointer' }} onClick={(e) => handleDeleteClick(e, id)}>
                     <circle cx={pos.x + NODE_W + 8} cy={pos.y - 8} r={13}
                       fill="white" stroke="#EF4444" strokeWidth={2} />
-                    <text x={pos.x + NODE_W + 8} y={pos.y - 3}
-                      textAnchor="middle" fontSize={13}
-                      style={{ pointerEvents: 'none' }}>🗑️</text>
+                    <Trash2 x={pos.x + NODE_W + 8 - 7} y={pos.y - 8 - 7} width={14} height={14}
+                      color="#EF4444" style={{ pointerEvents: 'none' }} />
                   </g>
                 )}
                 {/* 折りたたみトグル（PDCM/DCM/ECM のみ、配下が存在する場合） */}
@@ -697,9 +701,11 @@ export default function OrgTree() {
                   <g style={{ cursor: 'pointer' }} onClick={(e) => handleToggleCollapsed(e, id)}>
                     <circle cx={pos.x - 8} cy={pos.y - 8} r={13}
                       fill="white" stroke="#6B7280" strokeWidth={2} />
-                    <text x={pos.x - 8} y={pos.y - 4}
-                      textAnchor="middle" fontSize={12} fill="#374151"
-                      style={{ pointerEvents: 'none' }}>{isCollapsed ? '▶' : '▼'}</text>
+                    {isCollapsed
+                      ? <ChevronRight x={pos.x - 8 - 7} y={pos.y - 8 - 7} width={14} height={14}
+                          color="#374151" style={{ pointerEvents: 'none' }} />
+                      : <ChevronDown x={pos.x - 8 - 7} y={pos.y - 8 - 7} width={14} height={14}
+                          color="#374151" style={{ pointerEvents: 'none' }} />}
                   </g>
                 )}
               </g>
@@ -721,11 +727,13 @@ export default function OrgTree() {
                   width={44} height={20} rx={10}
                   fill="white" stroke="#6B7280" strokeWidth={1.5}
                 />
+                <ChevronDown x={pos.x + NODE_W / 2 - 17} y={pos.y + 72 + 8} width={12} height={12}
+                  color="#374151" style={{ pointerEvents: 'none' }} />
                 <text
-                  x={pos.x + NODE_W / 2} y={pos.y + 72 + 18}
+                  x={pos.x + NODE_W / 2 + 4} y={pos.y + 72 + 18}
                   textAnchor="middle" fontSize={11} fill="#374151" fontWeight={600}
                   style={{ pointerEvents: 'none' }}
-                >▼ {hiddenCount}</text>
+                >{hiddenCount}</text>
               </g>
             )
           })}

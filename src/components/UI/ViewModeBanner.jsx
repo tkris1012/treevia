@@ -1,3 +1,5 @@
+import { Eye } from 'lucide-react'
+
 export default function ViewModeBanner() {
   return (
     <div
@@ -12,7 +14,7 @@ export default function ViewModeBanner() {
         pointerEvents: 'none',
       }}
     >
-      👁 閲覧モード
+<Eye size={14} /> 閲覧モード
     </div>
   )
 }

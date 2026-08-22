@@ -1,4 +1,5 @@
 import { Component } from 'react'
+import { TreeDeciduous } from 'lucide-react'
 
 // 描画中に例外が起きても真っ白にせず、再読み込み導線を出す受け皿。
 // 併せてエラーをコンソールへ出し、原因調査を可能にする。
@@ -33,7 +34,9 @@ export default class ErrorBoundary extends Component {
           fontFamily: '-apple-system, BlinkMacSystemFont, "Hiragino Sans", sans-serif',
           background: '#F9FAFB', color: '#1F2937',
         }}>
-          <div style={{ fontSize: 40 }}>🌳</div>
+          <div style={{ display: 'flex', justifyContent: 'center', color: '#15A24A' }}>
+            <TreeDeciduous size={40} strokeWidth={1.5} />
+          </div>
           <div style={{ fontSize: 17, fontWeight: 700 }}>
             画面の読み込みでエラーが発生しました
           </div>
