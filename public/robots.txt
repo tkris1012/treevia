@@ -1,4 +1,31 @@
 User-agent: *
 Allow: /
 
+# AI検索・AIアシスタントのクローラーも明示的に許可
+# （上記の Allow: / で既に許可されているが、将来の設定ミスで
+#   誤って塞がれないよう個別にも明示しておく）
+User-agent: GPTBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Applebot-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
 Sitemap: https://tkris1012.github.io/treevia/sitemap.xml
