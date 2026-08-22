@@ -10,7 +10,7 @@ const FEATURE_COPY = {
   },
   charts: {
     title: '組織図をもっと作るには',
-    body: '作成できる組織図は、無料1つ・ライト2つ・プロ無制限です。上位プランで増やせます。',
+    body: '作成できる組織図は、無料1つ・ライト3つ・プロ無制限です。上位プランで増やせます。',
   },
   share: {
     title: '共有リンクを使うには',
@@ -66,7 +66,7 @@ export default function UpgradeModal() {
         {/* プラン比較 */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
           <PlanRow name={PLANS.free.name}  price="¥0"    note="組織図1つ・50人・写真OK・共有可" current={plan === 'free'} />
-          <PlanRow name={PLANS.light.name} price="¥380"  note="組織図2つ・500人まで・共有・印刷/PDF" current={plan === 'light'} highlight />
+          <PlanRow name={PLANS.light.name} price="¥380"  note="組織図3つ・500人まで・共有・印刷/PDF" current={plan === 'light'} highlight />
           <PlanRow name={PLANS.pro.name}   price="¥980"  note="組織図無制限・人数無制限・透かしなし共有・印刷/PDF" current={plan === 'pro'} highlight />
         </div>
 
