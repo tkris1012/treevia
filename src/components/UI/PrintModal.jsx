@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
+import { Printer, X, AlertTriangle } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { computeLayout, NODE_W, NODE_H } from '../../components/Tree/useTreeLayout.js'
 import TreeNode from '../../components/Tree/TreeNode.jsx'
@@ -108,8 +109,10 @@ export default function PrintModal({ onClose }) {
         display: 'flex', flexDirection: 'column', gap: 16,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ flex: 1, fontSize: 17, fontWeight: 700, color: '#1F2937' }}>🖨 印刷・PDF出力</div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: '#9CA3AF', padding: 0 }}>✕</button>
+          <div style={{ flex: 1, fontSize: 17, fontWeight: 700, color: '#1F2937', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Printer size={19} /> 印刷・PDF出力
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', padding: 0, display: 'flex' }}><X size={20} /></button>
         </div>
 
         {/* 出力方法 */}
@@ -144,7 +147,9 @@ export default function PrintModal({ onClose }) {
             <span style={{ color: '#6B7280' }}>（1枚目は全体図、以降を貼り合わせ）</span>
           )}
           {mode === 'poster' && pages > 30 && (
-            <div style={{ color: '#B45309', marginTop: 4 }}>⚠️ ページが多めです。A3や「1枚に収める」も検討してください。</div>
+            <div style={{ color: '#B45309', marginTop: 4, display: 'flex', alignItems: 'flex-start', gap: 5 }}>
+              <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} /> ページが多めです。A3や「1枚に収める」も検討してください。
+            </div>
           )}
         </div>
 

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Copy } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { auth } from '../../lib/firebase.js'
 import { navigateToChart, navigateToList } from '../../store/useSync.js'
@@ -72,7 +73,7 @@ export default function CopySharedChartButton() {
           cursor: busy ? 'wait' : 'pointer', opacity: busy ? 0.7 : 1,
         }}
       >
-        {busy ? '複製中…' : '📋 自分用に複製して編集'}
+        {busy ? '複製中…' : (<><Copy size={16} /> 自分用に複製して編集</>)}
       </button>
     </div>
   )

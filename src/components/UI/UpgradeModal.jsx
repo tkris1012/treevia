@@ -1,3 +1,4 @@
+import { Star, Check, CreditCard } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { PLANS, PLAN_ORDER, FREE_MEMBER_LIMIT } from '../../constants/plans.js'
 import { buildCheckoutUrl, isBillingLive } from '../../constants/billing.js'
@@ -54,7 +55,7 @@ export default function UpgradeModal() {
         width: 'min(460px, 94vw)', maxHeight: '90vh', overflowY: 'auto',
         boxShadow: '0 24px 70px rgba(0,0,0,0.30)', padding: 28,
       }}>
-        <div style={{ fontSize: 28, marginBottom: 8 }}>⭐</div>
+        <div style={{ marginBottom: 8, color: '#F59E0B' }}><Star size={28} fill="#F59E0B" strokeWidth={1} /></div>
         <h2 style={{ fontSize: 18, fontWeight: 700, color: '#1F2937', margin: '0 0 8px' }}>
           {copy.title}
         </h2>
@@ -100,8 +101,9 @@ function UpgradeButtons({ plan, user }) {
       <div style={{
         fontSize: 12, color: '#059669', textAlign: 'center',
         background: '#ECFDF5', borderRadius: 8, padding: '10px', marginBottom: 4,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
       }}>
-        ✓ 最上位プランをご利用中です
+        <Check size={14} /> 最上位プランをご利用中です
       </div>
     )
   }
@@ -112,8 +114,9 @@ function UpgradeButtons({ plan, user }) {
       <div style={{
         fontSize: 12, color: '#9CA3AF', textAlign: 'center',
         background: '#F9FAFB', borderRadius: 8, padding: '10px', marginBottom: 4,
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
       }}>
-        💳 オンライン決済は準備中です（まもなく開始）
+        <CreditCard size={14} /> オンライン決済は準備中です（まもなく開始）
       </div>
     )
   }

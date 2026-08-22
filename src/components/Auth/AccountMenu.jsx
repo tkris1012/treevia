@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { X, LogOut } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { auth } from '../../lib/firebase.js'
 import { openBillingPortal } from '../../constants/billing.js'
@@ -225,10 +226,11 @@ export default function AccountMenu() {
                       title="履歴から削除"
                       style={{
                         border: 'none', background: 'transparent', cursor: 'pointer',
-                        color: '#9CA3AF', fontSize: 16, lineHeight: 1, padding: 4,
+                        color: '#9CA3AF', lineHeight: 1, padding: 4,
+                        display: 'flex', alignItems: 'center',
                       }}
                     >
-                      ✕
+                      <X size={14} />
                     </button>
                   </div>
                 ))}
@@ -247,11 +249,11 @@ export default function AccountMenu() {
               </button>
               <button
                 onClick={handleLogout}
-                style={menuItemStyle('#EF4444')}
+                style={{ ...menuItemStyle('#EF4444'), display: 'flex', alignItems: 'center', gap: 6 }}
                 onMouseEnter={(e) => { e.currentTarget.style.background = '#FEF2F2' }}
                 onMouseLeave={(e) => { e.currentTarget.style.background = 'white' }}
               >
-                ↩ ログアウト
+                <LogOut size={14} /> ログアウト
               </button>
             </div>
           </div>

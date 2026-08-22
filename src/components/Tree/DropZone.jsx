@@ -1,3 +1,4 @@
+import { Check, X } from 'lucide-react'
 import { NODE_W, NODE_H } from './useTreeLayout.js'
 
 export default function DropZone({ x, y, isOver, isValid }) {
@@ -20,16 +21,11 @@ export default function DropZone({ x, y, isOver, isValid }) {
         style={{ pointerEvents: 'none' }}
       />
       {isOver && (
-        <text
-          x={x + NODE_W / 2}
-          y={y + NODE_H / 2 + 5}
-          textAnchor="middle"
-          fontSize={20}
-          fill={isValid ? '#059669' : '#DC2626'}
-          style={{ pointerEvents: 'none' }}
-        >
-          {isValid ? '✓' : '✕'}
-        </text>
+        isValid
+          ? <Check x={x + NODE_W / 2 - 12} y={y + NODE_H / 2 - 12} width={24} height={24}
+              color="#059669" strokeWidth={2.5} style={{ pointerEvents: 'none' }} />
+          : <X x={x + NODE_W / 2 - 12} y={y + NODE_H / 2 - 12} width={24} height={24}
+              color="#DC2626" strokeWidth={2.5} style={{ pointerEvents: 'none' }} />
       )}
     </g>
   )

@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { X, Camera, Trash2 } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { getRoleStyle, roleName } from '../../constants/roles.js'
 import { resizeToBase64 } from '../../lib/imageUtils.js'
@@ -119,9 +120,9 @@ export default function DetailPanel() {
           <div style={{ flex: 1, fontWeight: 600, fontSize: 15, color: '#1F1F1F' }}>メンバー編集</div>
           <button
             onClick={handleClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#9CA3AF', lineHeight: 1 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', lineHeight: 1, display: 'flex' }}
           >
-            ✕
+            <X size={18} />
           </button>
         </div>
 
@@ -147,7 +148,7 @@ export default function DetailPanel() {
                 <img src={photoPreview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 <div style={{ textAlign: 'center', fontSize: 12, color: '#9CA3AF' }}>
-                  <div style={{ fontSize: 28 }}>📷</div>
+                  <div style={{ display: 'flex', justifyContent: 'center' }}><Camera size={28} strokeWidth={1.5} /></div>
                   <div>タップして追加</div>
                 </div>
               )}
@@ -286,9 +287,10 @@ export default function DetailPanel() {
                 width: '100%', padding: '10px', borderRadius: 8,
                 border: '1px solid #FCA5A5', background: 'white',
                 fontSize: 14, cursor: 'pointer', color: '#EF4444', fontWeight: 600,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
               }}
             >
-              🗑️ このメンバーを削除
+              <Trash2 size={15} /> このメンバーを削除
             </button>
           </div>
         </div>

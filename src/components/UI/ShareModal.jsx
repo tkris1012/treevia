@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Link2, X, Check } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { setShareEnabled, regenerateShareToken, setShareAllowCopy } from '../../lib/firestore.js'
 import { canRemoveShareBranding } from '../../constants/plans.js'
@@ -114,17 +115,17 @@ export default function ShareModal({ onClose }) {
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ flex: 1, fontSize: 17, fontWeight: 700, color: '#1F2937' }}>
-            🔗 共有リンク
+          <div style={{ flex: 1, fontSize: 17, fontWeight: 700, color: '#1F2937', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Link2 size={18} /> 共有リンク
           </div>
           <button
             onClick={onClose}
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              fontSize: 20, color: '#9CA3AF', lineHeight: 1, padding: 0,
+              color: '#9CA3AF', lineHeight: 1, padding: 0, display: 'flex',
             }}
           >
-            ✕
+            <X size={20} />
           </button>
         </div>
 
@@ -196,9 +197,10 @@ export default function ShareModal({ onClose }) {
                     background: copied ? '#10B981' : '#7C3AED', color: 'white',
                     fontSize: 12, fontWeight: 600, cursor: 'pointer',
                     whiteSpace: 'nowrap',
+                    display: 'flex', alignItems: 'center', gap: 4,
                   }}
                 >
-                  {copied ? '✓ コピー済み' : 'コピー'}
+                  {copied ? (<><Check size={13} /> コピー済み</>) : 'コピー'}
                 </button>
               </div>
             </div>
@@ -272,8 +274,8 @@ export default function ShareModal({ onClose }) {
                 </button>
               </div>
             ) : (
-              <div style={{ fontSize: 11, color: '#059669', fontWeight: 600 }}>
-                ✓ 透かしなしで共有されます（プロ）
+              <div style={{ fontSize: 11, color: '#059669', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Check size={13} /> 透かしなしで共有されます（プロ）
               </div>
             )}
           </>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { PartyPopper, Link2 } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import ShareModal from './ShareModal.jsx'
 
@@ -30,7 +31,9 @@ export default function PostCopyShareModal() {
         width: 'min(420px, 94vw)', padding: 28, textAlign: 'center',
         boxShadow: '0 24px 70px rgba(0,0,0,0.30)',
       }}>
-        <div style={{ fontSize: 40 }}>🎉</div>
+        <div style={{ display: 'flex', justifyContent: 'center', color: '#F59E0B' }}>
+          <PartyPopper size={40} strokeWidth={1.5} />
+        </div>
         <h2 style={{ fontSize: 18, fontWeight: 800, color: '#1F2937', margin: '8px 0' }}>
           組織図を複製しました！
         </h2>
@@ -44,9 +47,10 @@ export default function PostCopyShareModal() {
             width: '100%', padding: '13px', borderRadius: 10, border: 'none',
             background: '#7C3AED', color: 'white', fontSize: 15, fontWeight: 700,
             cursor: 'pointer', boxShadow: '0 2px 8px rgba(124,58,237,0.35)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
           }}
         >
-          🔗 チームに共有する
+          <Link2 size={16} /> チームに共有する
         </button>
         <button
           onClick={() => setPostCopyPrompt(false)}

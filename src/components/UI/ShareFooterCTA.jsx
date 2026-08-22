@@ -1,3 +1,5 @@
+import { TreeDeciduous, ArrowRight } from 'lucide-react'
+
 // 共有（閲覧）ページの下部に表示する獲得CTA。
 // ダウンライン等の閲覧者が「自分も作りたい」と感じたらそのまま登録できる導線。
 // これが Treevia のバイラル成長ループの起点になる。
@@ -24,8 +26,8 @@ export default function ShareFooterCTA() {
           padding: '8px 8px 8px 16px',
         }}
       >
-        <span style={{ fontSize: 13, color: '#374151', whiteSpace: 'nowrap' }}>
-          🌳 この組織図は <strong style={{ color: '#7C3AED' }}>Treevia</strong> で作成
+        <span style={{ fontSize: 13, color: '#374151', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <TreeDeciduous size={16} style={{ flexShrink: 0, color: '#15A24A' }} /> この組織図は <strong style={{ color: '#7C3AED' }}>Treevia</strong> で作成
         </span>
         <a
           href={homeUrl}
@@ -34,9 +36,10 @@ export default function ShareFooterCTA() {
             background: '#7C3AED', color: 'white',
             fontSize: 13, fontWeight: 700, borderRadius: 999,
             padding: '8px 14px',
+            display: 'flex', alignItems: 'center', gap: 4,
           }}
         >
-          無料で作る →
+          無料で作る <ArrowRight size={14} />
         </a>
       </div>
     </div>

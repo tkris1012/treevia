@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { FolderTree, Palette, TreeDeciduous, Sprout, Pencil, Trash2 } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { navigateToChart } from '../../store/useSync.js'
 import { canCreateMoreCharts } from '../../constants/plans.js'
@@ -72,8 +73,8 @@ export default function ChartListPage() {
         padding: '14px 24px', display: 'flex', alignItems: 'center', gap: 16,
         boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
       }}>
-        <div style={{ fontSize: 18, fontWeight: 700, color: '#1F2937', flex: 1 }}>
-          🗂 組織図一覧
+        <div style={{ fontSize: 18, fontWeight: 700, color: '#1F2937', flex: 1, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <FolderTree size={20} /> 組織図一覧
         </div>
         <button
           onClick={openRoleManager}
@@ -81,9 +82,10 @@ export default function ChartListPage() {
           style={{
             background: 'white', border: '1px solid #E5E7EB', borderRadius: 8,
             padding: '6px 12px', cursor: 'pointer', fontSize: 13, color: '#374151', fontWeight: 600,
+            display: 'flex', alignItems: 'center', gap: 6,
           }}
         >
-          🎨 役職
+          <Palette size={15} /> 役職
         </button>
         <AccountMenu />
       </header>
@@ -100,7 +102,9 @@ export default function ChartListPage() {
             padding: '40px 28px', textAlign: 'center',
             maxWidth: 560, marginLeft: 'auto', marginRight: 'auto',
           }}>
-            <div style={{ fontSize: 52 }}>🌳</div>
+            <div style={{ display: 'flex', justifyContent: 'center', color: '#15A24A' }}>
+              <TreeDeciduous size={52} strokeWidth={1.5} />
+            </div>
             <div style={{ fontSize: 22, fontWeight: 800, color: '#1F2937', marginTop: 8 }}>
               Treevia へようこそ
             </div>
@@ -121,9 +125,10 @@ export default function ChartListPage() {
                   fontSize: 15, fontWeight: 700, cursor: 'pointer',
                   opacity: sampleBusy ? 0.7 : 1,
                   boxShadow: '0 2px 8px rgba(124,58,237,0.35)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                 }}
               >
-                {sampleBusy ? '作成中...' : '🌱 サンプル組織図を見る'}
+                {sampleBusy ? '作成中...' : (<><Sprout size={18} /> サンプル組織図を見る</>)}
               </button>
               <button
                 onClick={handleNewClick}
@@ -220,19 +225,19 @@ export default function ChartListPage() {
                     <button
                       onClick={() => handleRename(c)}
                       style={{
-                        display: 'block', width: '100%', padding: '10px 14px',
+                        display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px',
                         textAlign: 'left', border: 'none', background: 'white',
                         cursor: 'pointer', fontSize: 13, color: '#374151',
                       }}
                       onMouseEnter={(e) => { e.currentTarget.style.background = '#F9FAFB' }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = 'white' }}
                     >
-                      ✏️ 名前を変更
+                      <Pencil size={14} /> 名前を変更
                     </button>
                     <button
                       onClick={() => handleDelete(c.id)}
                       style={{
-                        display: 'block', width: '100%', padding: '10px 14px',
+                        display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px',
                         textAlign: 'left', border: 'none', background: 'white',
                         cursor: 'pointer', fontSize: 13, color: '#EF4444',
                         borderTop: '1px solid #F3F4F6',
@@ -240,7 +245,7 @@ export default function ChartListPage() {
                       onMouseEnter={(e) => { e.currentTarget.style.background = '#FEF2F2' }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = 'white' }}
                     >
-                      🗑️ 削除
+                      <Trash2 size={14} /> 削除
                     </button>
                   </div>
                 </>
