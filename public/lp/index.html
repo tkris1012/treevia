@@ -254,9 +254,10 @@
     .plan ul { list-style: none; margin: 16px 0 0; }
     .plan li { font-size: 13.5px; padding: 6px 0 6px 24px; position: relative; color: #374151; }
     .plan li::before { content: "✓"; position: absolute; left: 0; color: var(--purple); font-weight: 800; }
+    .plan .pname-row { display: flex; align-items: center; gap: 8px; }
     .plan .tag {
-      align-self: flex-start; font-size: 11px; font-weight: 700; color: var(--purple);
-      background: var(--tag); border-radius: 6px; padding: 2px 8px; margin-bottom: 10px;
+      font-size: 11px; font-weight: 700; color: var(--purple);
+      background: var(--tag); border-radius: 6px; padding: 2px 8px;
     }
 
     /* ===== FAQ ===== */
@@ -437,8 +438,10 @@
           </ul>
         </div>
         <div class="plan feat-plan">
-          <div class="tag">人気</div>
-          <div class="pname">ライト</div>
+          <div class="pname-row">
+            <div class="pname">ライト</div>
+            <div class="tag">人気</div>
+          </div>
           <div class="pprice">¥380<small> /月</small></div>
           <ul>
             <li>組織図 3つ</li>
