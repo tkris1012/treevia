@@ -1,0 +1,42 @@
+# Treevia
+
+> バイナリー（左右2分岐）の組織図をスマホで簡単に作成・共有できる無料のWebアプリ。
+> MLM・ネットワークビジネスのダウンライン管理と特に相性が良い設計。
+
+## 概要
+
+Treevia（ツリービア）は、左右2ラインで枝分かれする「バイナリー型」の組織図を、
+スマホ・PCのブラウザだけで作成・編集・共有できるサービスです。
+インストール不要、クレジットカード登録なしで今すぐ無料で利用開始できます。
+
+## 料金プラン
+
+- 無料プラン: ¥0/月 — 組織図1つ、メンバー50人まで、共有リンク（透かしあり）
+- ライトプラン: ¥380/月 — 組織図2つ、メンバー500人まで、共有リンク、印刷・PDF出力
+- プロプラン: ¥980/月 — 組織図・メンバーとも無制限、共有リンク（透かしなし）、印刷・PDF出力
+
+支払いはクレジットカード（Stripe）。サブスクリプションはいつでも解約可能。
+
+## 主な機能
+
+- バイナリー（左右2分岐）の組織図作成・編集
+- メンバーへの写真登録
+- 読み取り専用の共有リンク発行（ログイン不要で閲覧可能）
+- 共有された組織図を自分のアカウントへ複製して編集（共有元が許可した場合）
+- 組織図の印刷・PDF出力（1枚に収める／A4・A3のポスター分割）
+- 役職（カスタムラベル・色）の管理とフィルタ表示
+
+## 主なページ
+
+- サービス紹介: https://tkris1012.github.io/treevia/lp/
+- アプリ本体（無料登録・ログイン）: https://tkris1012.github.io/treevia/
+- よくある質問: https://tkris1012.github.io/treevia/lp/#faq
+- 特定商取引法に基づく表記: https://tkris1012.github.io/treevia/lp/tokushoho.html
+- プライバシーポリシー: https://tkris1012.github.io/treevia/lp/privacy.html
+- 利用規約: https://tkris1012.github.io/treevia/lp/terms.html
+- お問い合わせ: https://tkris1012.github.io/treevia/lp/contact.html
+
+## 運営
+
+運営: URBAN LIFE COMMUNITY
+お問い合わせ: urbanlifecommunity.support@gmail.com
