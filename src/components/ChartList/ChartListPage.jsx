@@ -337,9 +337,9 @@ function BookmarkRow({ bookmark, onRename, onRemove }) {
       <span style={{
         flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4,
         fontSize: 11, fontWeight: 700, color: '#7C3AED',
-        background: '#FAF5FF', borderRadius: 6, padding: '3px 7px',
+        background: '#FAF5FF', borderRadius: 6, padding: '5px',
       }}>
-        <Bookmark size={11} /> 共有
+        <Bookmark size={11} />
       </span>
       <div style={{
         flex: 1, minWidth: 0,
