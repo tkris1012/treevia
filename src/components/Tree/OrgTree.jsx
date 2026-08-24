@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect, useMemo, useReducer } from 'react'
 import {
   ArrowLeft, TreeDeciduous, Undo2, Link2, Lock, Printer, Palette,
-  Trash2, ChevronRight, ChevronDown,
+  Trash2, ChevronRight, ChevronDown, Eye,
 } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { navigateToList } from '../../store/useSync.js'
+import { useAuthUser } from '../../lib/useAuthUser.js'
 import { useTreeLayout, NODE_W, collectDescendants, getSlotPos } from './useTreeLayout.js'
 import { buildFilterOptions } from '../../constants/roles.js'
 import { canUseShare, canPrint } from '../../constants/plans.js'
@@ -64,6 +65,7 @@ export default function OrgTree() {
   const showUpgrade     = useStore((s) => s.showUpgrade)
   const viewMode        = useStore((s) => s.viewMode)
   const isReadOnly      = viewMode === 'view'
+  const viewerAuthUser  = useAuthUser()
   const charts          = useStore((s) => s.charts)
   const currentChartId  = useStore((s) => s.currentChartId)
   const viewerChartTitle = useStore((s) => s.viewerChartTitle)
@@ -493,7 +495,7 @@ export default function OrgTree() {
       }}>
         {/* 1段目：戻る＋タイトル ｜ 操作 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {!isReadOnly && (
+          {(!isReadOnly || viewerAuthUser) && (
             <button onClick={navigateToList} title="一覧へ戻る"
               style={ICON_BTN}><ArrowLeft size={17} /></button>
           )}
@@ -523,6 +525,15 @@ export default function OrgTree() {
               <span title={isSyncing ? '同期中' : '同期済み'}
                 style={{ width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
                   background: isSyncing ? '#FBBF24' : '#22C55E' }} />
+            </div>
+          )}
+          {isReadOnly && (
+            <div style={{
+              ...BAR_CHIP, display: 'flex', alignItems: 'center', gap: 6,
+              flexShrink: 0, pointerEvents: 'auto',
+              background: 'rgba(31, 41, 55, 0.85)', color: 'white', border: 'none',
+            }}>
+              <Eye size={14} /> 閲覧モード
             </div>
           )}
         </div>
