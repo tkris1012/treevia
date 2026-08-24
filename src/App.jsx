@@ -11,6 +11,7 @@ import RoleManager from './components/UI/RoleManager.jsx'
 import ChartListPage from './components/ChartList/ChartListPage.jsx'
 import CopySharedChartButton from './components/UI/CopySharedChartButton.jsx'
 import PostCopyShareModal from './components/UI/PostCopyShareModal.jsx'
+import BookmarkShareButton from './components/UI/BookmarkShareButton.jsx'
 
 export default function App() {
   const user           = useStore((s) => s.user)
@@ -32,6 +33,7 @@ export default function App() {
         <OrgTree />
         <ViewModeBanner />
         {shareConfig?.allowCopy && <CopySharedChartButton />}
+        <BookmarkShareButton />
         {showCTA && <ShareFooterCTA />}
         {confirm && <ConfirmDialog />}
       </div>

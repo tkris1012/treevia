@@ -43,6 +43,11 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.uid == uid;
     }
 
+    // ブックマーク（他人の共有組織図を一覧からすぐ開けるように保存）。本人のみ読み書き可。
+    match /users/{uid}/bookmarks/{bookmarkId} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
     // 共有トークン: token → { uid, chartId }
     match /shareTokens/{token} {
       allow read: if true;

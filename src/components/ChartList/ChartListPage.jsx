@@ -1,14 +1,17 @@
-import { useState } from 'react'
-import { FolderTree, Palette, TreeDeciduous, Sprout, Pencil, Trash2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { FolderTree, Palette, TreeDeciduous, Sprout, Pencil, Trash2, Bookmark } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
-import { navigateToChart } from '../../store/useSync.js'
+import { navigateToChart, navigateToSharedView } from '../../store/useSync.js'
 import { canCreateMoreCharts } from '../../constants/plans.js'
+import { subscribeShareConfig } from '../../lib/firestore.js'
 import AccountMenu from '../Auth/AccountMenu.jsx'
 import CreateChartModal from './CreateChartModal.jsx'
 import RenameChartModal from './RenameChartModal.jsx'
 
 export default function ChartListPage() {
   const charts = useStore((s) => s.charts)
+  const bookmarks = useStore((s) => s.bookmarks)
+  const removeBookmarkAction = useStore((s) => s.removeBookmarkAction)
   const createNewChart = useStore((s) => s.createNewChart)
   const createSampleChart = useStore((s) => s.createSampleChart)
   const deleteChartById = useStore((s) => s.deleteChartById)
@@ -93,7 +96,7 @@ export default function ChartListPage() {
       {/* Body */}
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: 24 }}>
         {/* 初回ウェルカム（組織図ゼロのとき）— アクティブ化の入口 */}
-        {charts.length === 0 ? (
+        {charts.length === 0 && bookmarks.length === 0 ? (
           <div style={{
             marginTop: 40,
             background: 'white', borderRadius: 16,
@@ -252,6 +255,11 @@ export default function ChartListPage() {
               )}
             </div>
           ))}
+
+          {/* ブックマークした他人の共有組織図 */}
+          {bookmarks.map((b) => (
+            <BookmarkRow key={b.id} bookmark={b} onRemove={() => removeBookmarkAction(b.id)} />
+          ))}
         </div>
         )}
       </div>
@@ -266,6 +274,71 @@ export default function ChartListPage() {
           onClose={() => setRenameTarget(null)}
         />
       )}
+    </div>
+  )
+}
+
+// ブックマークした他人の共有組織図の行。共有が停止/削除されていないかリアルタイムで確認する。
+function BookmarkRow({ bookmark, onRemove }) {
+  const [enabled, setEnabled] = useState(true)
+
+  useEffect(() => {
+    const unsub = subscribeShareConfig(bookmark.ownerUid, bookmark.chartId, (cfg) => {
+      setEnabled(!!cfg?.enabled)
+    })
+    return unsub
+  }, [bookmark.ownerUid, bookmark.chartId])
+
+  function handleOpen() {
+    if (!enabled) return
+    navigateToSharedView(bookmark.token)
+  }
+
+  return (
+    <div
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: '14px 16px', borderRadius: 10,
+        background: enabled ? 'white' : '#F9FAFB',
+        border: '1px solid #E5E7EB',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+        cursor: enabled ? 'pointer' : 'default',
+      }}
+      onClick={handleOpen}
+      onMouseEnter={(e) => { if (enabled) e.currentTarget.style.background = '#F9FAFB' }}
+      onMouseLeave={(e) => { if (enabled) e.currentTarget.style.background = 'white' }}
+    >
+      <span style={{
+        flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4,
+        fontSize: 11, fontWeight: 700, color: '#7C3AED',
+        background: '#FAF5FF', borderRadius: 6, padding: '3px 7px',
+      }}>
+        <Bookmark size={11} /> 共有
+      </span>
+      <div style={{
+        flex: 1, minWidth: 0,
+        fontSize: 15, fontWeight: 600,
+        color: enabled ? '#1F2937' : '#9CA3AF',
+        lineHeight: 1.4, wordBreak: 'break-word',
+      }}>
+        {bookmark.label || '無題'}
+        {!enabled && <span style={{ fontSize: 12, fontWeight: 500, marginLeft: 8 }}>（共有が終了しました）</span>}
+      </div>
+      <button
+        onClick={(e) => { e.stopPropagation(); onRemove() }}
+        title="ブックマークを削除"
+        style={{
+          flexShrink: 0,
+          width: 28, height: 28, borderRadius: 6,
+          border: 'none', background: 'transparent',
+          cursor: 'pointer', color: '#9CA3AF',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = '#FEF2F2'; e.currentTarget.style.color = '#EF4444' }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9CA3AF' }}
+      >
+        <Trash2 size={14} />
+      </button>
     </div>
   )
 }

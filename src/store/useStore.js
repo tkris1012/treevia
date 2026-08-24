@@ -3,6 +3,7 @@ import {
   addMember, updateMember, deleteMember, deleteMembers, restoreMember,
   createChart, createSampleChart, renameChart, deleteChart,
   getSharedChartForCopy, getUserPlan, getChartCount, createChartFromSharedMembers,
+  removeBookmark,
 } from '../lib/firestore.js'
 import { undoLimit, canAddMoreMembers, canCreateMoreCharts, FREE_MEMBER_LIMIT } from '../constants/plans.js'
 import { MAX_ROLES, genRoleId } from '../constants/roles.js'
@@ -115,6 +116,26 @@ export const useStore = create((set, get) => ({
   setViewerName: (n) => set({ viewerName: n }),
   viewerChartTitle: null,              // 閲覧モード時の組織図タイトル
   setViewerChartTitle: (t) => set({ viewerChartTitle: t }),
+  viewerOwnerUid: null,                // 閲覧モード時、共有元オーナーのuid（ブックマーク保存用）
+  setViewerOwnerUid: (uid) => set({ viewerOwnerUid: uid }),
+  viewerChartId: null,                 // 閲覧モード時、共有元のchartId（ブックマーク保存用）
+  setViewerChartId: (id) => set({ viewerChartId: id }),
+
+  // --- Bookmarks（他人の共有組織図をすぐ開けるように保存） ---
+  bookmarks: [],                       // [{ id, token, ownerUid, chartId, label, addedAt }]
+  setBookmarks: (bookmarks) => set({ bookmarks }),
+  removeBookmarkAction: async (id) => {
+    const { user, bookmarks } = get()
+    if (!user) return
+    const prev = bookmarks
+    set({ bookmarks: bookmarks.filter((b) => b.id !== id) })
+    try {
+      await removeBookmark(user.uid, id)
+    } catch (e) {
+      console.error('removeBookmark failed', e)
+      set({ bookmarks: prev })
+    }
+  },
 
   // --- Share ---
   shareConfig: null,                   // { enabled, token, branding, allowCopy } | null
