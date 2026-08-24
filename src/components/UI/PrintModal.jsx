@@ -7,11 +7,11 @@ import { estimatePages, generateChartPdf } from '../../lib/printChart.js'
 
 const PAD = 48 // 図の周囲の余白(px)
 
-export default function PrintModal({ onClose }) {
+export default function PrintModal({ onClose, title }) {
   const members = useStore((s) => s.members)
   const charts = useStore((s) => s.charts)
   const currentChartId = useStore((s) => s.currentChartId)
-  const chartTitle = charts.find((c) => c.id === currentChartId)?.title || '組織図'
+  const chartTitle = title || charts.find((c) => c.id === currentChartId)?.title || '組織図'
 
   const [mode, setMode] = useState('poster')        // 'fit' | 'poster'
   const [paper, setPaper] = useState('a4')           // 'a4' | 'a3'
