@@ -106,20 +106,25 @@ export default function BookmarkShareButton() {
         <button
           onClick={saved ? handleRemove : handleSave}
           disabled={busy}
-          style={{
+          title={saved ? 'ブックマーク済み（押すと解除）' : 'ブックマークに追加'}
+          style={saved ? {
+            pointerEvents: 'auto',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: 40, height: 40, borderRadius: 999,
+            background: 'white', color: '#F59E0B', border: '1px solid #E5E7EB',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+            cursor: busy ? 'wait' : 'pointer', opacity: busy ? 0.7 : 1,
+          } : {
             pointerEvents: 'auto',
             display: 'flex', alignItems: 'center', gap: 8,
-            background: saved ? 'white' : '#F59E0B',
-            color: saved ? '#374151' : 'white',
-            border: saved ? '1px solid #E5E7EB' : 'none',
-            borderRadius: 999,
-            padding: '10px 18px', fontSize: 13, fontWeight: 700,
+            background: '#F59E0B', color: 'white', border: 'none',
+            borderRadius: 999, padding: '10px 18px', fontSize: 13, fontWeight: 700,
             boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
             cursor: busy ? 'wait' : 'pointer', opacity: busy ? 0.7 : 1,
           }}
         >
           {saved
-            ? (<><BookmarkCheck size={15} /> ブックマーク済み</>)
+            ? <BookmarkCheck size={18} />
             : (<><Bookmark size={15} /> ブックマークに追加</>)}
         </button>
       )}

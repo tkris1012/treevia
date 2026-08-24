@@ -1,13 +1,10 @@
-import { useEffect, useState } from 'react'
-import { onAuthStateChanged } from 'firebase/auth'
 import { useStore } from './store/useStore.js'
 import { useSync } from './store/useSync.js'
-import { auth } from './lib/firebase.js'
+import { useAuthUser } from './lib/useAuthUser.js'
 import LoginPage from './components/Auth/LoginPage.jsx'
 import OrgTree from './components/Tree/OrgTree.jsx'
 import DetailPanel from './components/Panel/DetailPanel.jsx'
 import ConfirmDialog from './components/UI/ConfirmDialog.jsx'
-import ViewModeBanner from './components/UI/ViewModeBanner.jsx'
 import ShareFooterCTA from './components/UI/ShareFooterCTA.jsx'
 import UpgradeModal from './components/UI/UpgradeModal.jsx'
 import RoleManager from './components/UI/RoleManager.jsx'
@@ -27,8 +24,7 @@ export default function App() {
 
   // 閲覧モード中は useSync() が store.user を更新しないため、ここだけは
   // auth.currentUser を直接購読して「閲覧者自身がログイン済みか」を判定する。
-  const [viewerAuthUser, setViewerAuthUser] = useState(auth.currentUser)
-  useEffect(() => onAuthStateChanged(auth, setViewerAuthUser), [])
+  const viewerAuthUser = useAuthUser()
 
   // 閲覧モード（共有リンクからのアクセス）
   if (viewMode === 'view') {
@@ -40,7 +36,6 @@ export default function App() {
     return (
       <div className="relative w-full h-full">
         <OrgTree />
-        <ViewModeBanner />
         {shareConfig?.allowCopy && <CopySharedChartButton />}
         <BookmarkShareButton />
         {showCTA && <ShareFooterCTA />}
