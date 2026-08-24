@@ -1,5 +1,8 @@
+import { useEffect, useState } from 'react'
+import { onAuthStateChanged } from 'firebase/auth'
 import { useStore } from './store/useStore.js'
 import { useSync } from './store/useSync.js'
+import { auth } from './lib/firebase.js'
 import LoginPage from './components/Auth/LoginPage.jsx'
 import OrgTree from './components/Tree/OrgTree.jsx'
 import DetailPanel from './components/Panel/DetailPanel.jsx'
@@ -22,12 +25,18 @@ export default function App() {
 
   useSync()
 
+  // 閲覧モード中は useSync() が store.user を更新しないため、ここだけは
+  // auth.currentUser を直接購読して「閲覧者自身がログイン済みか」を判定する。
+  const [viewerAuthUser, setViewerAuthUser] = useState(auth.currentUser)
+  useEffect(() => onAuthStateChanged(auth, setViewerAuthUser), [])
+
   // 閲覧モード（共有リンクからのアクセス）
   if (viewMode === 'view') {
     // shareConfig は非同期で読み込まれる。読み込み中（null）に true 扱いすると
     // Pro共有（branding:false が届く）で「一瞬表示→消える」チラつきが起きるため、
     // 読み込み完了後（shareConfig が確定してから）だけ判定する。
-    const showCTA = shareConfig != null && shareConfig.branding !== false
+    // すでにログイン済みの閲覧者（ブックマークで開いた等）には登録誘導のCTAは不要。
+    const showCTA = !viewerAuthUser && shareConfig != null && shareConfig.branding !== false
     return (
       <div className="relative w-full h-full">
         <OrgTree />

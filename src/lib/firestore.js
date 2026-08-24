@@ -369,6 +369,10 @@ export async function removeBookmark(uid, id) {
   await deleteDoc(bookmarkDoc(uid, id))
 }
 
+export async function renameBookmark(uid, id, label) {
+  await updateDoc(bookmarkDoc(uid, id), { label: label || '無題' })
+}
+
 export async function getBookmark(uid, ownerUid, chartId) {
   const snap = await getDoc(bookmarkDoc(uid, bookmarkId(ownerUid, chartId)))
   return snap.exists() ? { id: snap.id, ...snap.data() } : null

@@ -3,7 +3,7 @@ import {
   addMember, updateMember, deleteMember, deleteMembers, restoreMember,
   createChart, createSampleChart, renameChart, deleteChart,
   getSharedChartForCopy, getUserPlan, getChartCount, createChartFromSharedMembers,
-  removeBookmark,
+  removeBookmark, renameBookmark,
 } from '../lib/firestore.js'
 import { undoLimit, canAddMoreMembers, canCreateMoreCharts, FREE_MEMBER_LIMIT } from '../constants/plans.js'
 import { MAX_ROLES, genRoleId } from '../constants/roles.js'
@@ -124,6 +124,18 @@ export const useStore = create((set, get) => ({
   // --- Bookmarks（他人の共有組織図をすぐ開けるように保存） ---
   bookmarks: [],                       // [{ id, token, ownerUid, chartId, label, addedAt }]
   setBookmarks: (bookmarks) => set({ bookmarks }),
+  renameBookmarkAction: async (id, label) => {
+    const { user, bookmarks } = get()
+    if (!user) return
+    const prev = bookmarks
+    set({ bookmarks: bookmarks.map((b) => (b.id === id ? { ...b, label } : b)) })
+    try {
+      await renameBookmark(user.uid, id, label)
+    } catch (e) {
+      console.error('renameBookmark failed', e)
+      set({ bookmarks: prev })
+    }
+  },
   removeBookmarkAction: (id) => {
     const { user, bookmarks } = get()
     if (!user) return
