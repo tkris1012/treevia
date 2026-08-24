@@ -7,6 +7,7 @@ import { subscribeShareConfig } from '../../lib/firestore.js'
 import AccountMenu from '../Auth/AccountMenu.jsx'
 import CreateChartModal from './CreateChartModal.jsx'
 import RenameChartModal from './RenameChartModal.jsx'
+import RenameBookmarkModal from './RenameBookmarkModal.jsx'
 
 export default function ChartListPage() {
   const charts = useStore((s) => s.charts)
@@ -21,6 +22,7 @@ export default function ChartListPage() {
 
   const [createOpen, setCreateOpen] = useState(false)
   const [renameTarget, setRenameTarget] = useState(null) // { id, title }
+  const [renameBookmarkTarget, setRenameBookmarkTarget] = useState(null) // { id, label }
   const [menuOpenId, setMenuOpenId] = useState(null)
   const [sampleBusy, setSampleBusy] = useState(false)
 
@@ -266,7 +268,12 @@ export default function ChartListPage() {
                 ー ブックマーク ー
               </div>
               {bookmarks.map((b) => (
-                <BookmarkRow key={b.id} bookmark={b} onRemove={() => removeBookmarkAction(b.id)} />
+                <BookmarkRow
+                  key={b.id}
+                  bookmark={b}
+                  onRename={() => setRenameBookmarkTarget({ id: b.id, label: b.label })}
+                  onRemove={() => removeBookmarkAction(b.id)}
+                />
               ))}
             </>
           )}
@@ -284,13 +291,21 @@ export default function ChartListPage() {
           onClose={() => setRenameTarget(null)}
         />
       )}
+      {renameBookmarkTarget && (
+        <RenameBookmarkModal
+          bookmarkId={renameBookmarkTarget.id}
+          initialLabel={renameBookmarkTarget.label}
+          onClose={() => setRenameBookmarkTarget(null)}
+        />
+      )}
     </div>
   )
 }
 
 // ブックマークした他人の共有組織図の行。共有が停止/削除されていないかリアルタイムで確認する。
-function BookmarkRow({ bookmark, onRemove }) {
+function BookmarkRow({ bookmark, onRename, onRemove }) {
   const [enabled, setEnabled] = useState(true)
+  const [menuOpen, setMenuOpen] = useState(false)
 
   useEffect(() => {
     const unsub = subscribeShareConfig(bookmark.ownerUid, bookmark.chartId, (cfg) => {
@@ -307,6 +322,7 @@ function BookmarkRow({ bookmark, onRemove }) {
   return (
     <div
       style={{
+        position: 'relative',
         display: 'flex', alignItems: 'center', gap: 12,
         padding: '14px 16px', borderRadius: 10,
         background: enabled ? 'white' : '#F9FAFB',
@@ -335,20 +351,65 @@ function BookmarkRow({ bookmark, onRemove }) {
         {!enabled && <span style={{ fontSize: 12, fontWeight: 500, marginLeft: 8 }}>（共有が終了しました）</span>}
       </div>
       <button
-        onClick={(e) => { e.stopPropagation(); onRemove() }}
-        title="ブックマークを削除"
+        onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v) }}
         style={{
           flexShrink: 0,
           width: 28, height: 28, borderRadius: 6,
           border: 'none', background: 'transparent',
-          cursor: 'pointer', color: '#9CA3AF',
+          cursor: 'pointer', fontSize: 18, color: '#9CA3AF',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = '#FEF2F2'; e.currentTarget.style.color = '#EF4444' }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = '#9CA3AF' }}
+        onMouseEnter={(e) => { e.currentTarget.style.background = '#F3F4F6' }}
+        onMouseLeave={(e) => { e.currentTarget.style.background = 'transparent' }}
       >
-        <Trash2 size={14} />
+        ⋯
       </button>
+
+      {menuOpen && (
+        <>
+          <div
+            onClick={(e) => { e.stopPropagation(); setMenuOpen(false) }}
+            style={{ position: 'fixed', inset: 0, zIndex: 20 }}
+          />
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'absolute', top: 44, right: 12,
+              background: 'white', borderRadius: 8,
+              boxShadow: '0 4px 16px rgba(0,0,0,0.15)',
+              border: '1px solid #E5E7EB',
+              minWidth: 140, zIndex: 21,
+              overflow: 'hidden',
+            }}
+          >
+            <button
+              onClick={() => { setMenuOpen(false); onRename() }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px',
+                textAlign: 'left', border: 'none', background: 'white',
+                cursor: 'pointer', fontSize: 13, color: '#374151',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#F9FAFB' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'white' }}
+            >
+              <Pencil size={14} /> 名前を変更
+            </button>
+            <button
+              onClick={() => { setMenuOpen(false); onRemove() }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 8, width: '100%', padding: '10px 14px',
+                textAlign: 'left', border: 'none', background: 'white',
+                cursor: 'pointer', fontSize: 13, color: '#EF4444',
+                borderTop: '1px solid #F3F4F6',
+              }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = '#FEF2F2' }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = 'white' }}
+            >
+              <Trash2 size={14} /> 削除
+            </button>
+          </div>
+        </>
+      )}
     </div>
   )
 }
