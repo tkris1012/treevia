@@ -22,6 +22,9 @@ const membersCol = (uid, chartId) => collection(db, 'users', uid, 'charts', char
 const memberDoc  = (uid, chartId, memberId) => doc(db, 'users', uid, 'charts', chartId, 'members', memberId)
 const shareConfigDoc = (uid, chartId) => doc(db, 'users', uid, 'charts', chartId, '_meta', 'share')
 const shareTokenDoc  = (token) => doc(db, 'shareTokens', token)
+const bookmarksCol   = (uid) => collection(db, 'users', uid, 'bookmarks')
+const bookmarkDoc    = (uid, bookmarkId) => doc(db, 'users', uid, 'bookmarks', bookmarkId)
+const bookmarkId     = (ownerUid, chartId) => `${ownerUid}_${chartId}`
 
 // === ユーティリティ ==========================================
 function generateToken() {
@@ -348,6 +351,45 @@ export function subscribeShareConfig(uid, chartId, callback) {
   return onSnapshot(shareConfigDoc(uid, chartId), (snap) => {
     callback(snap.exists() ? snap.data() : null)
   })
+}
+
+// === ブックマーク（他人の共有組織図を一覧からすぐ開けるように保存）=========
+// ownerUid+chartId で重複登録を防ぐため、ドキュメントIDを決定的にする。
+export async function addBookmark(uid, { token, ownerUid, chartId, label }) {
+  const id = bookmarkId(ownerUid, chartId)
+  await setDoc(bookmarkDoc(uid, id), {
+    token, ownerUid, chartId,
+    label: label || '無題',
+    addedAt: serverTimestamp(),
+  })
+  return id
+}
+
+export async function removeBookmark(uid, id) {
+  await deleteDoc(bookmarkDoc(uid, id))
+}
+
+export async function getBookmark(uid, ownerUid, chartId) {
+  const snap = await getDoc(bookmarkDoc(uid, bookmarkId(ownerUid, chartId)))
+  return snap.exists() ? { id: snap.id, ...snap.data() } : null
+}
+
+export async function getBookmarkCount(uid) {
+  const s = await getDocs(bookmarksCol(uid))
+  return s.size
+}
+
+export function subscribeBookmarks(uid, callback) {
+  const q = query(bookmarksCol(uid), orderBy('addedAt', 'desc'))
+  return onSnapshot(
+    q,
+    (snap) => {
+      const list = []
+      snap.forEach((d) => list.push({ id: d.id, ...d.data() }))
+      callback(list)
+    },
+    (err) => { console.warn('bookmarks subscribe failed', err); callback([]) },
+  )
 }
 
 // === 旧データからの自動移行 =================================

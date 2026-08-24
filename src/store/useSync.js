@@ -14,6 +14,7 @@ import {
   getUserRoles,
   subscribePublicMembers,
   subscribeShareConfig,
+  subscribeBookmarks,
 } from '../lib/firestore.js'
 import { recordAccount } from '../lib/auth.js'
 import { DEFAULT_ROLES } from '../constants/roles.js'
@@ -43,6 +44,15 @@ export function navigateToList() {
   window.dispatchEvent(new PopStateEvent('popstate'))
 }
 
+// ブックマークした共有リンクを開く
+export function navigateToSharedView(token) {
+  const url = new URL(window.location.href)
+  url.searchParams.set('s', token)
+  url.searchParams.delete('c')
+  window.history.pushState({}, '', url)
+  window.dispatchEvent(new PopStateEvent('popstate'))
+}
+
 export function useSync() {
   const setUser            = useStore((s) => s.setUser)
   const setMembers         = useStore((s) => s.setMembers)
@@ -51,14 +61,18 @@ export function useSync() {
   const setViewMode        = useStore((s) => s.setViewMode)
   const setShareConfig     = useStore((s) => s.setShareConfig)
   const setViewerChartTitle = useStore((s) => s.setViewerChartTitle)
+  const setViewerOwnerUid  = useStore((s) => s.setViewerOwnerUid)
+  const setViewerChartId   = useStore((s) => s.setViewerChartId)
   const setPlan            = useStore((s) => s.setPlan)
   const setRoles           = useStore((s) => s.setRoles)
+  const setBookmarks       = useStore((s) => s.setBookmarks)
 
   // ----- 1. 認証 + 組織図リストの購読、URL 解釈 -----
   useEffect(() => {
     let unsubCharts = null
     let unsubPlan = null
     let unsubRoles = null
+    let unsubBookmarks = null
     let viewerCleanup = null
 
     async function startShareView(token) {
@@ -71,6 +85,8 @@ export function useSync() {
         const cfg = await getShareConfig(uid, chartId)
         if (!cfg?.enabled) { setMembers({}); console.warn('Share is disabled'); return }
         setShareConfig(cfg) // 閲覧モードでも branding 判定に使う
+        setViewerOwnerUid(uid)
+        setViewerChartId(chartId)
         // オーナーの役職定義を読み込み、共有閲覧ページでも色・名称を正しく表示する
         try { setRoles(await getUserRoles(uid)) } catch (_) { setRoles([]) }
         // chart のタイトルも取得（公開設定が有効ならルール上 chart 本体は読めない場合もあるので失敗OK）
@@ -90,14 +106,16 @@ export function useSync() {
       // auth subscription
       const unsubAuth = onAuthStateChanged(auth, async (user) => {
         setUser(user)
-        if (unsubCharts) { unsubCharts(); unsubCharts = null }
-        if (unsubPlan)   { unsubPlan();   unsubPlan = null }
-        if (unsubRoles)  { unsubRoles();  unsubRoles = null }
+        if (unsubCharts)    { unsubCharts();    unsubCharts = null }
+        if (unsubPlan)      { unsubPlan();      unsubPlan = null }
+        if (unsubRoles)     { unsubRoles();     unsubRoles = null }
+        if (unsubBookmarks) { unsubBookmarks(); unsubBookmarks = null }
         if (!user) {
           setCharts([])
           setMembers({})
           setPlan('free')
           setRoles([])
+          setBookmarks([])
           return
         }
         // ログイン履歴に記録（この端末のみ・アカウント切替メニュー用）
@@ -107,9 +125,10 @@ export function useSync() {
         // 既存アカウントにデフォルト役職をseed（新規は空のまま）
         try { await seedDefaultRolesIfNeeded(user.uid, DEFAULT_ROLES) } catch (e) { console.warn('role seed skipped', e) }
         // 組織図リスト・プラン・役職を購読
-        unsubCharts = subscribeCharts(user.uid, setCharts)
-        unsubPlan   = subscribeUserPlan(user.uid, setPlan)
-        unsubRoles  = subscribeUserRoles(user.uid, setRoles)
+        unsubCharts    = subscribeCharts(user.uid, setCharts)
+        unsubPlan      = subscribeUserPlan(user.uid, setPlan)
+        unsubRoles     = subscribeUserRoles(user.uid, setRoles)
+        unsubBookmarks = subscribeBookmarks(user.uid, setBookmarks)
 
         // 未ログイン状態で共有ページの「自分用に複製」を押した場合、
         // ログイン後にここで複製を自動再開する。
@@ -142,11 +161,12 @@ export function useSync() {
     function applyURL() {
       const { shareToken } = readURL()
       // 切替時はクリーンアップ
-      if (viewerCleanup) { viewerCleanup(); viewerCleanup = null }
-      if (unsubAuth)     { unsubAuth();     unsubAuth = null }
-      if (unsubCharts)   { unsubCharts();   unsubCharts = null }
-      if (unsubPlan)     { unsubPlan();     unsubPlan = null }
-      if (unsubRoles)    { unsubRoles();    unsubRoles = null }
+      if (viewerCleanup)  { viewerCleanup();  viewerCleanup = null }
+      if (unsubAuth)      { unsubAuth();      unsubAuth = null }
+      if (unsubCharts)    { unsubCharts();    unsubCharts = null }
+      if (unsubPlan)      { unsubPlan();      unsubPlan = null }
+      if (unsubRoles)     { unsubRoles();     unsubRoles = null }
+      if (unsubBookmarks) { unsubBookmarks(); unsubBookmarks = null }
 
       if (shareToken) {
         startShareView(shareToken)
@@ -160,13 +180,14 @@ export function useSync() {
 
     return () => {
       window.removeEventListener('popstate', applyURL)
-      if (viewerCleanup) viewerCleanup()
-      if (unsubAuth)     unsubAuth()
-      if (unsubCharts)   unsubCharts()
-      if (unsubPlan)     unsubPlan()
-      if (unsubRoles)    unsubRoles()
+      if (viewerCleanup)  viewerCleanup()
+      if (unsubAuth)      unsubAuth()
+      if (unsubCharts)    unsubCharts()
+      if (unsubPlan)      unsubPlan()
+      if (unsubRoles)     unsubRoles()
+      if (unsubBookmarks) unsubBookmarks()
     }
-  }, [setUser, setMembers, setCharts, setViewMode, setViewerChartTitle, setPlan, setRoles])
+  }, [setUser, setMembers, setCharts, setViewMode, setViewerChartTitle, setViewerOwnerUid, setViewerChartId, setPlan, setRoles, setBookmarks])
 
   // ----- 2. URLの ?c=<chartId> を store の currentChartId に反映 -----
   useEffect(() => {
