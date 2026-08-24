@@ -19,6 +19,7 @@ export default function ChartListPage() {
   const plan = useStore((s) => s.plan)
   const showUpgrade = useStore((s) => s.showUpgrade)
   const openRoleManager = useStore((s) => s.openRoleManager)
+  const setAutoAddRoot = useStore((s) => s.setAutoAddRoot)
 
   const [createOpen, setCreateOpen] = useState(false)
   const [renameTarget, setRenameTarget] = useState(null) // { id, title }
@@ -49,7 +50,10 @@ export default function ChartListPage() {
   async function handleCreate(title) {
     const id = await createNewChart(title)
     setCreateOpen(false)
-    if (id) navigateToChart(id)
+    if (id) {
+      setAutoAddRoot(true) // 空の状態に入った瞬間、最初のメンバー追加を自動実行する
+      navigateToChart(id)
+    }
   }
 
   function handleOpen(chartId) {

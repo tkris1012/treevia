@@ -4,7 +4,10 @@ import { NODE_W, NODE_H } from './useTreeLayout.js'
 
 export default function TreeNode({ member, isRoot, isDragging, forPrint = false }) {
   const roles = useStore((s) => s.roles)
+  const selectedId = useStore((s) => s.selectedId)
+  const panelOpen = useStore((s) => s.panelOpen)
   if (!member) return null
+  const isSelected = !forPrint && panelOpen && selectedId === member.id
   const style = getRoleStyle(member.role, roles)
   const roleLabel = roleName(member.role, roles)
   const hasRole = !!roleLabel
@@ -18,14 +21,16 @@ export default function TreeNode({ member, isRoot, isDragging, forPrint = false 
         width: NODE_W,
         height: NODE_H,
         borderRadius: 10,
-        border: `2px solid ${style.border}`,
+        border: isSelected ? '2px solid #7C3AED' : `2px solid ${style.border}`,
         background: style.fill,
         display: 'flex',
         alignItems: 'center',
         position: 'relative',
         boxSizing: 'border-box',
         opacity: isDragging ? 0.4 : 1,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.10)',
+        boxShadow: isSelected
+          ? '0 0 0 3px rgba(124,58,237,0.30), 0 2px 8px rgba(0,0,0,0.10)'
+          : '0 2px 8px rgba(0,0,0,0.10)',
         userSelect: 'none',
         overflow: 'visible',
         pointerEvents: 'none', // SVGのoverlay rectにイベントを委譲

@@ -85,7 +85,11 @@ export const useStore = create((set, get) => ({
   charts: [],                          // [{ id, title, createdAt, updatedAt }]
   setCharts: (charts) => set({ charts }),
   currentChartId: null,                // 表示中の組織図ID（null = リスト画面）
-  setCurrentChartId: (id) => set({ currentChartId: id, undoStack: [] }),
+  setCurrentChartId: (id) => set({ currentChartId: id, undoStack: [], redoStack: [] }),
+
+  // 新規作成した空の組織図に入った直後、最初のメンバー追加を自動実行するためのフラグ
+  autoAddRoot: false,
+  setAutoAddRoot: (v) => set({ autoAddRoot: !!v }),
 
   // --- Members（現在の組織図のメンバー） ---
   members: {},
@@ -202,22 +206,25 @@ export const useStore = create((set, get) => ({
   showConfirm: (message, onOk) => set({ confirm: { message, onOk } }),
   closeConfirm: () => set({ confirm: null }),
 
-  // --- Undo Stack ---
+  // --- Undo / Redo Stack ---
   undoStack: [],
+  redoStack: [],
   pushUndo: () => {
     const { members, undoStack, plan } = get()
     const snapshot = JSON.parse(JSON.stringify(members))
     const next = [snapshot, ...undoStack].slice(0, undoLimit(plan))
-    set({ undoStack: next })
+    // 新しい変更を加えたら、それまでの「やり直す」履歴は無効になる
+    set({ undoStack: next, redoStack: [] })
   },
   undo: async () => {
-    const { undoStack, user, currentChartId, setSyncStatus } = get()
+    const { undoStack, redoStack, user, currentChartId, setSyncStatus, plan } = get()
     if (!undoStack.length || !user || !currentChartId) return
 
     const [prev, ...rest] = undoStack
     const current = get().members
+    const nextRedo = [current, ...redoStack].slice(0, undoLimit(plan))
 
-    set({ undoStack: rest, members: prev })
+    set({ undoStack: rest, redoStack: nextRedo, members: prev })
 
     setSyncStatus('syncing')
     try {
@@ -241,6 +248,42 @@ export const useStore = create((set, get) => ({
       ])
     } catch (e) {
       console.error('undo failed', e)
+    } finally {
+      setSyncStatus('synced')
+    }
+  },
+  redo: async () => {
+    const { undoStack, redoStack, user, currentChartId, setSyncStatus, plan } = get()
+    if (!redoStack.length || !user || !currentChartId) return
+
+    const [next, ...rest] = redoStack
+    const current = get().members
+    const nextUndo = [current, ...undoStack].slice(0, undoLimit(plan))
+
+    set({ redoStack: rest, undoStack: nextUndo, members: next })
+
+    setSyncStatus('syncing')
+    try {
+      const nextIds = new Set(Object.keys(next))
+      const curIds  = new Set(Object.keys(current))
+
+      const toAdd    = [...nextIds].filter((id) => !curIds.has(id))
+      const toDelete = [...curIds].filter((id) => !nextIds.has(id))
+      const toUpdate = [...nextIds].filter((id) => curIds.has(id))
+
+      await Promise.all([
+        ...toAdd.map((id) => {
+          const { id: _id, ...data } = next[id]
+          return restoreMember(user.uid, currentChartId, id, data)
+        }),
+        ...toDelete.map((id) => deleteMember(user.uid, currentChartId, id)),
+        ...toUpdate.map((id) => {
+          const { id: _id, ...data } = next[id]
+          return updateMember(user.uid, currentChartId, id, data)
+        }),
+      ])
+    } catch (e) {
+      console.error('redo failed', e)
     } finally {
       setSyncStatus('synced')
     }
