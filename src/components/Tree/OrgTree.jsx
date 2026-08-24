@@ -513,29 +513,35 @@ export default function OrgTree() {
         pointerEvents: 'none',
       }}>
         {isReadOnly ? (
-          /* 閲覧モード：戻る・タイトル・フィルタ・ブックマーク・閲覧モード表示を1列に */
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            {viewerAuthUser && (
-              <button onClick={navigateToList} title="一覧へ戻る"
-                style={ICON_BTN}><ArrowLeft size={17} /></button>
-            )}
-            {chartTitle ? (
+          <>
+            {/* 1段目：戻る・タイトル・ブックマーク・閲覧モード表示 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {viewerAuthUser && (
+                <button onClick={navigateToList} title="一覧へ戻る"
+                  style={ICON_BTN}><ArrowLeft size={17} /></button>
+              )}
+              {chartTitle ? (
+                <div style={{
+                  ...BAR_CHIP, flex: 1, minWidth: 0,
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}><TreeDeciduous size={15} style={{ flexShrink: 0, color: '#15A24A' }} /> {chartTitle}</div>
+              ) : <div style={{ flex: 1 }} />}
+              <BookmarkShareButton />
               <div style={{
-                ...BAR_CHIP, flex: 1, minWidth: 0,
-                display: 'flex', alignItems: 'center', gap: 6,
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-              }}><TreeDeciduous size={15} style={{ flexShrink: 0, color: '#15A24A' }} /> {chartTitle}</div>
-            ) : <div style={{ flex: 1 }} />}
-            {filterChip}
-            <BookmarkShareButton />
-            <div style={{
-              ...BAR_CHIP, display: 'flex', alignItems: 'center', gap: 6,
-              flexShrink: 0, pointerEvents: 'auto',
-              background: 'rgba(31, 41, 55, 0.85)', color: 'white', border: 'none',
-            }}>
-              <Eye size={14} /> 閲覧モード
+                ...BAR_CHIP, display: 'flex', alignItems: 'center', gap: 6,
+                flexShrink: 0, pointerEvents: 'auto',
+                background: 'rgba(31, 41, 55, 0.85)', color: 'white', border: 'none',
+              }}>
+                <Eye size={14} /> 閲覧モード
+              </div>
             </div>
-          </div>
+
+            {/* 2段目：フィルタ */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              {filterChip}
+            </div>
+          </>
         ) : (
           <>
             {/* 1段目：戻る＋タイトル ｜ 操作 */}
