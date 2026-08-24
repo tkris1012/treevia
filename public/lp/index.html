@@ -231,6 +231,12 @@
       min-height: auto; padding: 0; }
     /* 特徴イラスト */
     .feat-illus { width: 82%; height: auto; display: block; }
+    /* 使い方の具体例（ユースケース）ボックス */
+    .usecase { margin-top: 16px; padding: 14px 16px; background: #F3FAF6; border-left: 3px solid var(--purple); border-radius: 8px; }
+    .usecase-label { font-size: 12px; font-weight: 800; color: var(--purple); margin-bottom: 6px; }
+    .usecase p { font-size: 13px; color: var(--ink); font-weight: 700; margin: 0 0 8px; }
+    .usecase ol { margin: 0; padding-left: 18px; font-size: 13px; color: var(--gray); line-height: 1.7; }
+    .usecase li { margin-bottom: 2px; }
     .feat-visual.img-cover { padding: 0; min-height: auto; border: none; box-shadow: none; background: transparent; }
     .feat-cover { width: 100%; height: 240px; object-fit: cover; border-radius: 14px; display: block;
       box-shadow: 0 10px 30px rgba(0,0,0,0.12); border: 1px solid var(--line); }
@@ -400,6 +406,25 @@
           <p>移動中でも外出先でも、スマホからそのまま編集・確認。写真付きで顔が分かる組織図に。</p>
         </div>
         <div class="feat-visual"><img src="illus-mobile.jpg" alt="スマホでドラッグしてサクサク編集するイメージ" class="feat-illus" /></div>
+      </div>
+
+      <div class="feat rev">
+        <div class="feat-text">
+          <div class="feat-ic">🔖</div>
+          <h3>複数チームを、ひとつの画面でリアルタイム把握</h3>
+          <p>ダウンラインの共有リンクをブックマークしておけば、メンバーが組織図を更新するたびに、あなたの一覧にも自動で反映。何十人・何百人のチームがいくつあっても、開くだけで最新状況が分かります。</p>
+          <div class="usecase">
+            <div class="usecase-label">こんな使い方</div>
+            <p>50人・120人・200人の3チームを率いるリーダーの場合</p>
+            <ol>
+              <li>各チームのリーダーに「Treeviaで組織図を作って、共有リンクを送って」と伝える</li>
+              <li>もらったリンクを開いて「ブックマーク」をタップ</li>
+              <li>自分の一覧に3チーム分がまとめて並ぶ</li>
+              <li>各リーダーが更新するたび、開くだけで最新状況を確認（LINEで画像を送ってもらう必要なし）</li>
+            </ol>
+          </div>
+        </div>
+        <div class="feat-visual shot-wrap"><img src="shot-bookmark.jpg" alt="組織図一覧に複数チームがブックマークとして並び、リアルタイムで状況を確認できる画面" class="shot" /></div>
       </div>
     </div>
   </section>
