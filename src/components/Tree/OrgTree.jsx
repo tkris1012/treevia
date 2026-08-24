@@ -6,7 +6,7 @@ import {
 import { useStore } from '../../store/useStore.js'
 import { navigateToList } from '../../store/useSync.js'
 import { useAuthUser } from '../../lib/useAuthUser.js'
-import { getBookmark } from '../../lib/firestore.js'
+import { getBookmark, getUserPlan } from '../../lib/firestore.js'
 import { useTreeLayout, NODE_W, collectDescendants, getSlotPos } from './useTreeLayout.js'
 import { buildFilterOptions } from '../../constants/roles.js'
 import { canUseShare, canPrint } from '../../constants/plans.js'
@@ -93,12 +93,29 @@ export default function OrgTree() {
 
   const chartTitle = isReadOnly ? (bookmarkLabel || viewerChartTitle || '') : (currentChart?.title || '')
 
+  // 閲覧モードでの印刷・PDF出力は、閲覧者自身がプロプランかどうかで判定する
+  // （store.plan はオーナー用の購読しかしていないため、別途本人のプランを取得する）。
+  const [viewerPlan, setViewerPlan] = useState(null)
+  useEffect(() => {
+    let cancelled = false
+    async function check() {
+      if (!isReadOnly || !viewerAuthUser) { setViewerPlan(null); return }
+      try {
+        const p = await getUserPlan(viewerAuthUser.uid)
+        if (!cancelled) setViewerPlan(p)
+      } catch (_) { if (!cancelled) setViewerPlan(null) }
+    }
+    check()
+    return () => { cancelled = true }
+  }, [isReadOnly, viewerAuthUser])
+
   const filterOptions   = buildFilterOptions(roles)
 
   const [shareOpen, setShareOpen] = useState(false)
   const [printOpen, setPrintOpen] = useState(false)
   const shareAllowed = canUseShare(plan)
   const printAllowed = canPrint(plan)
+  const viewerPrintAllowed = viewerPlan === 'pro'
   const isShared     = !!shareConfig?.enabled
   const isSyncing    = syncStatus === 'syncing'
   function handleShareClick() {
@@ -108,6 +125,11 @@ export default function OrgTree() {
   function handlePrintClick() {
     if (printAllowed) setPrintOpen(true)
     else showUpgrade('print')
+  }
+  function handleViewerPrintClick() {
+    if (!viewerAuthUser) { navigateToList(); return }
+    if (viewerPrintAllowed) setPrintOpen(true)
+    else alert('この組織図の印刷・PDF出力は、プロプランの方のみご利用いただけます。')
   }
 
   const { positions, childMap, hiddenChildrenMap } = useTreeLayout()
@@ -547,6 +569,11 @@ export default function OrgTree() {
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}><TreeDeciduous size={15} style={{ flexShrink: 0, color: '#15A24A' }} /> {chartTitle}</div>
               ) : <div style={{ flex: 1 }} />}
+              <button onClick={handleViewerPrintClick}
+                title={viewerPrintAllowed ? '印刷・PDF出力' : '印刷・PDF出力（プロ）'}
+                style={ICON_BTN}>
+                {viewerPrintAllowed ? <Printer size={16} /> : <Lock size={16} />}
+              </button>
               <BookmarkShareButton />
               <div style={{
                 ...BAR_CHIP, display: 'flex', alignItems: 'center', gap: 6,
@@ -831,7 +858,7 @@ export default function OrgTree() {
 
       {/* 共有モーダル */}
       {shareOpen && <ShareModal onClose={() => setShareOpen(false)} />}
-      {printOpen && <PrintModal onClose={() => setPrintOpen(false)} />}
+      {printOpen && <PrintModal onClose={() => setPrintOpen(false)} title={chartTitle} />}
     </div>
   )
 }
