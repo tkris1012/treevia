@@ -8,9 +8,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
-    // 組織図メタ情報（タイトル等）
+    // 組織図メタ情報（タイトル等）。共有が有効なら閲覧者もタイトルを読めるようにする
+    // （本文はタイトル/日時のみで個人情報を含まない。メンバー情報と同じ考え方）。
     match /users/{uid}/charts/{chartId} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read: if (request.auth != null && request.auth.uid == uid)
+                  || (exists(/databases/$(database)/documents/users/$(uid)/charts/$(chartId)/_meta/share)
+                      && get(/databases/$(database)/documents/users/$(uid)/charts/$(chartId)/_meta/share).data.enabled == true);
+      allow write: if request.auth != null && request.auth.uid == uid;
 
       // 各組織図配下のメンバー
       match /members/{memberId} {
