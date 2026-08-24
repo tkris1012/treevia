@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useReducer } from 'react'
 import {
-  ArrowLeft, TreeDeciduous, Undo2, Link2, Lock, Printer, Palette,
-  Trash2, ChevronRight, ChevronDown, Eye,
+  ArrowLeft, TreeDeciduous, Undo2, Redo2, Link2, Lock, Printer, Palette,
+  Trash2, ChevronRight, ChevronDown, Eye, Pencil,
 } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { navigateToList } from '../../store/useSync.js'
@@ -13,6 +13,7 @@ import { canUseShare, canPrint } from '../../constants/plans.js'
 import ShareModal from '../UI/ShareModal.jsx'
 import PrintModal from '../UI/PrintModal.jsx'
 import BookmarkShareButton from '../UI/BookmarkShareButton.jsx'
+import RenameChartModal from '../ChartList/RenameChartModal.jsx'
 import TreeNode from './TreeNode.jsx'
 import DropZone from './DropZone.jsx'
 
@@ -55,12 +56,14 @@ export default function OrgTree() {
   const moveNode      = useStore((s) => s.moveNode)
   const addRootNode   = useStore((s) => s.addRootNode)
   const undo            = useStore((s) => s.undo)
+  const redo            = useStore((s) => s.redo)
   const toggleCollapsed = useStore((s) => s.toggleCollapsed)
   const roleFilter      = useStore((s) => s.roleFilter)
   const setRoleFilter   = useStore((s) => s.setRoleFilter)
   const roles           = useStore((s) => s.roles)
   const openRoleManager = useStore((s) => s.openRoleManager)
   const undoStack       = useStore((s) => s.undoStack)
+  const redoStack       = useStore((s) => s.redoStack)
   const syncStatus      = useStore((s) => s.syncStatus)
   const shareConfig     = useStore((s) => s.shareConfig)
   const plan            = useStore((s) => s.plan)
@@ -113,6 +116,7 @@ export default function OrgTree() {
 
   const [shareOpen, setShareOpen] = useState(false)
   const [printOpen, setPrintOpen] = useState(false)
+  const [renameOpen, setRenameOpen] = useState(false)
   const shareAllowed = canUseShare(plan)
   const printAllowed = canPrint(plan)
   const viewerPrintAllowed = viewerPlan === 'pro'
@@ -503,6 +507,16 @@ export default function OrgTree() {
   const activeControlId = hoveredId || longPressId
   const isEmpty         = Object.keys(members).length === 0
 
+  // 新規作成した空の組織図に入った直後は、ボタンを挟まず自動で最初のメンバーを追加する
+  const autoAddRoot    = useStore((s) => s.autoAddRoot)
+  const setAutoAddRoot = useStore((s) => s.setAutoAddRoot)
+  useEffect(() => {
+    if (!isReadOnly && isEmpty && autoAddRoot) {
+      setAutoAddRoot(false)
+      addRootNode()
+    }
+  }, [isReadOnly, isEmpty, autoAddRoot, setAutoAddRoot, addRootNode])
+
   const filterChip = (
     <div style={{ ...BAR_CHIP, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, pointerEvents: 'auto' }}>
       <span style={{ fontSize: 12, color: '#6B7280', fontWeight: 600 }}>フィルタ</span>
@@ -595,18 +609,28 @@ export default function OrgTree() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <button onClick={navigateToList} title="一覧へ戻る"
                 style={ICON_BTN}><ArrowLeft size={17} /></button>
-              {chartTitle ? (
-                <div style={{
+              <button
+                onClick={() => setRenameOpen(true)}
+                title="タイトルを編集"
+                style={{
                   ...BAR_CHIP, flex: 1, minWidth: 0,
                   display: 'flex', alignItems: 'center', gap: 6,
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                }}><TreeDeciduous size={15} style={{ flexShrink: 0, color: '#15A24A' }} /> {chartTitle}</div>
-              ) : <div style={{ flex: 1 }} />}
+                  cursor: 'pointer', textAlign: 'left', pointerEvents: 'auto',
+                }}
+              >
+                <TreeDeciduous size={15} style={{ flexShrink: 0, color: '#15A24A' }} />
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chartTitle || '無題'}</span>
+                <Pencil size={12} style={{ flexShrink: 0, color: '#9CA3AF' }} />
+              </button>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
                 <button onClick={undo} disabled={undoStack.length === 0} title="元に戻す"
                   style={{ ...ICON_BTN, opacity: undoStack.length ? 1 : 0.4,
                     cursor: undoStack.length ? 'pointer' : 'not-allowed' }}><Undo2 size={16} /></button>
+                <button onClick={redo} disabled={redoStack.length === 0} title="やり直す"
+                  style={{ ...ICON_BTN, opacity: redoStack.length ? 1 : 0.4,
+                    cursor: redoStack.length ? 'pointer' : 'not-allowed' }}><Redo2 size={16} /></button>
                 <button onClick={handleShareClick}
                   title={shareAllowed ? '共有リンク' : '共有リンク（プロ）'}
                   style={{ ...ICON_BTN, ...(isShared ? { background: '#ECFDF5', borderColor: '#A7F3D0' } : {}) }}>
@@ -859,6 +883,13 @@ export default function OrgTree() {
       {/* 共有モーダル */}
       {shareOpen && <ShareModal onClose={() => setShareOpen(false)} />}
       {printOpen && <PrintModal onClose={() => setPrintOpen(false)} title={chartTitle} />}
+      {renameOpen && currentChartId && (
+        <RenameChartModal
+          chartId={currentChartId}
+          initialTitle={chartTitle}
+          onClose={() => setRenameOpen(false)}
+        />
+      )}
     </div>
   )
 }

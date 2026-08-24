@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, Camera, Trash2 } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
-import { getRoleStyle, roleName } from '../../constants/roles.js'
+import { getRoleStyle, roleStyleFromColor } from '../../constants/roles.js'
 import { resizeToBase64 } from '../../lib/imageUtils.js'
 
 export default function DetailPanel() {
@@ -33,6 +33,7 @@ export default function DetailPanel() {
   const [photoLoading, setPhotoLoading] = useState(false)
 
   const fileInputRef = useRef(null)
+  const nameInputRef = useRef(null)
 
   // Sync form when member changes
   useEffect(() => {
@@ -44,6 +45,19 @@ export default function DetailPanel() {
       setPhotoPreview(member.photo || null)
     }
   }, [selectedId, member])
+
+  // 追加直後（デフォルト名のまま）は、すぐ入力できるよう名前欄にフォーカスする。
+  // selectedId のみに依存させ、Firestoreの再同期のたびに再フォーカスしないようにする。
+  useEffect(() => {
+    if (member?.name === '新メンバー') {
+      const t = setTimeout(() => {
+        nameInputRef.current?.focus()
+        nameInputRef.current?.select()
+      }, 0)
+      return () => clearTimeout(t)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedId])
 
   if (!panelOpen || !member) return null
 
@@ -184,9 +198,11 @@ export default function DetailPanel() {
           <label style={{ display: 'block', marginBottom: 16 }}>
             <div style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 6 }}>名前 *</div>
             <input
+              ref={nameInputRef}
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
               placeholder="名前を入力"
               style={{
                 width: '100%', padding: '8px 12px', borderRadius: 8,
@@ -228,39 +244,23 @@ export default function DetailPanel() {
                 役職を管理
               </button>
             </div>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              style={{
-                width: '100%', padding: '8px 12px', borderRadius: 8,
-                border: '1px solid #D1D5DB', fontSize: 15, outline: 'none',
-                background: 'white', cursor: 'pointer', boxSizing: 'border-box',
-              }}
-            >
-              <option value="">（役職なし）</option>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              <RoleChip label="なし" active={!role} onClick={() => setRole('')} />
               {roles.map((r) => (
-                <option key={r.id} value={r.id}>{r.name}</option>
+                <RoleChip
+                  key={r.id}
+                  label={r.name}
+                  color={r.color}
+                  active={role === r.id}
+                  onClick={() => setRole(r.id)}
+                />
               ))}
               {/* 既存の値がリストに無い場合も選択を保持 */}
               {role && !roles.some((r) => r.id === role) && (
-                <option value={role}>{role}（削除済み）</option>
+                <RoleChip label={`${role}（削除済み）`} active onClick={() => {}} />
               )}
-            </select>
-          </label>
-
-          {/* Preview chip */}
-          <div style={{ marginBottom: 8 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 8 }}>プレビュー</div>
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 6,
-              padding: '4px 10px', borderRadius: 20,
-              border: `2px solid ${style.border}`,
-              background: style.fill,
-            }}>
-              {roleName(role, roles) && <span style={{ fontSize: 11, color: style.sub, fontWeight: 600 }}>{roleName(role, roles)}</span>}
-              <span style={{ fontSize: 14, color: style.text, fontWeight: 500 }}>{name || '（名前なし）'}</span>
             </div>
-          </div>
+          </label>
 
           {/* 操作（スマホでの追加・削除導線） */}
           <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #F0F0F0' }}>
@@ -322,6 +322,25 @@ export default function DetailPanel() {
         </div>
       </div>
     </>
+  )
+}
+
+function RoleChip({ label, color, active, onClick }) {
+  const style = roleStyleFromColor(color)
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        padding: '6px 12px', borderRadius: 999, fontSize: 13, fontWeight: 600,
+        cursor: 'pointer', whiteSpace: 'nowrap',
+        border: `2px solid ${active ? style.border : '#E5E7EB'}`,
+        background: active ? style.fill : 'white',
+        color: active ? style.text : '#6B7280',
+      }}
+    >
+      {label}
+    </button>
   )
 }
 
