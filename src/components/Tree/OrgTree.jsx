@@ -11,6 +11,7 @@ import { buildFilterOptions } from '../../constants/roles.js'
 import { canUseShare, canPrint } from '../../constants/plans.js'
 import ShareModal from '../UI/ShareModal.jsx'
 import PrintModal from '../UI/PrintModal.jsx'
+import BookmarkShareButton from '../UI/BookmarkShareButton.jsx'
 import TreeNode from './TreeNode.jsx'
 import DropZone from './DropZone.jsx'
 
@@ -460,6 +461,24 @@ export default function OrgTree() {
   const activeControlId = hoveredId || longPressId
   const isEmpty         = Object.keys(members).length === 0
 
+  const filterChip = (
+    <div style={{ ...BAR_CHIP, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, pointerEvents: 'auto' }}>
+      <span style={{ fontSize: 12, color: '#6B7280', fontWeight: 600 }}>フィルタ</span>
+      <select
+        value={roleFilter}
+        onChange={(e) => setRoleFilter(e.target.value)}
+        style={{
+          fontSize: 13, padding: '3px 6px', border: '1px solid #E5E7EB',
+          borderRadius: 6, background: 'white', cursor: 'pointer', outline: 'none',
+        }}
+      >
+        {filterOptions.map((opt) => (
+          <option key={opt.value} value={opt.value}>{opt.label}</option>
+        ))}
+      </select>
+    </div>
+  )
+
   // ── レンダー ──────────────────────────────────────────────
   return (
     <div
@@ -487,47 +506,28 @@ export default function OrgTree() {
         </div>
       )}
 
-      {/* トップバー（全幅・2段構成。縦画面でも重ならない） */}
+      {/* トップバー（全幅。縦画面でも重ならない） */}
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
         padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8,
         pointerEvents: 'none',
       }}>
-        {/* 1段目：戻る＋タイトル ｜ 操作 */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          {(!isReadOnly || viewerAuthUser) && (
-            <button onClick={navigateToList} title="一覧へ戻る"
-              style={ICON_BTN}><ArrowLeft size={17} /></button>
-          )}
-          {chartTitle ? (
-            <div style={{
-              ...BAR_CHIP, flex: 1, minWidth: 0,
-              display: 'flex', alignItems: 'center', gap: 6,
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            }}><TreeDeciduous size={15} style={{ flexShrink: 0, color: '#15A24A' }} /> {chartTitle}</div>
-          ) : <div style={{ flex: 1 }} />}
-
-          {!isReadOnly && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-              <button onClick={undo} disabled={undoStack.length === 0} title="元に戻す"
-                style={{ ...ICON_BTN, opacity: undoStack.length ? 1 : 0.4,
-                  cursor: undoStack.length ? 'pointer' : 'not-allowed' }}><Undo2 size={16} /></button>
-              <button onClick={handleShareClick}
-                title={shareAllowed ? '共有リンク' : '共有リンク（プロ）'}
-                style={{ ...ICON_BTN, ...(isShared ? { background: '#ECFDF5', borderColor: '#A7F3D0' } : {}) }}>
-                {shareAllowed ? <Link2 size={16} /> : <Lock size={16} />}
-              </button>
-              <button onClick={handlePrintClick}
-                title={printAllowed ? '印刷・PDF出力' : '印刷・PDF出力（ライト/プロ）'}
-                style={ICON_BTN}>
-                {printAllowed ? <Printer size={16} /> : <Lock size={16} />}
-              </button>
-              <span title={isSyncing ? '同期中' : '同期済み'}
-                style={{ width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
-                  background: isSyncing ? '#FBBF24' : '#22C55E' }} />
-            </div>
-          )}
-          {isReadOnly && (
+        {isReadOnly ? (
+          /* 閲覧モード：戻る・タイトル・フィルタ・ブックマーク・閲覧モード表示を1列に */
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            {viewerAuthUser && (
+              <button onClick={navigateToList} title="一覧へ戻る"
+                style={ICON_BTN}><ArrowLeft size={17} /></button>
+            )}
+            {chartTitle ? (
+              <div style={{
+                ...BAR_CHIP, flex: 1, minWidth: 0,
+                display: 'flex', alignItems: 'center', gap: 6,
+                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+              }}><TreeDeciduous size={15} style={{ flexShrink: 0, color: '#15A24A' }} /> {chartTitle}</div>
+            ) : <div style={{ flex: 1 }} />}
+            {filterChip}
+            <BookmarkShareButton />
             <div style={{
               ...BAR_CHIP, display: 'flex', alignItems: 'center', gap: 6,
               flexShrink: 0, pointerEvents: 'auto',
@@ -535,30 +535,48 @@ export default function OrgTree() {
             }}>
               <Eye size={14} /> 閲覧モード
             </div>
-          )}
-        </div>
-
-        {/* 2段目：フィルタ ＋ 役職 */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-          <div style={{ ...BAR_CHIP, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, pointerEvents: 'auto' }}>
-            <span style={{ fontSize: 12, color: '#6B7280', fontWeight: 600 }}>フィルタ</span>
-            <select
-              value={roleFilter}
-              onChange={(e) => setRoleFilter(e.target.value)}
-              style={{
-                fontSize: 13, padding: '3px 6px', border: '1px solid #E5E7EB',
-                borderRadius: 6, background: 'white', cursor: 'pointer', outline: 'none',
-              }}
-            >
-              {filterOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
-              ))}
-            </select>
           </div>
-          {!isReadOnly && (
-            <button onClick={openRoleManager} title="役職を管理" style={BAR_BTN}><Palette size={14} /> 役職</button>
-          )}
-        </div>
+        ) : (
+          <>
+            {/* 1段目：戻る＋タイトル ｜ 操作 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <button onClick={navigateToList} title="一覧へ戻る"
+                style={ICON_BTN}><ArrowLeft size={17} /></button>
+              {chartTitle ? (
+                <div style={{
+                  ...BAR_CHIP, flex: 1, minWidth: 0,
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}><TreeDeciduous size={15} style={{ flexShrink: 0, color: '#15A24A' }} /> {chartTitle}</div>
+              ) : <div style={{ flex: 1 }} />}
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                <button onClick={undo} disabled={undoStack.length === 0} title="元に戻す"
+                  style={{ ...ICON_BTN, opacity: undoStack.length ? 1 : 0.4,
+                    cursor: undoStack.length ? 'pointer' : 'not-allowed' }}><Undo2 size={16} /></button>
+                <button onClick={handleShareClick}
+                  title={shareAllowed ? '共有リンク' : '共有リンク（プロ）'}
+                  style={{ ...ICON_BTN, ...(isShared ? { background: '#ECFDF5', borderColor: '#A7F3D0' } : {}) }}>
+                  {shareAllowed ? <Link2 size={16} /> : <Lock size={16} />}
+                </button>
+                <button onClick={handlePrintClick}
+                  title={printAllowed ? '印刷・PDF出力' : '印刷・PDF出力（ライト/プロ）'}
+                  style={ICON_BTN}>
+                  {printAllowed ? <Printer size={16} /> : <Lock size={16} />}
+                </button>
+                <span title={isSyncing ? '同期中' : '同期済み'}
+                  style={{ width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
+                    background: isSyncing ? '#FBBF24' : '#22C55E' }} />
+              </div>
+            </div>
+
+            {/* 2段目：フィルタ ＋ 役職 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              {filterChip}
+              <button onClick={openRoleManager} title="役職を管理" style={BAR_BTN}><Palette size={14} /> 役職</button>
+            </div>
+          </>
+        )}
       </div>
 
       {/* 全体表示（右下） */}
