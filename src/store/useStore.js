@@ -124,17 +124,25 @@ export const useStore = create((set, get) => ({
   // --- Bookmarks（他人の共有組織図をすぐ開けるように保存） ---
   bookmarks: [],                       // [{ id, token, ownerUid, chartId, label, addedAt }]
   setBookmarks: (bookmarks) => set({ bookmarks }),
-  removeBookmarkAction: async (id) => {
+  removeBookmarkAction: (id) => {
     const { user, bookmarks } = get()
     if (!user) return
-    const prev = bookmarks
-    set({ bookmarks: bookmarks.filter((b) => b.id !== id) })
-    try {
-      await removeBookmark(user.uid, id)
-    } catch (e) {
-      console.error('removeBookmark failed', e)
-      set({ bookmarks: prev })
-    }
+    const bookmark = bookmarks.find((b) => b.id === id)
+    if (!bookmark) return
+    get().showConfirm(
+      `「${bookmark.label || '無題'}」のブックマークを削除します。よろしいですか？`,
+      async () => {
+        get().closeConfirm()
+        const prev = get().bookmarks
+        set({ bookmarks: prev.filter((b) => b.id !== id) })
+        try {
+          await removeBookmark(user.uid, id)
+        } catch (e) {
+          console.error('removeBookmark failed', e)
+          set({ bookmarks: prev })
+        }
+      }
+    )
   },
 
   // --- Share ---

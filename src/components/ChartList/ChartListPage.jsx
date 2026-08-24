@@ -257,9 +257,19 @@ export default function ChartListPage() {
           ))}
 
           {/* ブックマークした他人の共有組織図 */}
-          {bookmarks.map((b) => (
-            <BookmarkRow key={b.id} bookmark={b} onRemove={() => removeBookmarkAction(b.id)} />
-          ))}
+          {bookmarks.length > 0 && (
+            <>
+              <div style={{
+                textAlign: 'center', color: '#9CA3AF', fontSize: 12, fontWeight: 700,
+                margin: '12px 0 2px',
+              }}>
+                ー ブックマーク ー
+              </div>
+              {bookmarks.map((b) => (
+                <BookmarkRow key={b.id} bookmark={b} onRemove={() => removeBookmarkAction(b.id)} />
+              ))}
+            </>
+          )}
         </div>
         )}
       </div>
