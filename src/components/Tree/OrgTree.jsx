@@ -6,6 +6,7 @@ import {
 import { useStore } from '../../store/useStore.js'
 import { navigateToList } from '../../store/useSync.js'
 import { useAuthUser } from '../../lib/useAuthUser.js'
+import { getBookmark } from '../../lib/firestore.js'
 import { useTreeLayout, NODE_W, collectDescendants, getSlotPos } from './useTreeLayout.js'
 import { buildFilterOptions } from '../../constants/roles.js'
 import { canUseShare, canPrint } from '../../constants/plans.js'
@@ -70,8 +71,27 @@ export default function OrgTree() {
   const charts          = useStore((s) => s.charts)
   const currentChartId  = useStore((s) => s.currentChartId)
   const viewerChartTitle = useStore((s) => s.viewerChartTitle)
+  const viewerOwnerUid  = useStore((s) => s.viewerOwnerUid)
+  const viewerChartId   = useStore((s) => s.viewerChartId)
   const currentChart    = charts.find((c) => c.id === currentChartId)
-  const chartTitle      = isReadOnly ? (viewerChartTitle || '') : (currentChart?.title || '')
+
+  // 自分がこの共有組織図をブックマークしていて、名前を編集していたら、
+  // 実際のタイトルよりそちらの表示名を優先する。
+  const [bookmarkLabel, setBookmarkLabel] = useState(null)
+  useEffect(() => {
+    let cancelled = false
+    async function check() {
+      if (!isReadOnly || !viewerAuthUser || !viewerOwnerUid || !viewerChartId) { setBookmarkLabel(null); return }
+      try {
+        const existing = await getBookmark(viewerAuthUser.uid, viewerOwnerUid, viewerChartId)
+        if (!cancelled) setBookmarkLabel(existing?.label || null)
+      } catch (_) { if (!cancelled) setBookmarkLabel(null) }
+    }
+    check()
+    return () => { cancelled = true }
+  }, [isReadOnly, viewerAuthUser, viewerOwnerUid, viewerChartId])
+
+  const chartTitle = isReadOnly ? (bookmarkLabel || viewerChartTitle || '') : (currentChart?.title || '')
 
   const filterOptions   = buildFilterOptions(roles)
 
