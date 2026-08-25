@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo, useReducer } from 'react'
 import {
-  ArrowLeft, TreeDeciduous, Undo2, Redo2, Link2, Lock, Printer, Palette,
+  ArrowLeft, TreeDeciduous, Undo2, Redo2, Link2, Printer, Palette,
   Trash2, ChevronRight, ChevronDown, Eye, Pencil,
 } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
@@ -586,7 +586,7 @@ export default function OrgTree() {
               <button onClick={handleViewerPrintClick}
                 title={viewerPrintAllowed ? '印刷・PDF出力' : '印刷・PDF出力（プロ）'}
                 style={ICON_BTN}>
-                {viewerPrintAllowed ? <Printer size={16} /> : <Lock size={16} />}
+                <Printer size={16} />
               </button>
               <BookmarkShareButton />
               <div style={{
@@ -634,12 +634,12 @@ export default function OrgTree() {
                 <button onClick={handleShareClick}
                   title={shareAllowed ? '共有リンク' : '共有リンク（プロ）'}
                   style={{ ...ICON_BTN, ...(isShared ? { background: '#ECFDF5', borderColor: '#A7F3D0' } : {}) }}>
-                  {shareAllowed ? <Link2 size={16} /> : <Lock size={16} />}
+                  <Link2 size={16} />
                 </button>
                 <button onClick={handlePrintClick}
                   title={printAllowed ? '印刷・PDF出力' : '印刷・PDF出力（ライト/プロ）'}
                   style={ICON_BTN}>
-                  {printAllowed ? <Printer size={16} /> : <Lock size={16} />}
+                  <Printer size={16} />
                 </button>
                 <span title={isSyncing ? '同期中' : '同期済み'}
                   style={{ width: 10, height: 10, borderRadius: '50%', flexShrink: 0,
