@@ -188,11 +188,6 @@ export async function deleteMember(uid, chartId, memberId) {
   touchChart(uid, chartId)
 }
 
-export async function deleteMembers(uid, chartId, memberIds) {
-  await Promise.all(memberIds.map((id) => deleteDoc(memberDoc(uid, chartId, id))))
-  touchChart(uid, chartId)
-}
-
 export async function restoreMember(uid, chartId, memberId, data) {
   await setDoc(memberDoc(uid, chartId, memberId), {
     ...data,
