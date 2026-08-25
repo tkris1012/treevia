@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import {
-  addMember, updateMember, deleteMember, deleteMembers, restoreMember,
+  addMember, updateMember, deleteMember, restoreMember,
   createChart, createSampleChart, renameChart, deleteChart,
   getSharedChartForCopy, getUserPlan, getChartCount, createChartFromSharedMembers,
   removeBookmark, renameBookmark,
@@ -423,27 +423,71 @@ export const useStore = create((set, get) => ({
     }
   },
 
+  // メンバー削除：配下は消さない方針。
+  // - 子0人：そのまま削除
+  // - 子1人：削除せず、祖父母の直下（削除したメンバーがいた位置）に自動で繰り上げ接続
+  // - 子2人（左右両方）：祖父母側の接続先が1つしか無いため単純な繰り上げができず、削除をブロック
   deleteNode: async (targetId) => {
     const { user, currentChartId, members, pushUndo, setSyncStatus, closeConfirm } = get()
     if (!user || !currentChartId) return
 
-    const descendants = collectDescendants(members, targetId)
-    const allIds = [targetId, ...descendants]
-    const count = descendants.length
+    const target = members[targetId]
+    if (!target) return
+    const memberName = target.name ?? ''
+    const directChildren = Object.values(members).filter((m) => m.parentId === targetId)
 
-    const memberName = members[targetId]?.name ?? ''
+    if (directChildren.length >= 2) {
+      alert(`「${memberName}」には配下が2人（左右両方）いるため削除できません。先に配下を移動または削除してください。`)
+      return
+    }
+
+    if (directChildren.length === 1) {
+      const child = directChildren[0]
+      const newParentId = target.parentId ?? null
+      const newPosition = target.position ?? null
+      get().showConfirm(
+        `「${memberName}」を削除します。配下の「${child.name || ''}」はその上に自動で繰り上がります。よろしいですか？（元に戻すで復活可能）`,
+        async () => {
+          closeConfirm()
+          pushUndo()
+          setSyncStatus('syncing')
+          try {
+            await updateMember(user.uid, currentChartId, child.id, {
+              parentId: newParentId,
+              position: newPosition,
+            })
+            await deleteMember(user.uid, currentChartId, targetId)
+            set((s) => {
+              const next = { ...s.members }
+              delete next[targetId]
+              next[child.id] = { ...next[child.id], parentId: newParentId, position: newPosition }
+              return {
+                members: next,
+                selectedId: s.selectedId === targetId ? null : s.selectedId,
+                panelOpen: s.selectedId === targetId ? false : s.panelOpen,
+              }
+            })
+          } catch (e) {
+            console.error('deleteNode(promote) failed', e)
+          } finally {
+            setSyncStatus('synced')
+          }
+        }
+      )
+      return
+    }
 
     get().showConfirm(
-      `「${memberName}」と配下${count}人を削除します。よろしいですか？（元に戻すで復活可能）`,
+      `「${memberName}」を削除します。よろしいですか？（元に戻すで復活可能）`,
       async () => {
         closeConfirm()
         pushUndo()
         setSyncStatus('syncing')
         try {
-          await deleteMembers(user.uid, currentChartId, allIds)
+          await deleteMember(user.uid, currentChartId, targetId)
           set((s) => {
             const next = { ...s.members }
-            allIds.forEach((id) => delete next[id])
+            delete next[targetId]
             return {
               members: next,
               selectedId: s.selectedId === targetId ? null : s.selectedId,
