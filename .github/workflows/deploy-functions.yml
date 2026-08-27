@@ -31,7 +31,7 @@ jobs:
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Set up gcloud
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@v3
 
       # 実行時サービスアカウント（デフォルトの compute SA）に
       # Secret 読み取りと Firestore 書き込みの権限を付与（冪等）
