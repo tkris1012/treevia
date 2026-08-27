@@ -21,7 +21,7 @@ jobs:
       id-token: write
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       # Workload Identity Federation で Google 認証（鍵ファイル不要）
       - name: Authenticate to Google Cloud
