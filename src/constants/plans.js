@@ -13,7 +13,6 @@ export const FREE_MEMBER_LIMIT = 50   // 無料：組織図あたりのメンバ
 export const LIGHT_MEMBER_LIMIT = 500 // ライト：500人まで（プロは無制限で差別化）
 export const CHART_LIMIT = { free: 1, light: 3, pro: Infinity } // 組織図の数
 export const UNDO_LIMIT = { free: 5, light: 20, pro: 20 }
-export const BOOKMARK_LIMIT = { free: 1, light: 5, pro: Infinity } // 他人の共有組織図をブックマークできる数
 
 // === 機能ごとの利用可否 ======================================
 export function isPaid(plan) {
@@ -33,11 +32,6 @@ export function canRemoveShareBranding(plan) {
 // 組織図の数：無料1・ライト3・プロ無制限
 export function canCreateMoreCharts(plan, currentCount) {
   return currentCount < (CHART_LIMIT[plan] ?? 1)
-}
-
-// 他人の共有組織図のブックマーク数：無料1・ライト5・プロ無制限
-export function canAddMoreBookmarks(plan, currentCount) {
-  return currentCount < (BOOKMARK_LIMIT[plan] ?? 1)
 }
 
 // メンバー追加：無料50人 / ライト500人 / プロ無制限
