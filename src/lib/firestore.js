@@ -373,11 +373,6 @@ export async function getBookmark(uid, ownerUid, chartId) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null
 }
 
-export async function getBookmarkCount(uid) {
-  const s = await getDocs(bookmarksCol(uid))
-  return s.size
-}
-
 export function subscribeBookmarks(uid, callback) {
   const q = query(bookmarksCol(uid), orderBy('addedAt', 'desc'))
   return onSnapshot(

@@ -3,8 +3,7 @@ import { Bookmark, BookmarkCheck, LogIn, X } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { useAuthUser } from '../../lib/useAuthUser.js'
 import { navigateToList } from '../../store/useSync.js'
-import { getBookmark, addBookmark, getUserPlan, getBookmarkCount } from '../../lib/firestore.js'
-import { canAddMoreBookmarks } from '../../constants/plans.js'
+import { getBookmark, addBookmark } from '../../lib/firestore.js'
 
 const ICON_BTN = {
   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -104,12 +103,6 @@ export default function BookmarkShareButton() {
     dismissHint()
     setBusy(true)
     try {
-      const plan = await getUserPlan(authUser.uid)
-      const count = await getBookmarkCount(authUser.uid)
-      if (!canAddMoreBookmarks(plan, count)) {
-        alert('ブックマークできる件数が上限に達しています。プランをアップグレードすると、もっと保存できます。')
-        return
-      }
       const token = new URLSearchParams(window.location.search).get('s')
       await addBookmark(authUser.uid, {
         token, ownerUid: viewerOwnerUid, chartId: viewerChartId, label: viewerChartTitle,
