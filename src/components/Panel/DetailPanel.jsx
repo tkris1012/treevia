@@ -106,7 +106,7 @@ export default function DetailPanel() {
     addNode(selectedId, position)
   }
 
-  // このメンバーを削除（確認ダイアログ経由。子が1人なら繰り上げ、2人いる場合はブロック）
+  // このメンバーを削除（確認ダイアログ経由。既定は繰り上げ、チェックで配下ごと削除も可）
   function handleDeleteMember() {
     if (!selectedId) return
     deleteNode(selectedId)
