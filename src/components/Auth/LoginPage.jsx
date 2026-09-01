@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { signInWithGoogle, signInWithEmail, registerWithEmail, resetPassword } from '../../lib/auth.js'
+import InAppBrowserBanner from '../UI/InAppBrowserBanner.jsx'
 import logoUrl from '../../../CB331C5D-F5CD-452E-BD4F-02F8A307A4C7.png'
 
 function authErrorMessage(code) {
@@ -90,6 +91,8 @@ export default function LoginPage() {
       <div className="p-8 flex flex-col items-center gap-5 w-full max-w-sm mt-[8vh]">
         {/* Logo */}
         <img src={logoUrl} alt="Treevia" className="w-full max-w-[260px] h-auto" />
+
+        <InAppBrowserBanner />
 
         {/* Google */}
         <button
