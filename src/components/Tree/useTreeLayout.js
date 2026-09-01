@@ -160,18 +160,6 @@ export function computeLayout(members, roleFilter = 'ALL', roleRank = {}) {
     }
   })
 
-  // 片側だけの子（兄弟がいない）は、左右どちらのラインかが見た目でも分かるよう
-  // ほんの少しだけ左右にずらす（構造上の列計算には影響させない、見た目だけの微調整）。
-  const SIBLINGLESS_NUDGE = 12
-  ids.forEach((id) => {
-    const pos = positions[id]
-    const m = members[id]
-    if (!pos || !m?.parentId || !childMap[m.parentId]) return
-    const { left, right } = childMap[m.parentId]
-    if (right === id && !left) pos.x += SIBLINGLESS_NUDGE
-    else if (left === id && !right) pos.x -= SIBLINGLESS_NUDGE
-  })
-
   return { positions, childMap, roots, hiddenChildrenMap }
 }
 
