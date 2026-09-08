@@ -9,9 +9,9 @@ export const PLANS = {
 export const PLAN_ORDER = ['free', 'light', 'pro']
 
 // 制限値
-export const FREE_MEMBER_LIMIT = 50   // 無料：組織図あたりのメンバー上限
+export const FREE_MEMBER_LIMIT = 100  // 無料：組織図あたりのメンバー上限
 export const LIGHT_MEMBER_LIMIT = 500 // ライト：500人まで（プロは無制限で差別化）
-export const CHART_LIMIT = { free: 1, light: 3, pro: Infinity } // 組織図の数
+export const CHART_LIMIT = { free: 1, light: 5, pro: Infinity } // 組織図の数
 export const UNDO_LIMIT = { free: 5, light: 20, pro: 20 }
 
 // === 機能ごとの利用可否 ======================================
@@ -29,12 +29,12 @@ export function canRemoveShareBranding(plan) {
   return plan === 'pro'
 }
 
-// 組織図の数：無料1・ライト3・プロ無制限
+// 組織図の数：無料1・ライト5・プロ無制限
 export function canCreateMoreCharts(plan, currentCount) {
   return currentCount < (CHART_LIMIT[plan] ?? 1)
 }
 
-// メンバー追加：無料50人 / ライト500人 / プロ無制限
+// メンバー追加：無料100人 / ライト500人 / プロ無制限
 export function canAddMoreMembers(plan, currentCount) {
   if (plan === 'free') return currentCount < FREE_MEMBER_LIMIT
   if (plan === 'light') return currentCount < LIGHT_MEMBER_LIMIT
