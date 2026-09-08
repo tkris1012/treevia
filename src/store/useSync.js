@@ -18,6 +18,7 @@ import {
 } from '../lib/firestore.js'
 import { recordAccount } from '../lib/auth.js'
 import { DEFAULT_ROLES } from '../constants/roles.js'
+import { FREE_MEMBER_LIMIT } from '../constants/plans.js'
 
 function readURL() {
   const params = new URLSearchParams(window.location.search)
@@ -144,7 +145,7 @@ export function useSync() {
             } else if (res?.reason === 'chart_limit') {
               alert('無料プランで持てる組織図は1つまでです。プランをアップグレードすると、もっと作成・複製できます。')
             } else if (res?.reason === 'too_many') {
-              alert(`この組織図はメンバーが${res.total}人います。無料プランは50人までです。ライト以上のプランにアップグレードすると取り込めます。`)
+              alert(`この組織図はメンバーが${res.total}人います。無料プランは${FREE_MEMBER_LIMIT}人までです。ライト以上のプランにアップグレードすると取り込めます。`)
             } else if (res?.reason === 'not_allowed') {
               alert('この組織図は複製が許可されていないか、共有が終了しています。')
             } else {

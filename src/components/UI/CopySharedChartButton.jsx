@@ -3,6 +3,7 @@ import { Copy } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { auth } from '../../lib/firebase.js'
 import { navigateToChart, navigateToList } from '../../store/useSync.js'
+import { FREE_MEMBER_LIMIT } from '../../constants/plans.js'
 
 // 複製待ちトークンの退避先（未ログイン→ログイン後に複製を再開するため）
 export const PENDING_COPY_KEY = 'treevia_pending_copy'
@@ -19,7 +20,7 @@ export function handleImportResult(res, setPostCopyPrompt) {
       alert('無料プランで持てる組織図は1つまでです。プランをアップグレードすると、もっと作成・複製できます。')
       break
     case 'too_many':
-      alert(`この組織図はメンバーが${res.total}人います。無料プランは50人までです。ライト以上のプランにアップグレードすると取り込めます。`)
+      alert(`この組織図はメンバーが${res.total}人います。無料プランは${FREE_MEMBER_LIMIT}人までです。ライト以上のプランにアップグレードすると取り込めます。`)
       break
     case 'not_allowed':
       alert('この組織図は複製が許可されていないか、共有が終了しています。')
