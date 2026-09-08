@@ -548,7 +548,7 @@ export default function OrgTree() {
     >
       {/* ツールバー（左下） — 閲覧モードでは非表示 */}
       {!isReadOnly && (
-        <div style={{ position: 'absolute', bottom: 16, left: 16, zIndex: 10 }}>
+        <div style={{ position: 'absolute', bottom: 'max(16px, env(safe-area-inset-bottom))', left: 16, zIndex: 10 }}>
           <button
             onClick={addRootNode}
             style={{
@@ -565,24 +565,24 @@ export default function OrgTree() {
       {/* トップバー（全幅。縦画面でも重ならない） */}
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
-        padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: 8,
+        padding: 'max(10px, env(safe-area-inset-top)) 12px 10px', display: 'flex', flexDirection: 'column', gap: 8,
         pointerEvents: 'none',
       }}>
         {isReadOnly ? (
           <>
             {/* 1段目：戻る・タイトル・ブックマーク・閲覧モード表示 */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               {viewerAuthUser && (
                 <button onClick={navigateToList} title="一覧へ戻る"
                   style={ICON_BTN}><ArrowLeft size={17} /></button>
               )}
               {chartTitle ? (
                 <div style={{
-                  ...BAR_CHIP, flex: 1, minWidth: 0,
+                  ...BAR_CHIP, flex: 1, minWidth: 120,
                   display: 'flex', alignItems: 'center', gap: 6,
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 }}><TreeDeciduous size={15} style={{ flexShrink: 0, color: '#15A24A' }} /> {chartTitle}</div>
-              ) : <div style={{ flex: 1 }} />}
+              ) : <div style={{ flex: 1, minWidth: 40 }} />}
               <button onClick={handleViewerPrintClick}
                 title={viewerPrintAllowed ? '印刷・PDF出力' : '印刷・PDF出力（プロ）'}
                 style={ICON_BTN}>
@@ -606,14 +606,14 @@ export default function OrgTree() {
         ) : (
           <>
             {/* 1段目：戻る＋タイトル ｜ 操作 */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               <button onClick={navigateToList} title="一覧へ戻る"
                 style={ICON_BTN}><ArrowLeft size={17} /></button>
               <button
                 onClick={() => setRenameOpen(true)}
                 title="タイトルを編集"
                 style={{
-                  ...BAR_CHIP, flex: 1, minWidth: 0,
+                  ...BAR_CHIP, flex: 1, minWidth: 120,
                   display: 'flex', alignItems: 'center', gap: 6,
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                   cursor: 'pointer', textAlign: 'left', pointerEvents: 'auto',
@@ -660,7 +660,7 @@ export default function OrgTree() {
       <button
         onClick={fitView}
         style={{
-          position: 'absolute', bottom: 16, right: 16, zIndex: 10,
+          position: 'absolute', bottom: 'max(16px, env(safe-area-inset-bottom))', right: 16, zIndex: 10,
           background: 'white', border: '1px solid #D1D5DB', borderRadius: 8,
           padding: '6px 12px', fontSize: 13, color: '#374151', cursor: 'pointer',
           boxShadow: '0 1px 4px rgba(0,0,0,.12)',
