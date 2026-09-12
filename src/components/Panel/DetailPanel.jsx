@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { X, Camera, Trash2 } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { getRoleStyle, roleStyleFromColor } from '../../constants/roles.js'
-import { resizeToBase64 } from '../../lib/imageUtils.js'
+import PhotoCropModal from '../UI/PhotoCropModal.jsx'
 
 export default function DetailPanel() {
   const selectedId = useStore((s) => s.selectedId)
@@ -30,7 +30,7 @@ export default function DetailPanel() {
   const [photo, setPhoto] = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
   const [saving, setSaving] = useState(false)
-  const [photoLoading, setPhotoLoading] = useState(false)
+  const [cropSrc, setCropSrc] = useState(null) // クロップ待ちの選択画像（object URL）
 
   const fileInputRef = useRef(null)
   const nameInputRef = useRef(null)
@@ -63,19 +63,23 @@ export default function DetailPanel() {
 
   const style = getRoleStyle(role, roles)
 
-  async function handlePhotoChange(e) {
+  function handlePhotoChange(e) {
     const file = e.target.files?.[0]
+    e.target.value = '' // 同じファイルを選び直しても onChange が発火するようにリセット
     if (!file) return
-    setPhotoLoading(true)
-    try {
-      const base64 = await resizeToBase64(file)
-      setPhoto(base64)
-      setPhotoPreview(base64)
-    } catch {
-      alert('写真の処理に失敗しました')
-    } finally {
-      setPhotoLoading(false)
-    }
+    setCropSrc(URL.createObjectURL(file))
+  }
+
+  function handleCropCancel() {
+    if (cropSrc) URL.revokeObjectURL(cropSrc)
+    setCropSrc(null)
+  }
+
+  function handleCropConfirm(base64) {
+    setPhoto(base64)
+    setPhotoPreview(base64)
+    if (cropSrc) URL.revokeObjectURL(cropSrc)
+    setCropSrc(null)
   }
 
   function handleRemovePhoto() {
@@ -156,9 +160,7 @@ export default function DetailPanel() {
               onClick={() => fileInputRef.current?.click()}
               title="クリックして写真を選択"
             >
-              {photoLoading ? (
-                <div style={{ fontSize: 12, color: '#9CA3AF' }}>処理中...</div>
-              ) : photoPreview ? (
+              {photoPreview ? (
                 <img src={photoPreview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
                 <div style={{ textAlign: 'center', fontSize: 12, color: '#9CA3AF' }}>
@@ -321,6 +323,14 @@ export default function DetailPanel() {
           </button>
         </div>
       </div>
+
+      {cropSrc && (
+        <PhotoCropModal
+          imageSrc={cropSrc}
+          onCancel={handleCropCancel}
+          onConfirm={handleCropConfirm}
+        />
+      )}
     </>
   )
 }
