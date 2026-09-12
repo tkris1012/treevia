@@ -161,6 +161,9 @@
     .footer-logo { height: 34px; width: auto; margin-bottom: 12px; }
     .nav .spacer { flex: 1; }
     .nav .btn { padding: 9px 18px; font-size: 14px; }
+    .nav-link { font-size: 14px; font-weight: 700; color: var(--ink); margin-right: 18px; white-space: nowrap; }
+    .nav-link:hover { color: var(--purple); }
+    @media (max-width: 480px) { .nav-link { display: none; } }
     @media (max-width: 480px) { .logo-img { height: 38px; } }
 
     /* ===== Hero ===== */
@@ -237,6 +240,24 @@
     .usecase p { font-size: 13px; color: var(--ink); font-weight: 700; margin: 0 0 8px; }
     .usecase ol { margin: 0; padding-left: 18px; font-size: 13px; color: var(--gray); line-height: 1.7; }
     .usecase li { margin-bottom: 2px; }
+
+    /* ===== Updates（アップデート情報） ===== */
+    .updates-list { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 0; }
+    .update-item {
+      display: flex; gap: 18px; padding: 18px 0;
+      border-bottom: 1px solid var(--line);
+    }
+    .update-item:first-child { padding-top: 0; }
+    .update-item:last-child { border-bottom: none; }
+    .update-date { flex-shrink: 0; width: 96px; font-size: 12.5px; color: var(--gray); font-weight: 700; padding-top: 2px; }
+    .update-body h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .update-body p { font-size: 13.5px; color: var(--gray); line-height: 1.7; }
+    .updates-more { text-align: center; margin-top: 28px; }
+    .updates-more a { font-size: 13.5px; color: var(--purple); font-weight: 700; }
+    @media (max-width: 480px) {
+      .update-item { flex-direction: column; gap: 4px; }
+      .update-date { width: auto; }
+    }
     .feat-visual.img-cover { padding: 0; min-height: auto; border: none; box-shadow: none; background: transparent; }
     .feat-cover { width: 100%; height: 240px; object-fit: cover; border-radius: 14px; display: block;
       box-shadow: 0 10px 30px rgba(0,0,0,0.12); border: 1px solid var(--line); }
@@ -317,6 +338,7 @@
         <img src="logo-full.png" alt="Treevia — つながりが、見える。組織が、育つ。" class="logo-img" />
       </a>
       <div class="spacer"></div>
+      <a href="#updates" class="nav-link">アップデート</a>
       <a class="btn" href="/treevia/?from=lp">無料で始める</a>
     </div>
   </header>
@@ -453,6 +475,40 @@
       </div>
       <div style="text-align:center; margin-top:36px;">
         <a class="btn" href="/treevia/?from=lp">無料で始める</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Updates -->
+  <section class="section" id="updates">
+    <div class="wrap">
+      <div class="eyebrow">アップデート情報</div>
+      <h2 class="title">今も、継続的に改善中です。</h2>
+      <div class="updates-list">
+        <div class="update-item">
+          <div class="update-date">2026.09.12</div>
+          <div class="update-body">
+            <h4>メンバー写真の切り取り機能を追加</h4>
+            <p>写真を選んだ後、ドラッグ・ズームで好きな位置に切り取れるようになりました。</p>
+          </div>
+        </div>
+        <div class="update-item">
+          <div class="update-date">2026.09.08</div>
+          <div class="update-body">
+            <h4>無料・ライトプランを増量</h4>
+            <p>無料プランはメンバー100人まで、ライトプランは組織図5つまで作成できるようになりました。</p>
+          </div>
+        </div>
+        <div class="update-item">
+          <div class="update-date">2026.08.23</div>
+          <div class="update-body">
+            <h4>他人の共有組織図をブックマーク</h4>
+            <p>複数チームの共有リンクをブックマークして、一覧からすぐ開けるようになりました。</p>
+          </div>
+        </div>
+      </div>
+      <div class="updates-more">
+        <a href="./updates.html">更新履歴をすべて見る →</a>
       </div>
     </div>
   </section>
