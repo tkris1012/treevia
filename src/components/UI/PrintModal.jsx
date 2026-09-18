@@ -3,9 +3,26 @@ import { Printer, X, AlertTriangle } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { computeLayout, NODE_W, NODE_H } from '../../components/Tree/useTreeLayout.js'
 import TreeNode from '../../components/Tree/TreeNode.jsx'
-import { estimatePages, generateChartPdf } from '../../lib/printChart.js'
+import {
+  estimatePages, generateChartPdf, posterGrid, pageContentMM,
+  DEFAULT_MAX_TILES, MAX_TILES_LIMIT,
+} from '../../lib/printChart.js'
 
 const PAD = 48 // 図の周囲の余白(px)
+const PREVIEW_MAX = 260 // プレビューの最大辺(px)
+
+// 指定メンバー以下（本人+子孫）だけを抜き出す
+function collectSubtree(all, rootId) {
+  const result = { [rootId]: all[rootId] }
+  const queue = [rootId]
+  while (queue.length) {
+    const id = queue.shift()
+    Object.values(all).forEach((m) => {
+      if (m.parentId === id) { result[m.id] = m; queue.push(m.id) }
+    })
+  }
+  return result
+}
 
 export default function PrintModal({ onClose, title }) {
   const members = useStore((s) => s.members)
@@ -16,16 +33,40 @@ export default function PrintModal({ onClose, title }) {
   const [mode, setMode] = useState('poster')        // 'fit' | 'poster'
   const [paper, setPaper] = useState('a4')           // 'a4' | 'a3'
   const [orientation, setOrientation] = useState('landscape') // 'portrait' | 'landscape'
+  const [maxTiles, setMaxTiles] = useState(DEFAULT_MAX_TILES)
+  const [scopeId, setScopeId] = useState('')         // '' = 全体
   const [busy, setBusy] = useState(false)
 
   const printRef = useRef(null)
 
+  // 印刷範囲の選択肢（ツリー順・インデント付き）
+  const memberOptions = useMemo(() => {
+    const list = []
+    const roots = Object.values(members).filter((m) => !m.parentId || !members[m.parentId])
+    function walk(id, depth) {
+      const m = members[id]
+      if (!m) return
+      list.push({ id, name: m.name || '（名前なし）', depth })
+      Object.values(members)
+        .filter((c) => c.parentId === id)
+        .forEach((c) => walk(c.id, depth + 1))
+    }
+    roots.forEach((r) => walk(r.id, 0))
+    return list
+  }, [members])
+
+  // 選択範囲だけに絞ったメンバー（全体印刷なら members のまま）
+  const scopedMembers = useMemo(() => {
+    if (!scopeId || !members[scopeId]) return members
+    return collectSubtree(members, scopeId)
+  }, [members, scopeId])
+
   // 折りたたみを全部展開した全体レイアウト
   const expanded = useMemo(() => {
     const r = {}
-    Object.keys(members).forEach((id) => { r[id] = { ...members[id], collapsed: false } })
+    Object.keys(scopedMembers).forEach((id) => { r[id] = { ...scopedMembers[id], collapsed: false } })
     return r
-  }, [members])
+  }, [scopedMembers])
 
   const { positions, childMap } = useMemo(
     () => computeLayout(expanded, 'ALL', {}),
@@ -71,19 +112,31 @@ export default function PrintModal({ onClose, title }) {
     return lines
   }, [expanded, positions, childMap, ox, oy])
 
-  const memberCount = Object.keys(members).length
-  const pages = contentW ? estimatePages(contentW, contentH, { mode, paper, orientation }) : 0
+  const memberCount = Object.keys(scopedMembers).length
+  const pages = contentW ? estimatePages(contentW, contentH, { mode, paper, orientation, maxTiles }) : 0
+
+  // プレビュー用のポスター分割グリッド
+  const { innerW, innerH } = pageContentMM(paper, orientation)
+  const grid = (mode === 'poster' && contentW)
+    ? posterGrid(contentW, contentH, innerW, innerH, maxTiles)
+    : null
+
+  const previewScale = contentW ? Math.min(PREVIEW_MAX / contentW, PREVIEW_MAX / contentH, 1) : 1
+  const previewW = contentW * previewScale
+  const previewH = contentH * previewScale
 
   async function handleGenerate() {
     if (busy || !printRef.current || !contentW) return
     setBusy(true)
     try {
+      const scopeName = scopeId ? scopedMembers[scopeId]?.name : null
+      const fileName = scopeName ? `${chartTitle}（${scopeName}以下）.pdf` : `${chartTitle}.pdf`
       await generateChartPdf({
         element: printRef.current,
         contentWidth: contentW,
         contentHeight: contentH,
-        options: { mode, paper, orientation },
-        fileName: `${chartTitle}.pdf`,
+        options: { mode, paper, orientation, maxTiles },
+        fileName,
       })
       onClose()
     } catch (e) {
@@ -95,7 +148,7 @@ export default function PrintModal({ onClose, title }) {
   }
 
   function isRoot(m) {
-    return !m.parentId || !members[m.parentId]
+    return !m.parentId || !scopedMembers[m.parentId]
   }
 
   return (
@@ -104,7 +157,8 @@ export default function PrintModal({ onClose, title }) {
       <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.4)', zIndex: 50 }} />
       <div style={{
         position: 'fixed', top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
-        width: 'min(440px, 92vw)', background: 'white', borderRadius: 12,
+        width: 'min(460px, 92vw)', maxHeight: '90vh', overflowY: 'auto',
+        background: 'white', borderRadius: 12,
         boxShadow: '0 20px 60px rgba(0,0,0,0.30)', zIndex: 51, padding: 24,
         display: 'flex', flexDirection: 'column', gap: 16,
       }}>
@@ -114,6 +168,24 @@ export default function PrintModal({ onClose, title }) {
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', padding: 0, display: 'flex' }}><X size={20} /></button>
         </div>
+
+        {/* 印刷範囲 */}
+        <Field label="印刷範囲">
+          <select
+            value={scopeId}
+            onChange={(e) => setScopeId(e.target.value)}
+            style={{
+              width: '100%', padding: '8px 10px', borderRadius: 8,
+              border: '1px solid #D1D5DB', fontSize: 13, color: '#374151',
+              background: 'white', cursor: 'pointer', boxSizing: 'border-box',
+            }}
+          >
+            <option value="">全体を印刷</option>
+            {memberOptions.map((o) => (
+              <option key={o.id} value={o.id}>{'　'.repeat(o.depth)}{o.name}（配下含む）</option>
+            ))}
+          </select>
+        </Field>
 
         {/* 出力方法 */}
         <Field label="出力方法">
@@ -137,6 +209,69 @@ export default function PrintModal({ onClose, title }) {
           </Field>
         </div>
 
+        {/* 分割枚数の調整（ポスター分割のときのみ） */}
+        {mode === 'poster' && (
+          <Field label={`分割の目安：最大${maxTiles}枚（＋全体図1枚）`}>
+            <input
+              type="range"
+              min={1}
+              max={MAX_TILES_LIMIT}
+              step={1}
+              value={maxTiles}
+              onChange={(e) => setMaxTiles(Number(e.target.value))}
+              style={{ width: '100%' }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, color: '#9CA3AF', marginTop: 2 }}>
+              <span>少なく・大きめ</span>
+              <span>多く・詳細</span>
+            </div>
+          </Field>
+        )}
+
+        {/* プレビュー */}
+        {contentW > 0 && (
+          <div style={{
+            display: 'flex', justifyContent: 'center', padding: 10,
+            background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 8,
+          }}>
+            <svg width={previewW} height={previewH} style={{ background: 'white', border: '1px solid #E5E7EB', borderRadius: 4, overflow: 'visible' }}>
+              <g transform={`scale(${previewScale})`}>
+                {edges.map((e) => (
+                  <path key={e.id} d={e.d} stroke="#D1D5DB" strokeWidth={5} fill="none" vectorEffect="non-scaling-stroke" />
+                ))}
+                {Object.keys(positions).map((id) => {
+                  const p = positions[id]
+                  return (
+                    <rect
+                      key={id}
+                      x={p.x + ox} y={p.y + oy} width={NODE_W} height={NODE_H}
+                      rx={8} fill="#EDE9FE" stroke="#C4B5FD" strokeWidth={2}
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  )
+                })}
+              </g>
+              {mode === 'poster' && grid && Array.from({ length: grid.rows }).map((_, r) => (
+                Array.from({ length: grid.cols }).map((_, c) => {
+                  const x = c * grid.tilePxW * previewScale
+                  const y = r * grid.tilePxH * previewScale
+                  const w = Math.min(grid.tilePxW, contentW - c * grid.tilePxW) * previewScale
+                  const h = Math.min(grid.tilePxH, contentH - r * grid.tilePxH) * previewScale
+                  if (w <= 0 || h <= 0) return null
+                  return (
+                    <g key={`${r}-${c}`}>
+                      <rect x={x} y={y} width={w} height={h} fill="none" stroke="#7C3AED" strokeWidth={1.5} strokeDasharray="4 3" />
+                      <text x={x + 4} y={y + 13} fontSize={11} fill="#7C3AED" fontWeight="700">
+                        {String.fromCharCode(65 + c)}-{r + 1}
+                      </text>
+                    </g>
+                  )
+                })
+              ))}
+            </svg>
+          </div>
+        )}
+
         {/* 見積り */}
         <div style={{
           fontSize: 13, color: '#374151', background: '#F9FAFB',
@@ -148,7 +283,7 @@ export default function PrintModal({ onClose, title }) {
           )}
           {mode === 'poster' && pages > 30 && (
             <div style={{ color: '#B45309', marginTop: 4, display: 'flex', alignItems: 'flex-start', gap: 5 }}>
-              <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} /> ページが多めです。A3や「1枚に収める」も検討してください。
+              <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} /> ページが多めです。A3や「1枚に収める」、分割枚数を減らすのも検討してください。
             </div>
           )}
         </div>
@@ -189,7 +324,7 @@ export default function PrintModal({ onClose, title }) {
         </svg>
         {Object.keys(positions).map((id) => {
           const p = positions[id]
-          const m = members[id]
+          const m = scopedMembers[id]
           if (!m) return null
           return (
             <div key={id} style={{ position: 'absolute', left: p.x + ox, top: p.y + oy, width: NODE_W }}>

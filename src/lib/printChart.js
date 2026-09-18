@@ -12,20 +12,21 @@ const PAPER_MM = {
 }
 
 // 用紙の「中身を置ける領域」(mm)を向き込みで返す
-function pageContentMM(paper, orientation) {
+export function pageContentMM(paper, orientation) {
   const base = PAPER_MM[paper] || PAPER_MM.a4
   const w = orientation === 'landscape' ? base.h : base.w
   const h = orientation === 'landscape' ? base.w : base.h
   return { pageW: w, pageH: h, innerW: w - MARGIN_MM * 2, innerH: h - MARGIN_MM * 2 }
 }
 
-// ポスター分割のタイル数上限（全体図1枚を足して合計はこれ+1ページ）
-const MAX_POSTER_TILES = 9
+// ポスター分割のタイル数（デフォルト値・調整可能な範囲）
+export const DEFAULT_MAX_TILES = 9
+export const MAX_TILES_LIMIT = 30
 
 // ポスター分割のグリッドを計算。
-// f は「原寸(96dpi)に対する縮小率」。ページ数が MAX_POSTER_TILES を超える場合は
+// f は「原寸(96dpi)に対する縮小率」。ページ数が maxTiles を超える場合は
 // f を下げて（全体を縮小して）タイル数を上限内に収める。小さい図は f=1（原寸）。
-function posterGrid(contentW, contentH, innerW, innerH, maxTiles = MAX_POSTER_TILES) {
+export function posterGrid(contentW, contentH, innerW, innerH, maxTiles = DEFAULT_MAX_TILES) {
   for (let f = 1.0; f >= 0.1 - 1e-9; f -= 0.02) {
     const tilePxW = innerW / (PX_TO_MM * f)
     const tilePxH = innerH / (PX_TO_MM * f)
@@ -47,10 +48,10 @@ function posterGrid(contentW, contentH, innerW, innerH, maxTiles = MAX_POSTER_TI
 
 // 生成前の枚数見積り（プレビュー表示用）
 export function estimatePages(contentW, contentH, options) {
-  const { mode = 'poster', paper = 'a4', orientation = 'landscape' } = options
+  const { mode = 'poster', paper = 'a4', orientation = 'landscape', maxTiles = DEFAULT_MAX_TILES } = options
   if (mode === 'fit') return 1
   const { innerW, innerH } = pageContentMM(paper, orientation)
-  const { cols, rows } = posterGrid(contentW, contentH, innerW, innerH)
+  const { cols, rows } = posterGrid(contentW, contentH, innerW, innerH, maxTiles)
   return cols * rows + 1 // +1 = 全体図ページ
 }
 
@@ -96,7 +97,7 @@ function sliceDataURL(master, sx, sy, sw, sh) {
 
 // element（全体サイズで描画済みの非表示DOM）から PDF を生成して保存する。
 export async function generateChartPdf({ element, contentWidth, contentHeight, options, fileName }) {
-  const { mode = 'poster', paper = 'a4', orientation = 'landscape' } = options
+  const { mode = 'poster', paper = 'a4', orientation = 'landscape', maxTiles = DEFAULT_MAX_TILES } = options
   // 重いライブラリは実行時に読み込む
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
     import('html2canvas'),
@@ -121,7 +122,7 @@ export async function generateChartPdf({ element, contentWidth, contentHeight, o
   }
 
   // ポスター分割（ページ数上限に収まるよう全体を自動縮小：係数 f）
-  const { f, cols, rows, tilePxW, tilePxH } = posterGrid(contentWidth, contentHeight, innerW, innerH)
+  const { f, cols, rows, tilePxW, tilePxH } = posterGrid(contentWidth, contentHeight, innerW, innerH, maxTiles)
 
   // 1ページ目：全体図（升目と番号つき）
   const overview = sliceDataURL(master, 0, 0, master.width, master.height)
