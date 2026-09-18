@@ -204,9 +204,11 @@ export default function OrgTree() {
   }, [])
 
   // ── iOS Safari の慣性スワイプを防ぐ（passive: false の native touchmove）─
-  // React の onTouchMove は passive なので preventDefault が効かない
+  // React の onTouchMove は passive なので preventDefault が効かない。
+  // パン操作面のSVGにだけ付ける（コンテナ全体だとモーダル内のスライダーや
+  // スクロールまで潰れる）
   useEffect(() => {
-    const el = containerRef.current
+    const el = svgRef.current
     if (!el) return
     const onTouchMove = (e) => { e.preventDefault() }
     el.addEventListener('touchmove', onTouchMove, { passive: false })
