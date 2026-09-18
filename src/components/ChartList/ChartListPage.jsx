@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { FolderTree, Palette, TreeDeciduous, Sprout, Pencil, Trash2, Bookmark } from 'lucide-react'
+import { FolderTree, Palette, TreeDeciduous, Pencil, Trash2, Bookmark } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { navigateToChart, navigateToSharedView } from '../../store/useSync.js'
 import { canCreateMoreCharts } from '../../constants/plans.js'
@@ -14,7 +14,6 @@ export default function ChartListPage() {
   const bookmarks = useStore((s) => s.bookmarks)
   const removeBookmarkAction = useStore((s) => s.removeBookmarkAction)
   const createNewChart = useStore((s) => s.createNewChart)
-  const createSampleChart = useStore((s) => s.createSampleChart)
   const deleteChartById = useStore((s) => s.deleteChartById)
   const plan = useStore((s) => s.plan)
   const showUpgrade = useStore((s) => s.showUpgrade)
@@ -25,26 +24,13 @@ export default function ChartListPage() {
   const [renameTarget, setRenameTarget] = useState(null) // { id, title }
   const [renameBookmarkTarget, setRenameBookmarkTarget] = useState(null) // { id, label }
   const [menuOpenId, setMenuOpenId] = useState(null)
-  const [sampleBusy, setSampleBusy] = useState(false)
 
-  // サンプル組織図は無料枠のカウント対象外（オンボーディングで枠を使い切らないように）
+  // サンプル組織図（過去に作成されたもの）は無料枠のカウント対象外
   const ownedCount = charts.filter((c) => !c.isSample).length
 
   function handleNewClick() {
     if (canCreateMoreCharts(plan, ownedCount)) setCreateOpen(true)
     else showUpgrade('charts')
-  }
-
-  async function handleSampleClick() {
-    if (sampleBusy) return
-    if (!canCreateMoreCharts(plan, ownedCount)) { showUpgrade('charts'); return }
-    setSampleBusy(true)
-    try {
-      const id = await createSampleChart()
-      if (id) navigateToChart(id)
-    } finally {
-      setSampleBusy(false)
-    }
   }
 
   async function handleCreate(title) {
@@ -119,32 +105,19 @@ export default function ChartListPage() {
             </div>
             <div style={{ fontSize: 14, color: '#6B7280', marginTop: 10, lineHeight: 1.7 }}>
               バイナリーの組織図を、左右ツリーでかんたんに作成・共有。<br />
-              まずはサンプルを開いて、操作感を見てみましょう。
+              さっそく組織図を作ってみましょう。
             </div>
             <div style={{
               display: 'flex', flexDirection: 'column', gap: 10,
               marginTop: 24, maxWidth: 320, marginLeft: 'auto', marginRight: 'auto',
             }}>
               <button
-                onClick={handleSampleClick}
-                disabled={sampleBusy}
+                onClick={handleNewClick}
                 style={{
                   padding: '13px', borderRadius: 10, border: 'none',
                   background: '#7C3AED', color: 'white',
                   fontSize: 15, fontWeight: 700, cursor: 'pointer',
-                  opacity: sampleBusy ? 0.7 : 1,
                   boxShadow: '0 2px 8px rgba(124,58,237,0.35)',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
-                }}
-              >
-                {sampleBusy ? '作成中...' : (<><Sprout size={18} /> サンプル組織図を見る</>)}
-              </button>
-              <button
-                onClick={handleNewClick}
-                style={{
-                  padding: '13px', borderRadius: 10,
-                  border: '1px solid #D1D5DB', background: 'white',
-                  fontSize: 15, fontWeight: 600, color: '#374151', cursor: 'pointer',
                 }}
               >
                 ＋ 自分の組織を作る
