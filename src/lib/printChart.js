@@ -1,8 +1,8 @@
 // html2canvas / jsPDF は重いので、印刷実行時に動的import（初期バンドルを軽く保つ）
 
 // CSS px ↔ mm（96dpi 基準）
-const PX_TO_MM = 25.4 / 96
-const MARGIN_MM = 8 // 各ページの余白
+export const PX_TO_MM = 25.4 / 96
+export const MARGIN_MM = 8 // 各ページの余白
 const CAPTURE_SCALE = 2 // 目標キャプチャ解像度（実際は上限内に自動調整）
 const JPEG_QUALITY = 0.85 // PDF埋め込み画像はJPEGで軽量化
 

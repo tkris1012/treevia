@@ -5,11 +5,11 @@ import { computeLayout, NODE_W, NODE_H } from '../../components/Tree/useTreeLayo
 import TreeNode from '../../components/Tree/TreeNode.jsx'
 import {
   estimatePages, generateChartPdf, posterGrid, pageContentMM,
-  DEFAULT_MAX_TILES, MAX_TILES_LIMIT,
+  DEFAULT_MAX_TILES, MAX_TILES_LIMIT, PX_TO_MM, MARGIN_MM,
 } from '../../lib/printChart.js'
 
 const PAD = 48 // 図の周囲の余白(px)
-const PREVIEW_MAX = 260 // プレビューの最大辺(px)
+const PREVIEW_MAX = 300 // プレビュー全体（用紙の組み合わせ）の最大辺(px)
 
 // 指定メンバー以下（本人+子孫）だけを抜き出す
 function collectSubtree(all, rootId) {
@@ -115,15 +115,29 @@ export default function PrintModal({ onClose, title }) {
   const memberCount = Object.keys(scopedMembers).length
   const pages = contentW ? estimatePages(contentW, contentH, { mode, paper, orientation, maxTiles }) : 0
 
-  // プレビュー用のポスター分割グリッド
-  const { innerW, innerH } = pageContentMM(paper, orientation)
+  // 実寸(mm)ベースで用紙・向き・分割枚数を反映したプレビューを計算
+  const { pageW, pageH, innerW, innerH } = pageContentMM(paper, orientation)
   const grid = (mode === 'poster' && contentW)
     ? posterGrid(contentW, contentH, innerW, innerH, maxTiles)
     : null
 
-  const previewScale = contentW ? Math.min(PREVIEW_MAX / contentW, PREVIEW_MAX / contentH, 1) : 1
-  const previewW = contentW * previewScale
-  const previewH = contentH * previewScale
+  // 1枚に収めるモード：中央寄せの縮尺（generateChartPdf の fit と同じ計算式）
+  const fitScale = contentW
+    ? Math.min(innerW / (contentW * PX_TO_MM), innerH / (contentH * PX_TO_MM))
+    : 1
+  const fitContent = (mode === 'fit' && contentW) ? {
+    wmm: contentW * PX_TO_MM * fitScale,
+    hmm: contentH * PX_TO_MM * fitScale,
+    xmm: (pageW - contentW * PX_TO_MM * fitScale) / 2,
+    ymm: (pageH - contentH * PX_TO_MM * fitScale) / 2,
+  } : null
+
+  // 用紙の組み合わせ全体（アセンブリ）の実寸(mm)とプレビュー縮尺
+  const assemblyWmm = mode === 'poster' && grid ? grid.cols * pageW : pageW
+  const assemblyHmm = mode === 'poster' && grid ? grid.rows * pageH : pageH
+  const mmToPx = contentW ? Math.min(PREVIEW_MAX / assemblyWmm, PREVIEW_MAX / assemblyHmm) : 1
+  const previewW = assemblyWmm * mmToPx
+  const previewH = assemblyHmm * mmToPx
 
   async function handleGenerate() {
     if (busy || !printRef.current || !contentW) return
@@ -228,40 +242,73 @@ export default function PrintModal({ onClose, title }) {
           </Field>
         )}
 
-        {/* プレビュー */}
+        {/* プレビュー（用紙サイズ・向き・枚数を実寸ベースで反映） */}
         {contentW > 0 && (
           <div style={{
             display: 'flex', justifyContent: 'center', padding: 10,
             background: '#F9FAFB', border: '1px solid #E5E7EB', borderRadius: 8,
           }}>
-            <svg width={previewW} height={previewH} style={{ background: 'white', border: '1px solid #E5E7EB', borderRadius: 4, overflow: 'visible' }}>
-              <g transform={`scale(${previewScale})`}>
-                {edges.map((e) => (
-                  <path key={e.id} d={e.d} stroke="#D1D5DB" strokeWidth={5} fill="none" vectorEffect="non-scaling-stroke" />
-                ))}
-                {Object.keys(positions).map((id) => {
-                  const p = positions[id]
-                  return (
-                    <rect
-                      key={id}
-                      x={p.x + ox} y={p.y + oy} width={NODE_W} height={NODE_H}
-                      rx={8} fill="#EDE9FE" stroke="#C4B5FD" strokeWidth={2}
-                      vectorEffect="non-scaling-stroke"
-                    />
-                  )
-                })}
-              </g>
+            <svg width={previewW} height={previewH} style={{ background: '#E5E7EB', borderRadius: 4, overflow: 'visible' }}>
+              {mode === 'fit' && fitContent && (
+                <>
+                  <rect x={0} y={0} width={previewW} height={previewH} fill="white" stroke="#D1D5DB" strokeWidth={1.5} />
+                  <g transform={`translate(${fitContent.xmm * mmToPx},${fitContent.ymm * mmToPx}) scale(${PX_TO_MM * fitScale * mmToPx})`}>
+                    {edges.map((e) => (
+                      <path key={e.id} d={e.d} stroke="#D1D5DB" strokeWidth={5} fill="none" vectorEffect="non-scaling-stroke" />
+                    ))}
+                    {Object.keys(positions).map((id) => {
+                      const p = positions[id]
+                      return (
+                        <rect
+                          key={id}
+                          x={p.x + ox} y={p.y + oy} width={NODE_W} height={NODE_H}
+                          rx={8} fill="#EDE9FE" stroke="#C4B5FD" strokeWidth={2}
+                          vectorEffect="non-scaling-stroke"
+                        />
+                      )
+                    })}
+                  </g>
+                </>
+              )}
+
               {mode === 'poster' && grid && Array.from({ length: grid.rows }).map((_, r) => (
                 Array.from({ length: grid.cols }).map((_, c) => {
-                  const x = c * grid.tilePxW * previewScale
-                  const y = r * grid.tilePxH * previewScale
-                  const w = Math.min(grid.tilePxW, contentW - c * grid.tilePxW) * previewScale
-                  const h = Math.min(grid.tilePxH, contentH - r * grid.tilePxH) * previewScale
+                  const x = c * grid.tilePxW
+                  const y = r * grid.tilePxH
+                  const w = Math.min(grid.tilePxW, contentW - x)
+                  const h = Math.min(grid.tilePxH, contentH - y)
                   if (w <= 0 || h <= 0) return null
+                  const pageXpx = c * pageW * mmToPx
+                  const pageYpx = r * pageH * mmToPx
+                  const pageWpx = pageW * mmToPx
+                  const pageHpx = pageH * mmToPx
                   return (
                     <g key={`${r}-${c}`}>
-                      <rect x={x} y={y} width={w} height={h} fill="none" stroke="#7C3AED" strokeWidth={1.5} strokeDasharray="4 3" />
-                      <text x={x + 4} y={y + 13} fontSize={11} fill="#7C3AED" fontWeight="700">
+                      {/* ページ1枚分をネスト<svg>のビューポートでクリップ（実際の紙の切れ目を再現） */}
+                      <svg
+                        x={pageXpx} y={pageYpx} width={pageWpx} height={pageHpx}
+                        viewBox={`0 0 ${pageW} ${pageH}`}
+                        style={{ overflow: 'hidden' }}
+                      >
+                        <rect x={0} y={0} width={pageW} height={pageH} fill="white" stroke="#D1D5DB" strokeWidth={0.6} vectorEffect="non-scaling-stroke" />
+                        <g transform={`translate(${MARGIN_MM - x * PX_TO_MM * grid.f},${MARGIN_MM - y * PX_TO_MM * grid.f}) scale(${PX_TO_MM * grid.f})`}>
+                          {edges.map((e) => (
+                            <path key={e.id} d={e.d} stroke="#D1D5DB" strokeWidth={5} fill="none" vectorEffect="non-scaling-stroke" />
+                          ))}
+                          {Object.keys(positions).map((id) => {
+                            const p = positions[id]
+                            return (
+                              <rect
+                                key={id}
+                                x={p.x + ox} y={p.y + oy} width={NODE_W} height={NODE_H}
+                                rx={8} fill="#EDE9FE" stroke="#C4B5FD" strokeWidth={2}
+                                vectorEffect="non-scaling-stroke"
+                              />
+                            )
+                          })}
+                        </g>
+                      </svg>
+                      <text x={pageXpx + 4} y={pageYpx + 13} fontSize={11} fill="#7C3AED" fontWeight="700">
                         {String.fromCharCode(65 + c)}-{r + 1}
                       </text>
                     </g>
