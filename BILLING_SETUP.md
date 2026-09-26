@@ -1,6 +1,6 @@
 # 決済セットアップ手順（Stripe Payment Link + Cloud Functions Webhook）
 
-無料 / ライト(¥480) / プロ(¥980) のプラン課金を、Stripe の Payment Link と
+無料 / ライト(¥380) / プロ(¥980) のプラン課金を、Stripe の Payment Link と
 Firebase Cloud Functions の Webhook で実現する。支払いが完了すると Webhook が
 Firestore の `users/{uid}.plan` を書き換え、アプリ側は `onSnapshot` で即反映する。
 
@@ -25,7 +25,7 @@ Firestore の `users/{uid}.plan` を書き換え、アプリ側は `onSnapshot` 
 
 Stripe ダッシュボード（テストモード）→「商品」→「商品を追加」
 
-- **ライトプラン**: 料金 ¥480 / 月（継続）→ 作成後の `price_...` を控える
+- **ライトプラン**: 料金 ¥380 / 月（継続）→ 作成後の `price_...` を控える
 - **プロプラン**: 料金 ¥980 / 月（継続）→ 作成後の `price_...` を控える
 
 ## ステップ 3: Payment Link を作成
@@ -113,6 +113,85 @@ Stripe ダッシュボード →「開発者」→「Webhook」→「エンド�
 3. `PAYMENT_LINKS` を本番 URL に、シークレットを本番キーに差し替えて再ビルド
 4. **`functions/deploy.sh` の `STRIPE_PRICE_LIGHT` / `STRIPE_PRICE_PRO` を本番 price ID に更新**してから
    `bash functions/deploy.sh` を実行（手動コマンドは使わない）
+
+## 運用: 死活監視
+
+Webhook が停止しても、**既存ユーザーの更新課金は Webhook を通らない**ため
+売上は普通に立ち続け、アプリも正常に見える。壊れているのは「新規決済のプラン付与」
+だけなので、監視を入れておかないと気づけない（2026-09 に約4日間気づけなかった）。
+
+```bash
+gcloud services enable monitoring.googleapis.com --project=mlm-org-chart
+
+TOKEN=$(gcloud auth print-access-token) \
+python3 scripts/setup_monitoring.py you@example.com
+```
+
+`stripeWebhook` と `createPortalSession` に5分間隔で GET し、**405 以外**が
+10分続いたらメール通知。何度実行しても既存分は作り直さない。
+
+> 初回のみ、指定アドレスに届く Google Cloud の確認メールのリンクを踏むこと。
+> 踏むまで通知は有効にならない。
+
+あわせて **Stripe 側の Webhook 失敗通知**も有効にしておく
+（Stripe → 開発者 → Webhook → エンドポイント → 通知設定）。
+Stripe の自動リトライは約3日で尽きるため、それまでに気づく必要がある。
+
+## 運用: Stripe と Firestore の定期照合
+
+Stripe の有効サブスクと Firestore の `users/{uid}.plan` がずれていないか照合する。
+月1回程度、または障害復旧後に実行する。**読み取り専用**。
+
+```bash
+SK=$(gcloud secrets versions access latest --secret=STRIPE_SECRET_KEY --project=mlm-org-chart) \
+TOKEN=$(gcloud auth print-access-token) \
+python3 scripts/reconcile.py
+```
+
+検出できるずれ:
+
+| 表示 | 意味 |
+|---|---|
+| `未作成` | 課金されているのに Firestore にユーザーが無い（Webhook 取りこぼし） |
+| `plan=free` | 課金されているのにプランが付いていない |
+| `subIDずれ` | 解約時に `handleSubscriptionEnded` が対象を引けない状態 |
+| `uid不明` | `client_reference_id` 無しで決済された（決済リンクの直接共有など） |
+
+終了コードは 0=全件一致 / 1=要対応あり。
+
+## 取りこぼした決済の救済
+
+照合で要対応が出た場合、**まず Stripe からの再送を試す**。Webhook が正規ルートで
+処理するので、`stripeSubscriptionId` まで正しく入る。
+
+1. 関数が生きているか確認（`405` が返ること）
+   ```bash
+   curl -i https://asia-northeast1-mlm-org-chart.cloudfunctions.net/stripeWebhook
+   ```
+2. Stripe → 開発者 → Webhook → エンドポイント
+   - 失敗が続くと**自動で無効化**されることがある。無効なら再有効化
+   - 「最近の配信」から失敗した `checkout.session.completed` を**再送**
+3. 反映を確認
+   ```bash
+   gcloud functions logs read stripeWebhook \
+     --region=asia-northeast1 --gen2 --project=mlm-org-chart --limit=30
+   ```
+   `プラン更新: <uid> → light` が出れば成功
+
+再送しても解決しない場合のみ、Firestore の `users/{uid}` を手動で更新する
+（`plan` / `stripeCustomerId` / `stripeSubscriptionId` の3つ。`stripeSubscriptionId`
+を入れ忘れると解約時に無料へ戻らなくなる）。必要な値は `reconcile.py` の出力に出る。
+
+## トラブルシュート: Cloud Functions が 500 / 429 を返す
+
+| 症状 | 原因と対処 |
+|---|---|
+| Google Frontend の **500**（HTMLのエラーページ） | リクエストが関数に届いていない。`gcloud billing projects describe mlm-org-chart` で `billingEnabled` を確認。無料トライアル終了で停止しているケースがある |
+| **429** `Rate exceeded.` | Cloud Run がインスタンスを起動できていない。請求を有効化した直後は反映に**30分〜1時間**かかることがあるので、まず時間を置く。ログに `no available instance` が出る |
+| **405** が返る | **正常**。関数は GET を受け付けない設計（`index.js` 冒頭） |
+
+請求停止から復旧したときは、`deploy.sh` での再デプロイが必要になることがある。
+復旧後は必ず `scripts/reconcile.py` で取りこぼしを確認すること。
 
 ## セキュリティ / 課金面のポイント
 
