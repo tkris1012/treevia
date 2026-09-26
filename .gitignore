@@ -11,3 +11,7 @@ Thumbs.db
 functions/node_modules
 functions/.env
 .firebase
+
+# 運用スクリプト (scripts/*.py)
+__pycache__/
+*.pyc
