@@ -21,7 +21,14 @@ import urllib.request
 
 PROJECT = os.environ.get('GCP_PROJECT', 'mlm-org-chart')
 HOST = f'asia-northeast1-{PROJECT}.cloudfunctions.net'
-BASE = f'https://monitoring.googleapis.com/v3/projects/{PROJECT}'
+ROOT = 'https://monitoring.googleapis.com/v3'
+BASE = f'{ROOT}/projects/{PROJECT}'
+
+# 実行回数 = 間隔 × リージョン数 × チェック数。リージョンを絞るのが一番効く。
+# Stripe から届くかを見たいだけなので地理的分散に意味は薄い。
+# ただし API 側の制約で最低3リージョン必要。
+CHECK_PERIOD = '600s'
+CHECK_REGIONS = ['USA', 'EUROPE', 'ASIA_PACIFIC']
 
 FUNCTIONS = [
     ('stripeWebhook', 'Stripe決済の反映。落ちると購入者にプランが付与されない'),
@@ -40,9 +47,9 @@ SILENT_FAILURE_LOGS = [
 ]
 
 
-def api(token, method, path, body=None):
+def request(token, method, url, body=None):
     req = urllib.request.Request(
-        f'{BASE}/{path}',
+        url,
         method=method,
         data=json.dumps(body).encode() if body is not None else None,
     )
@@ -50,6 +57,18 @@ def api(token, method, path, body=None):
     req.add_header('Content-Type', 'application/json')
     with urllib.request.urlopen(req) as r:
         return json.load(r)
+
+
+def api(token, method, path, body=None):
+    return request(token, method, f'{BASE}/{path}', body)
+
+
+def api_resource(token, method, name, body=None, update_mask=None):
+    """リソース名（projects/.../uptimeCheckConfigs/xxx）を直接叩く。"""
+    url = f'{ROOT}/{name}'
+    if update_mask:
+        url += '?updateMask=' + ','.join(update_mask)
+    return request(token, method, url, body)
 
 
 def find_existing(token, path, key, display_name):
@@ -78,7 +97,15 @@ def ensure_uptime_check(token, fn_name):
     display = f'Treevia {fn_name} 稼働監視'
     found = find_existing(token, 'uptimeCheckConfigs', 'uptimeCheckConfigs', display)
     if found:
-        print(f'  稼働チェック[{fn_name}]: 既存を使用')
+        # 作り直すと check_id が変わり、アラートポリシーが古いIDを参照したまま
+        # 無言で機能しなくなる。必ず同じリソースを更新する。
+        if found.get('period') == CHECK_PERIOD and found.get('selectedRegions') == CHECK_REGIONS:
+            print(f'  稼働チェック[{fn_name}]: 既存を使用（変更なし）')
+        else:
+            api_resource(token, 'PATCH', found['name'],
+                         {'period': CHECK_PERIOD, 'selectedRegions': CHECK_REGIONS},
+                         update_mask=['period', 'selectedRegions'])
+            print(f'  稼働チェック[{fn_name}]: 既存を更新（{CHECK_PERIOD} / {len(CHECK_REGIONS)}リージョン）')
         return found['name']
     created = api(token, 'POST', 'uptimeCheckConfigs', {
         'displayName': display,
@@ -95,21 +122,17 @@ def ensure_uptime_check(token, fn_name):
             # 関数は GET に 405 を返すのが正常。2xx ではない点に注意
             'acceptedResponseStatusCodes': [{'statusValue': 405}],
         },
-        'period': '300s',
+        'period': CHECK_PERIOD,
         'timeout': '10s',
+        'selectedRegions': CHECK_REGIONS,
     })
     print(f'  稼働チェック[{fn_name}]: 作成')
     return created['name']
 
 
-def ensure_alert_policy(token, channel, check_names):
-    found = find_existing(token, 'alertPolicies', 'alertPolicies', POLICY_NAME)
-    if found:
-        print(f'  アラートポリシー: 既存あり（更新しません）')
-        return found['name']
-
+def build_uptime_conditions(check_names):
     conditions = []
-    for (fn_name, why), check in zip(FUNCTIONS, check_names):
+    for (fn_name, _why), check in zip(FUNCTIONS, check_names):
         check_id = check.rsplit('/', 1)[-1]
         conditions.append({
             'displayName': f'{fn_name} が応答しない',
@@ -120,7 +143,8 @@ def ensure_alert_policy(token, channel, check_names):
                     f'AND metric.label.check_id="{check_id}"'
                 ),
                 'aggregations': [{
-                    'alignmentPeriod': '300s',
+                    # チェック間隔より短いと、集計窓に結果が入らず誤判定する
+                    'alignmentPeriod': CHECK_PERIOD,
                     'perSeriesAligner': 'ALIGN_NEXT_OLDER',
                     'crossSeriesReducer': 'REDUCE_COUNT_FALSE',
                     'groupByFields': ['resource.label.host'],
@@ -131,6 +155,22 @@ def ensure_alert_policy(token, channel, check_names):
                 'trigger': {'count': 1},
             },
         })
+    return conditions
+
+
+def ensure_alert_policy(token, channel, check_names):
+    conditions = build_uptime_conditions(check_names)
+    found = find_existing(token, 'alertPolicies', 'alertPolicies', POLICY_NAME)
+    if found:
+        current = (found.get('conditions') or [{}])[0].get('conditionThreshold', {})
+        current_align = (current.get('aggregations') or [{}])[0].get('alignmentPeriod')
+        if current_align == CHECK_PERIOD:
+            print('  アラートポリシー: 既存を使用（変更なし）')
+        else:
+            api_resource(token, 'PATCH', found['name'],
+                         {'conditions': conditions}, update_mask=['conditions'])
+            print(f'  アラートポリシー: 集計間隔を更新（{current_align} → {CHECK_PERIOD}）')
+        return found['name']
 
     created = api(token, 'POST', 'alertPolicies', {
         'displayName': POLICY_NAME,
@@ -214,7 +254,9 @@ def main():
     ensure_alert_policy(token, channel, checks)
     ensure_log_alert_policy(token, channel)
 
-    print('\n完了。5分間隔でチェックし、10分以上失敗が続くとメールが飛びます。')
+    period_min = int(CHECK_PERIOD.rstrip('s')) // 60
+    print(f'\n完了。{len(CHECK_REGIONS)}リージョンから{period_min}分間隔でチェックし、'
+          f'失敗が続くと約{period_min * 2}分でメールが飛びます。')
     print('あわせて、決済がプランに反映されなかった場合もログから検知します。')
     print(f'{email} 宛に届く確認メールのリンクを踏むまで通知は有効になりません。')
     return 0
