@@ -127,8 +127,22 @@ TOKEN=$(gcloud auth print-access-token) \
 python3 scripts/setup_monitoring.py you@example.com
 ```
 
-`stripeWebhook` と `createPortalSession` に5分間隔で GET し、**405 以外**が
-10分続いたらメール通知。何度実行しても既存分は作り直さない。
+作られるものは2つ。何度実行しても既存分は作り直さない。
+
+1. **稼働監視** — `stripeWebhook` と `createPortalSession` に5分間隔で GET し、
+   **405 以外**が10分続いたらメール通知
+2. **ログアラート** — 関数は 200 を返しているのに購入者にプランが付かなかった
+   ケースを検知する。以下のログが出た時点で通知される
+
+   | ログ | 状態 |
+   |---|---|
+   | `未知の price` | price ID が設定と不一致。プランが付与されていない |
+   | `client_reference_id の無いセッション` | uid 無しで決済され、購入者を特定できていない |
+   | `該当ユーザーが見つからないサブスク` | 解約を検知したが対象を引けず、有料のまま残っている |
+
+> ⚠️ ログアラートは `functions/index.js` の**ログ文言と完全に連動**している。
+> メッセージを変更する場合は `scripts/setup_monitoring.py` の
+> `SILENT_FAILURE_LOGS` も必ず更新すること（無言で検知漏れになる）。
 
 > 初回のみ、指定アドレスに届く Google Cloud の確認メールのリンクを踏むこと。
 > 踏むまで通知は有効にならない。

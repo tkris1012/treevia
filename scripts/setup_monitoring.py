@@ -29,6 +29,15 @@ FUNCTIONS = [
 ]
 CHANNEL_NAME = 'Treevia 運用通知'
 POLICY_NAME = 'Treevia: Cloud Functions ダウン検知'
+LOG_POLICY_NAME = 'Treevia: 決済が反映されなかった決済の検知'
+
+# 関数は 200 を返すため稼働監視には引っかからないが、購入者にプランが
+# 付与されていない状態。index.js が出すログをそのまま拾う。
+SILENT_FAILURE_LOGS = [
+    ('未知の price', 'price ID が設定と不一致。購入者にプランが付与されていない'),
+    ('client_reference_id の無いセッション', 'uid 無しで決済された。購入者を特定できていない'),
+    ('該当ユーザーが見つからないサブスク', '解約を検知したが対象ユーザーを引けず、有料のまま残っている'),
+]
 
 
 def api(token, method, path, body=None):
@@ -146,6 +155,50 @@ def ensure_alert_policy(token, channel, check_names):
     return created['name']
 
 
+def ensure_log_alert_policy(token, channel):
+    found = find_existing(token, 'alertPolicies', 'alertPolicies', LOG_POLICY_NAME)
+    if found:
+        print('  ログアラート: 既存あり（更新しません）')
+        return found['name']
+
+    # `:` は「含む」。構造化ログの場合に備えて jsonPayload 側も見る
+    patterns = ' OR '.join(
+        f'textPayload:"{kw}" OR jsonPayload.message:"{kw}"' for kw, _ in SILENT_FAILURE_LOGS
+    )
+    log_filter = (
+        'resource.type="cloud_run_revision" '
+        'AND resource.labels.service_name="stripewebhook" '
+        f'AND ({patterns})'
+    )
+
+    created = api(token, 'POST', 'alertPolicies', {
+        'displayName': LOG_POLICY_NAME,
+        'combiner': 'OR',
+        'conditions': [{
+            'displayName': '決済は成立したがプランが付与されていない',
+            'conditionMatchedLog': {'filter': log_filter},
+        }],
+        # ログ一致条件では notificationRateLimit が必須
+        'alertStrategy': {'notificationRateLimit': {'period': '300s'}},
+        'notificationChannels': [channel],
+        'enabled': True,
+        'documentation': {
+            'content': (
+                '## 決済されたのにプランが付与されていない可能性があります\n\n'
+                + '\n'.join(f'- `{kw}`: {why}' for kw, why in SILENT_FAILURE_LOGS)
+                + '\n\n関数自体は正常に応答しているため稼働監視では検知できません。\n\n'
+                '### 確認手順\n'
+                '1. 該当ログから uid / price ID を確認\n'
+                '2. `python3 scripts/reconcile.py` で影響範囲を特定\n'
+                '3. BILLING_SETUP.md の「取りこぼした決済の救済」に従って復旧\n'
+            ),
+            'mimeType': 'text/markdown',
+        },
+    })
+    print('  ログアラート: 作成')
+    return created['name']
+
+
 def main():
     token = os.environ.get('TOKEN')
     if not token or len(sys.argv) < 2:
@@ -159,8 +212,10 @@ def main():
     channel = ensure_channel(token, email)
     checks = [ensure_uptime_check(token, fn) for fn, _ in FUNCTIONS]
     ensure_alert_policy(token, channel, checks)
+    ensure_log_alert_policy(token, channel)
 
     print('\n完了。5分間隔でチェックし、10分以上失敗が続くとメールが飛びます。')
+    print('あわせて、決済がプランに反映されなかった場合もログから検知します。')
     print(f'{email} 宛に届く確認メールのリンクを踏むまで通知は有効になりません。')
     return 0
 
