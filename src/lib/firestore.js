@@ -156,10 +156,14 @@ export function subscribeCharts(uid, callback) {
   })
 }
 
-async function touchChart(uid, chartId) {
+async function touchChart(uid, chartId, { content = true } = {}) {
   // メンバー編集時に chart の updatedAt を更新
+  const data = { updatedAt: serverTimestamp() }
+  // ブックマークした人の「更新あり」表示に使う。ノードの開閉のような見た目だけの
+  // 変更で進めると、中身が同じなのにマークが点いて信用されなくなる
+  if (content) data.contentUpdatedAt = serverTimestamp()
   try {
-    await updateDoc(chartDoc(uid, chartId), { updatedAt: serverTimestamp() })
+    await updateDoc(chartDoc(uid, chartId), data)
   } catch (_) { /* noop */ }
 }
 
@@ -180,7 +184,7 @@ export async function updateMember(uid, chartId, memberId, data) {
     ...data,
     updatedAt: serverTimestamp(),
   })
-  touchChart(uid, chartId)
+  touchChart(uid, chartId, { content: Object.keys(data).some((k) => k !== 'collapsed') })
 }
 
 export async function deleteMember(uid, chartId, memberId) {
@@ -348,6 +352,15 @@ export function subscribeShareConfig(uid, chartId, callback) {
   })
 }
 
+// 共有組織図の「中身が最後に変わった時刻」。共有停止中は読めないので null を返す
+export function subscribeChartContentUpdatedAt(uid, chartId, callback) {
+  return onSnapshot(
+    chartDoc(uid, chartId),
+    (snap) => callback(snap.exists() ? snap.data({ serverTimestamps: 'estimate' }).contentUpdatedAt ?? null : null),
+    () => callback(null),
+  )
+}
+
 // === ブックマーク（他人の共有組織図を一覧からすぐ開けるように保存）=========
 // ownerUid+chartId で重複登録を防ぐため、ドキュメントIDを決定的にする。
 export async function addBookmark(uid, { token, ownerUid, chartId, label }) {
@@ -356,8 +369,13 @@ export async function addBookmark(uid, { token, ownerUid, chartId, label }) {
     token, ownerUid, chartId,
     label: label || '無題',
     addedAt: serverTimestamp(),
+    lastViewedAt: serverTimestamp(),
   })
   return id
+}
+
+export async function markBookmarkViewed(uid, ownerUid, chartId) {
+  await updateDoc(bookmarkDoc(uid, bookmarkId(ownerUid, chartId)), { lastViewedAt: serverTimestamp() })
 }
 
 export async function removeBookmark(uid, id) {
@@ -379,7 +397,8 @@ export function subscribeBookmarks(uid, callback) {
     q,
     (snap) => {
       const list = []
-      snap.forEach((d) => list.push({ id: d.id, ...d.data() }))
+      // 既読記録の直後にサーバー時刻が未確定(null)だと「更新あり」が一瞬点くので推定値を使う
+      snap.forEach((d) => list.push({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) }))
       callback(list)
     },
     (err) => { console.warn('bookmarks subscribe failed', err); callback([]) },
