@@ -3,7 +3,8 @@ import { FolderTree, Palette, TreeDeciduous, Pencil, Trash2, Bookmark } from 'lu
 import { useStore } from '../../store/useStore.js'
 import { navigateToChart, navigateToSharedView } from '../../store/useSync.js'
 import { canCreateMoreCharts } from '../../constants/plans.js'
-import { subscribeShareConfig } from '../../lib/firestore.js'
+import { subscribeShareConfig, subscribeChartContentUpdatedAt } from '../../lib/firestore.js'
+import { hasUnseenUpdate, formatRelative } from '../../lib/bookmarkUpdates.js'
 import AccountMenu from '../Auth/AccountMenu.jsx'
 import CreateChartModal from './CreateChartModal.jsx'
 import RenameChartModal from './RenameChartModal.jsx'
@@ -283,6 +284,8 @@ export default function ChartListPage() {
 function BookmarkRow({ bookmark, onRename, onRemove }) {
   const [enabled, setEnabled] = useState(true)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [contentUpdatedAt, setContentUpdatedAt] = useState(null)
+  const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
     const unsub = subscribeShareConfig(bookmark.ownerUid, bookmark.chartId, (cfg) => {
@@ -290,6 +293,22 @@ function BookmarkRow({ bookmark, onRename, onRemove }) {
     })
     return unsub
   }, [bookmark.ownerUid, bookmark.chartId])
+
+  useEffect(() => {
+    if (!enabled) { setContentUpdatedAt(null); return }
+    return subscribeChartContentUpdatedAt(bookmark.ownerUid, bookmark.chartId, setContentUpdatedAt)
+  }, [bookmark.ownerUid, bookmark.chartId, enabled])
+
+  // 「○分前」を開きっぱなしでも進める
+  useEffect(() => {
+    if (!contentUpdatedAt) return
+    const id = setInterval(() => setNow(Date.now()), 60000)
+    return () => clearInterval(id)
+  }, [contentUpdatedAt])
+
+  const unseen = enabled && hasUnseenUpdate(contentUpdatedAt, bookmark.lastViewedAt, bookmark.addedAt)
+  const rel = enabled && contentUpdatedAt ? formatRelative(contentUpdatedAt, now) : ''
+  const updatedLabel = !rel ? '' : rel === 'たった今' ? 'たった今更新' : `${rel}に更新`
 
   function handleOpen() {
     if (!enabled) return
@@ -312,20 +331,45 @@ function BookmarkRow({ bookmark, onRename, onRemove }) {
       onMouseLeave={(e) => { if (enabled) e.currentTarget.style.background = 'white' }}
     >
       <span style={{
+        position: 'relative',
         flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4,
         fontSize: 11, fontWeight: 700, color: '#7C3AED',
         background: '#FAF5FF', borderRadius: 6, padding: '5px',
       }}>
         <Bookmark size={11} />
+        {unseen && (
+          <span style={{
+            position: 'absolute', top: -3, right: -3, width: 9, height: 9,
+            borderRadius: '50%', background: '#10B981', border: '2px solid white',
+          }} />
+        )}
       </span>
-      <div style={{
-        flex: 1, minWidth: 0,
-        fontSize: 15, fontWeight: 600,
-        color: enabled ? '#1F2937' : '#9CA3AF',
-        lineHeight: 1.4, wordBreak: 'break-word',
-      }}>
-        {bookmark.label || '無題'}
-        {!enabled && <span style={{ fontSize: 12, fontWeight: 500, marginLeft: 8 }}>（共有が終了しました）</span>}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize: 15, fontWeight: unseen ? 700 : 600,
+          color: enabled ? '#1F2937' : '#9CA3AF',
+          lineHeight: 1.4, wordBreak: 'break-word',
+        }}>
+          {bookmark.label || '無題'}
+          {unseen && (
+            <span style={{
+              display: 'inline-block', verticalAlign: 'middle', marginLeft: 8,
+              fontSize: 11, fontWeight: 700, color: '#047857', background: '#D1FAE5',
+              borderRadius: 999, padding: '1px 8px', lineHeight: 1.6,
+            }}>
+              更新あり
+            </span>
+          )}
+          {!enabled && <span style={{ fontSize: 12, fontWeight: 500, marginLeft: 8 }}>（共有が終了しました）</span>}
+        </div>
+        {updatedLabel && (
+          <div style={{
+            marginTop: 2, fontSize: 12, lineHeight: 1.4,
+            color: unseen ? '#047857' : '#9CA3AF', fontWeight: unseen ? 600 : 400,
+          }}>
+            {updatedLabel}
+          </div>
+        )}
       </div>
       <button
         onClick={(e) => { e.stopPropagation(); setMenuOpen((v) => !v) }}

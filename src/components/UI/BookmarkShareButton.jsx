@@ -3,7 +3,7 @@ import { Bookmark, BookmarkCheck, LogIn, X } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { useAuthUser } from '../../lib/useAuthUser.js'
 import { navigateToList } from '../../store/useSync.js'
-import { getBookmark, addBookmark } from '../../lib/firestore.js'
+import { getBookmark, addBookmark, markBookmarkViewed } from '../../lib/firestore.js'
 
 const ICON_BTN = {
   display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -65,6 +65,18 @@ export default function BookmarkShareButton() {
     check()
     return () => { cancelled = true }
   }, [authUser, viewerOwnerUid, viewerChartId])
+
+  // 一覧の「更新あり」を消すための既読記録。閲覧中の更新はリアルタイムで見えているので、
+  // 離れるときにももう一度記録する（開いた時点の記録だけだと、見たのに更新ありが残る）
+  useEffect(() => {
+    if (!authUser || !saved || !viewerOwnerUid || !viewerChartId) return
+    const mark = () => {
+      markBookmarkViewed(authUser.uid, viewerOwnerUid, viewerChartId)
+        .catch((e) => console.warn('markBookmarkViewed failed', e))
+    }
+    mark()
+    return mark
+  }, [authUser, saved, viewerOwnerUid, viewerChartId])
 
   // ログイン済み・未保存のときだけ、初回訪問者に機能を気づかせる吹き出しを出す
   useEffect(() => {
