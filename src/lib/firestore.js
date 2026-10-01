@@ -297,7 +297,7 @@ export async function getChartCount(uid) {
 }
 
 // 共有メンバー配列から、自分のアカウントに新しい組織図を複製作成する。
-// 親子(parentId)・左右(position)・名前・役割文字列(job)・写真は引き継ぎ、
+// 親子(parentId)・左右(position)・名前・役割文字列(job)・段数・写真は引き継ぎ、
 // 役職(role)は引き継がない（空にする）。ID は新規採番し parentId を張り替える。
 export async function createChartFromSharedMembers(uid, title, sourceMembers) {
   const chartRef = await addDoc(chartsCol(uid), {
@@ -321,6 +321,7 @@ export async function createChartFromSharedMembers(uid, title, sourceMembers) {
       name: m.name || '',
       role: '', // 役職は引き継がない
       job: m.job || '',
+      dan: m.dan ?? null,
       photo: m.photo ?? null,
       parentId: newParentId,
       position: m.position ?? null,
