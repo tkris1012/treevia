@@ -1,6 +1,7 @@
 import { getRoleStyle, roleName } from '../../constants/roles.js'
 import { useStore } from '../../store/useStore.js'
 import { NODE_W, NODE_H } from './useTreeLayout.js'
+import DanBadge from './DanBadge.jsx'
 
 export default function TreeNode({ member, isRoot, isDragging, forPrint = false }) {
   const roles = useStore((s) => s.roles)
@@ -55,6 +56,11 @@ export default function TreeNode({ member, isRoot, isDragging, forPrint = false 
         >
           ROOT
         </span>
+      )}
+
+      {/* 段数（ルート以外）: 名前の幅を削らないよう角にはみ出して載せる */}
+      {!isRoot && (
+        <DanBadge dan={member.dan} style={{ position: 'absolute', top: -11, right: -10, zIndex: 1 }} />
       )}
 
       {/* Photo */}

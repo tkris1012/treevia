@@ -3,6 +3,8 @@ import { X, Camera, Trash2 } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { getRoleStyle, roleStyleFromColor } from '../../constants/roles.js'
 import PhotoCropModal from '../UI/PhotoCropModal.jsx'
+import DanBadge from '../Tree/DanBadge.jsx'
+import { DAN_OPTIONS, normalizeDan } from '../../constants/dan.js'
 
 export default function DetailPanel() {
   const selectedId = useStore((s) => s.selectedId)
@@ -16,6 +18,7 @@ export default function DetailPanel() {
   const openRoleManager = useStore((s) => s.openRoleManager)
 
   const member = selectedId ? members[selectedId] : null
+  const isRoot = !!member && (!member.parentId || !members[member.parentId])
 
   // 子枠の埋まり具合（追加ボタンの有効/無効判定）
   const children = selectedId
@@ -27,6 +30,7 @@ export default function DetailPanel() {
   const [name, setName] = useState('')
   const [role, setRole] = useState('')
   const [job, setJob]   = useState('')
+  const [dan, setDan]   = useState('')
   const [photo, setPhoto] = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
   const [saving, setSaving] = useState(false)
@@ -41,6 +45,7 @@ export default function DetailPanel() {
       setName(member.name || '')
       setRole(member.role || '')
       setJob(member.job || '')
+      setDan(normalizeDan(member.dan) ? String(member.dan) : '')
       setPhoto(null)
       setPhotoPreview(member.photo || null)
     }
@@ -92,6 +97,7 @@ export default function DetailPanel() {
     setSaving(true)
     try {
       const updates = { name: name.trim(), role, job: job.trim() }
+      if (!isRoot) updates.dan = normalizeDan(dan)
       if (photo !== null) updates.photo = photo || null
       await saveNode(selectedId, updates)
       setPanelOpen(false)
@@ -233,6 +239,33 @@ export default function DetailPanel() {
               onBlur={(e) => e.target.style.borderColor = '#D1D5DB'}
             />
           </label>
+
+          {/* 段数（ルート以外） */}
+          {!isRoot && (
+            <label style={{ display: 'block', marginBottom: 16 }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 6 }}>段数</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <select
+                  value={dan}
+                  onChange={(e) => setDan(e.target.value)}
+                  style={{
+                    flex: 1, padding: '8px 12px', borderRadius: 8,
+                    border: '1px solid #D1D5DB', fontSize: 15, outline: 'none',
+                    boxSizing: 'border-box', background: 'white', color: dan ? '#1F2937' : '#9CA3AF',
+                    cursor: 'pointer',
+                  }}
+                >
+                  <option value="">未設定</option>
+                  {DAN_OPTIONS.map((n) => (
+                    <option key={n} value={String(n)}>{n}段</option>
+                  ))}
+                </select>
+                <div style={{ width: 44, display: 'flex', justifyContent: 'center' }}>
+                  <DanBadge dan={dan} />
+                </div>
+              </div>
+            </label>
+          )}
 
           {/* 役職 */}
           <label style={{ display: 'block', marginBottom: 24 }}>
