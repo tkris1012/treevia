@@ -10,6 +10,9 @@
 TOKEN が無い場合は、環境変数 TREEVIA_GCP_SA_B64（読み取り専用サービスアカウントの
 鍵JSONを base64 にしたもの）から認証する（要 pip install google-auth requests）。
 
+運営者自身などを集計から外すときは、環境変数 TREEVIA_EXCLUDE にメールアドレスか
+uid をカンマ（または空白）区切りで渡す。例: TREEVIA_EXCLUDE=me@example.com
+
 出力: 総ユーザー数 / 直近7日・30日の新規登録と利用 / 組織図を作った人 /
       有料プランの人数 / 月別の新規登録
 """
@@ -92,6 +95,19 @@ def fetch_chart_owners():
     return owners
 
 
+def excluded_uids(users):
+    # TREEVIA_EXCLUDE のメールアドレス / uid に一致するユーザーの uid を返す
+    keys = {k.lower() for k in os.environ.get('TREEVIA_EXCLUDE', '').replace(',', ' ').split()}
+    return {u['localId'] for u in users if u['localId'].lower() in keys or (u.get('email') or '').lower() in keys}
+
+
+def drop_excluded(users, plans, owners):
+    ex = excluded_uids(users)
+    return ([u for u in users if u['localId'] not in ex],
+            {k: v for k, v in plans.items() if k not in ex},
+            {k: v for k, v in owners.items() if k not in ex}, len(ex))
+
+
 def ms(v):
     return int(v) / 1000 if v else None
 
@@ -100,7 +116,7 @@ def rfc(v):
     return dt.datetime.fromisoformat(v.replace('Z', '+00:00')).timestamp() if v else None
 
 
-def report(users, plans, owners, now=None):
+def report(users, plans, owners, now=None, excluded=0):
     now = now or dt.datetime.now(dt.timezone.utc).timestamp()
     day = 86400
     created = [ms(u.get('createdAt')) for u in users]
@@ -113,7 +129,8 @@ def report(users, plans, owners, now=None):
     paid = {k: v for k, v in plans.items() if v in ('light', 'pro')}
 
     out = []
-    out.append(f'■ 総ユーザー数（Googleログイン済み）: {n}人')
+    note = f'（TREEVIA_EXCLUDE で{excluded}人を除外）' if excluded else ''
+    out.append(f'■ 総ユーザー数（Googleログイン済み）: {n}人{note}')
     out.append(f'   新規登録  直近7日: {within(created, 7)}人 / 直近30日: {within(created, 30)}人')
     out.append(f'   利用      直近7日: {within(used, 7)}人 / 直近30日: {within(used, 30)}人')
     pct = f'（{made / n * 100:.0f}%）' if n else ''
@@ -134,4 +151,5 @@ def report(users, plans, owners, now=None):
 if __name__ == '__main__':
     if not TOKEN:
         raise SystemExit('TOKEN か TREEVIA_GCP_SA_B64 を環境変数で渡してください（user_stats.py の docstring 参照）')
-    print(report(fetch_auth_users(), fetch_plans(), fetch_chart_owners()))
+    users, plans, owners, excluded = drop_excluded(fetch_auth_users(), fetch_plans(), fetch_chart_owners())
+    print(report(users, plans, owners, excluded=excluded))

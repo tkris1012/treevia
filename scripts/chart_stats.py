@@ -7,12 +7,12 @@
 使い方（Cloud Shell）:
     TOKEN=$(gcloud auth print-access-token) python3 scripts/chart_stats.py
 
-認証は user_stats.py と同じ（TOKEN が無ければ TREEVIA_GCP_SA_B64 を使う）。
+認証と TREEVIA_EXCLUDE（集計から外すユーザー）は user_stats.py と同じ。
 """
 import datetime as dt
 import statistics
 
-from user_stats import DOCS, TOKEN, fetch_auth_users, fetch_plans, req
+from user_stats import DOCS, TOKEN, excluded_uids, fetch_auth_users, fetch_plans, req
 
 FREE_LIMIT = 100
 WATCH_FROM = 50
@@ -84,8 +84,10 @@ def eta(count, recent):
     return 'このペースだと1年以上先'
 
 
-def report(charts, plans, emails):
+def report(charts, plans, emails, excluded=0):
     out = []
+    if excluded:
+        out.append(f'（TREEVIA_EXCLUDE で{excluded}人の組織図を除外）')
     counts = [c['count'] for c in charts.values()]
     if not counts:
         return '組織図がありません'
@@ -123,7 +125,9 @@ if __name__ == '__main__':
     if not TOKEN:
         raise SystemExit('TOKEN か TREEVIA_GCP_SA_B64 を環境変数で渡してください（user_stats.py の docstring 参照）')
     now = dt.datetime.now(dt.timezone.utc).timestamp()
-    charts = fetch_charts()
+    users = fetch_auth_users()
+    ex = excluded_uids(users)
+    charts = {k: c for k, c in fetch_charts().items() if c['uid'] not in ex}
     count_members(charts, now)
-    emails = {u['localId']: u.get('email') for u in fetch_auth_users()}
-    print(report(charts, fetch_plans(), emails))
+    emails = {u['localId']: u.get('email') for u in users}
+    print(report(charts, fetch_plans(), emails, excluded=len(ex)))
