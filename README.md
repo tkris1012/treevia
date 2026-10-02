@@ -140,11 +140,12 @@ Firebase Console → Authentication → Settings → 承認済みドメイン �
 
 ## 運用スクリプト（`scripts/`）
 
-どれも Cloud Shell で実行する。`user_stats.py` と `reconcile.py` は読み取り専用。
+どれも Cloud Shell で実行する。`setup_monitoring.py` 以外は読み取り専用。
 
 | スクリプト | 用途 |
 |---|---|
 | `user_stats.py` | 総ユーザー数・新規登録・利用者数・有料プラン人数などを集計 |
+| `chart_stats.py` | 組織図ごとのメンバー数の分布と、無料プランで100人に近い組織図を集計 |
 | `reconcile.py` | Stripe の有効サブスクと Firestore のプランのずれを照合 |
 | `setup_monitoring.py` | Cloud Functions の死活監視とアラートを作成 |
 
