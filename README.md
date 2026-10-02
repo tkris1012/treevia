@@ -160,6 +160,9 @@ Claude Code on the web の環境変数に登録しておけば、Cloud Shell を
 `roles/serviceusage.serviceUsageConsumer`）だけを付け、Stripe の秘密鍵（Secret Manager）には
 アクセスさせない。そのため `reconcile.py` は引き続き Cloud Shell で実行する。
 
+`user_stats.py` と `chart_stats.py` は、環境変数 `TREEVIA_EXCLUDE` にメールアドレスか uid
+（複数ならカンマ区切り）を入れると、そのユーザーを集計から外す（運営者自身の確認用アカウントなど）。
+
 `reconcile.py` と `setup_monitoring.py` の詳細は [BILLING_SETUP.md](./BILLING_SETUP.md) を参照。
 
 ---
