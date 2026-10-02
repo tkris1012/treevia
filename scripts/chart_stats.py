@@ -6,6 +6,8 @@
 
 使い方（Cloud Shell）:
     TOKEN=$(gcloud auth print-access-token) python3 scripts/chart_stats.py
+
+認証は user_stats.py と同じ（TOKEN が無ければ TREEVIA_GCP_SA_B64 を使う）。
 """
 import datetime as dt
 import statistics
@@ -119,7 +121,7 @@ def report(charts, plans, emails):
 
 if __name__ == '__main__':
     if not TOKEN:
-        raise SystemExit('TOKEN を環境変数で渡してください（docstring 参照）')
+        raise SystemExit('TOKEN か TREEVIA_GCP_SA_B64 を環境変数で渡してください（user_stats.py の docstring 参照）')
     now = dt.datetime.now(dt.timezone.utc).timestamp()
     charts = fetch_charts()
     count_members(charts, now)

@@ -153,6 +153,13 @@ Firebase Console → Authentication → Settings → 承認済みドメイン �
 TOKEN=$(gcloud auth print-access-token) python3 scripts/user_stats.py
 ```
 
+`user_stats.py` と `chart_stats.py` は、`TOKEN` の代わりに環境変数 `TREEVIA_GCP_SA_B64`
+（読み取り専用サービスアカウントの鍵JSONを base64 にしたもの）でも認証できる。
+Claude Code on the web の環境変数に登録しておけば、Cloud Shell を開かずに集計できる。
+このサービスアカウントには閲覧系のロール（`roles/datastore.viewer` / `roles/firebaseauth.viewer` /
+`roles/serviceusage.serviceUsageConsumer`）だけを付け、Stripe の秘密鍵（Secret Manager）には
+アクセスさせない。そのため `reconcile.py` は引き続き Cloud Shell で実行する。
+
 `reconcile.py` と `setup_monitoring.py` の詳細は [BILLING_SETUP.md](./BILLING_SETUP.md) を参照。
 
 ---
