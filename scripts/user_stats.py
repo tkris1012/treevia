@@ -7,16 +7,39 @@
 使い方（Cloud Shell）:
     TOKEN=$(gcloud auth print-access-token) python3 scripts/user_stats.py
 
+TOKEN が無い場合は、環境変数 TREEVIA_GCP_SA_B64（読み取り専用サービスアカウントの
+鍵JSONを base64 にしたもの）から認証する（要 pip install google-auth requests）。
+
 出力: 総ユーザー数 / 直近7日・30日の新規登録と利用 / 組織図を作った人 /
       有料プランの人数 / 月別の新規登録
 """
+import base64
 import datetime as dt
 import json
 import os
 import urllib.parse
 import urllib.request
 
-TOKEN, P = os.environ.get('TOKEN', ''), 'mlm-org-chart'
+
+def resolve_token():
+    if os.environ.get('TOKEN'):
+        return os.environ['TOKEN']
+    key_b64 = os.environ.get('TREEVIA_GCP_SA_B64')
+    if not key_b64:
+        return ''
+    try:
+        from google.auth.transport.requests import Request
+        from google.oauth2 import service_account
+    except ImportError:
+        raise SystemExit('google-auth が必要です: pip install google-auth requests')
+    info = json.loads(base64.b64decode(key_b64))
+    creds = service_account.Credentials.from_service_account_info(
+        info, scopes=['https://www.googleapis.com/auth/cloud-platform'])
+    creds.refresh(Request())
+    return creds.token
+
+
+TOKEN, P = resolve_token(), 'mlm-org-chart'
 DOCS = f'https://firestore.googleapis.com/v1/projects/{P}/databases/(default)/documents'
 
 
@@ -110,5 +133,5 @@ def report(users, plans, owners, now=None):
 
 if __name__ == '__main__':
     if not TOKEN:
-        raise SystemExit('TOKEN を環境変数で渡してください（docstring 参照）')
+        raise SystemExit('TOKEN か TREEVIA_GCP_SA_B64 を環境変数で渡してください（user_stats.py の docstring 参照）')
     print(report(fetch_auth_users(), fetch_plans(), fetch_chart_owners()))
