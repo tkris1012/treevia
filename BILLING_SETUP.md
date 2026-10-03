@@ -75,6 +75,10 @@ firebase functions:secrets:set STRIPE_WEBHOOK_SECRET  # ステップ7で取得�
 >
 > 本番デプロイは必ず **`functions/deploy.sh`** を使う。price ID・シークレット・
 > ランタイムがスクリプトに固定されているため、手動コピペによる事故が起きない。
+>
+> GitHub Actions による関数の自動デプロイ（旧 `deploy-functions.yml`）は廃止した。
+> 過去に事故を起こした古い price ID がハードコードされたまま、`functions/` を変更して
+> push するたびに本番を上書きしていたため。関数のデプロイは `deploy.sh` だけで行う。
 
 ```bash
 cd functions && npm install && cd ..
