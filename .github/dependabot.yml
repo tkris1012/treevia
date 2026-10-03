@@ -1,21 +1,38 @@
 version: 2
+
+# 更新の提案は種類ごとに1本のPRへまとめる（個別に何十本も溜まらないように）。
+# メジャー更新を ignore で除外しないのは、メジャーでしか直らない脆弱性
+# （例: firebase-admin）の修正まで止めないため。まとめたPRで中身を把握し、
+# 取り込むときは1つずつテストする。
 updates:
   # フロントエンド（ルート）の依存ライブラリ
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+      major:
+        update-types: ["major"]
     labels:
       - "dependencies"
       - "security"
 
   # Cloud Functions の依存ライブラリ
+  # ⚠ functions/ への変更は deploy-functions.yml で本番に自動デプロイされる。
+  #   取り込む前にデプロイ手順（BILLING_SETUP.md）を確認すること。
   - package-ecosystem: "npm"
     directory: "/functions"
     schedule:
       interval: "weekly"
-    open-pull-requests-limit: 10
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+      major:
+        update-types: ["major"]
     labels:
       - "dependencies"
       - "security"
@@ -25,6 +42,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      actions:
+        patterns: ["*"]
     labels:
       - "dependencies"
       - "security"
