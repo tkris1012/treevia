@@ -21,8 +21,8 @@ updates:
       - "security"
 
   # Cloud Functions の依存ライブラリ
-  # ⚠ functions/ への変更は deploy-functions.yml で本番に自動デプロイされる。
-  #   取り込む前にデプロイ手順（BILLING_SETUP.md）を確認すること。
+  # 取り込んでも本番には反映されない。反映は functions/deploy.sh で手動デプロイする
+  # （BILLING_SETUP.md）。決済に直結するので、デプロイ後は Webhook の動作を確認すること。
   - package-ecosystem: "npm"
     directory: "/functions"
     schedule:
