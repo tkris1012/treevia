@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useReducer } from 'react'
 import {
   ArrowLeft, TreeDeciduous, Undo2, Redo2, Link2, Printer, Palette,
-  Trash2, ChevronRight, ChevronDown, Eye, Pencil,
+  Trash2, ChevronRight, ChevronDown, Eye, Pencil, Lock, LockOpen,
 } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { navigateToList } from '../../store/useSync.js'
@@ -43,6 +43,10 @@ const DRAG_THRESHOLD = 6
 const LONG_PRESS_MS = 500
 const DROP_SNAP_DIST = NODE_W * 0.7
 
+function lockKey(chartId) {
+  return `treevia:lock:${chartId}`
+}
+
 function isRootNode(member, members) {
   return !member.parentId || !members[member.parentId]
 }
@@ -77,6 +81,28 @@ export default function OrgTree() {
   const viewerOwnerUid  = useStore((s) => s.viewerOwnerUid)
   const viewerChartId   = useStore((s) => s.viewerChartId)
   const currentChart    = charts.find((c) => c.id === currentChartId)
+
+  // 誤操作防止ロック（オーナー用）。端末ごと・組織図ごとに覚えておく
+  const [locked, setLocked] = useState(false)
+  useEffect(() => {
+    let saved = false
+    try { saved = !!currentChartId && localStorage.getItem(lockKey(currentChartId)) === '1' } catch (_) {}
+    setLocked(saved)
+  }, [currentChartId])
+  function toggleLocked() {
+    const next = !locked
+    setLocked(next)
+    if (next) {
+      setPanelOpen(false)
+      setHoveredId(null); setLongPressId(null)
+    }
+    try {
+      if (next) localStorage.setItem(lockKey(currentChartId), '1')
+      else localStorage.removeItem(lockKey(currentChartId))
+    } catch (_) {}
+  }
+  // 編集不可（閲覧モード or ロック中）
+  const editDisabled = isReadOnly || locked
 
   // 自分がこの共有組織図をブックマークしていて、名前を編集していたら、
   // 実際のタイトルよりそちらの表示名を優先する。
@@ -176,12 +202,12 @@ export default function OrgTree() {
   // ── キーボードショートカット ───────────────────────────────
   useEffect(() => {
     const onKey = (e) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo() }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); if (!editDisabled) undo() }
       if (e.key === 'Escape') { setDrag(null); setHoveredId(null); setLongPressId(null) }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [undo])
+  }, [undo, editDisabled])
 
   // ── ホイールズーム（passive: false）────────────────────────
   useEffect(() => {
@@ -352,8 +378,8 @@ export default function OrgTree() {
     if (!pointerRef.current.moved && dist > DRAG_THRESHOLD) {
       clearTimeout(longPressTimer.current)
       const id = pointerRef.current.id
-      // 閲覧モードではドラッグ移動できない
-      if (!isReadOnly && !isRootNode(members[id] ?? {}, members)) {
+      // 閲覧モード・ロック中はドラッグ移動できない
+      if (!editDisabled && !isRootNode(members[id] ?? {}, members)) {
         pointerRef.current.moved = true
         const sv = toSVG(e.clientX, e.clientY)
         setDrag({ id, ghostX: sv.x - NODE_W / 2, ghostY: sv.y - 36, overParentId: null, overPosition: null })
@@ -381,8 +407,8 @@ export default function OrgTree() {
     pointerRef.current = null
 
     if (!wasDragging) {
-      // 閲覧モードでは編集パネルを開かない
-      if (!isReadOnly && longPressId !== id) {
+      // 閲覧モード・ロック中は編集パネルを開かない
+      if (!editDisabled && longPressId !== id) {
         setSelectedId(id)
         setPanelOpen(true)
         setLongPressId(null)
@@ -548,8 +574,8 @@ export default function OrgTree() {
       }}
       onDragStart={(e) => e.preventDefault()}
     >
-      {/* ツールバー（左下） — 閲覧モードでは非表示 */}
-      {!isReadOnly && (
+      {/* ツールバー（左下） — 閲覧モード・ロック中は非表示 */}
+      {!editDisabled && (
         <div style={{ position: 'absolute', bottom: 'max(16px, env(safe-area-inset-bottom))', left: 16, zIndex: 10 }}>
           <button
             onClick={addRootNode}
@@ -612,27 +638,29 @@ export default function OrgTree() {
               <button onClick={navigateToList} title="一覧へ戻る"
                 style={ICON_BTN}><ArrowLeft size={17} /></button>
               <button
-                onClick={() => setRenameOpen(true)}
-                title="タイトルを編集"
+                onClick={() => { if (!locked) setRenameOpen(true) }}
+                title={locked ? chartTitle : 'タイトルを編集'}
                 style={{
                   ...BAR_CHIP, flex: 1, minWidth: 120,
                   display: 'flex', alignItems: 'center', gap: 6,
                   overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                  cursor: 'pointer', textAlign: 'left', pointerEvents: 'auto',
+                  cursor: locked ? 'default' : 'pointer', textAlign: 'left', pointerEvents: 'auto',
                 }}
               >
                 <TreeDeciduous size={15} style={{ flexShrink: 0, color: '#15A24A' }} />
                 <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{chartTitle || '無題'}</span>
-                <Pencil size={12} style={{ flexShrink: 0, color: '#9CA3AF' }} />
+                {!locked && <Pencil size={12} style={{ flexShrink: 0, color: '#9CA3AF' }} />}
               </button>
 
               <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                {!locked && <>
                 <button onClick={undo} disabled={undoStack.length === 0} title="元に戻す"
                   style={{ ...ICON_BTN, opacity: undoStack.length ? 1 : 0.4,
                     cursor: undoStack.length ? 'pointer' : 'not-allowed' }}><Undo2 size={16} /></button>
                 <button onClick={redo} disabled={redoStack.length === 0} title="やり直す"
                   style={{ ...ICON_BTN, opacity: redoStack.length ? 1 : 0.4,
                     cursor: redoStack.length ? 'pointer' : 'not-allowed' }}><Redo2 size={16} /></button>
+                </>}
                 <button onClick={handleShareClick}
                   title={shareAllowed ? '共有リンク' : '共有リンク（プロ）'}
                   style={{ ...ICON_BTN, ...(isShared ? { background: '#ECFDF5', borderColor: '#A7F3D0' } : {}) }}>
@@ -649,10 +677,20 @@ export default function OrgTree() {
               </div>
             </div>
 
-            {/* 2段目：フィルタ ＋ 役職 */}
+            {/* 2段目：フィルタ ＋ 役職 ＋ ロック */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               {filterChip}
-              <button onClick={openRoleManager} title="役職を管理" style={BAR_BTN}><Palette size={14} /> 役職</button>
+              {!locked && (
+                <button onClick={openRoleManager} title="役職を管理" style={BAR_BTN}><Palette size={14} /> 役職</button>
+              )}
+              {locked ? (
+                <button key="locked" onClick={toggleLocked} title="タップでロック解除" aria-pressed="true" style={{
+                  ...BAR_BTN, background: '#F59E0B', border: '1px solid #D97706', color: 'white',
+                }}><Lock size={14} /> ロック中</button>
+              ) : (
+                <button key="unlocked" onClick={toggleLocked} title="誤操作防止ロック" aria-pressed="false"
+                  style={ICON_BTN}><LockOpen size={16} /></button>
+              )}
             </div>
           </>
         )}
@@ -679,7 +717,7 @@ export default function OrgTree() {
           pointerEvents: 'none', padding: 24, textAlign: 'center',
         }}>
           <div style={{ opacity: 0.25 }}><TreeDeciduous size={48} strokeWidth={1.5} /></div>
-          {isReadOnly ? (
+          {editDisabled ? (
             <div style={{ fontSize: 15, color: '#9CA3AF', fontWeight: 500 }}>
               まだメンバーがいません
             </div>
@@ -746,7 +784,7 @@ export default function OrgTree() {
               <rect key={`r-${m.id}`}
                 x={pos.x} y={pos.y} width={NODE_W} height={72} rx={10}
                 fill="transparent" pointerEvents="all"
-                style={{ cursor: isRoot ? 'default' : 'grab' }}
+                style={{ cursor: isRoot || editDisabled ? 'default' : 'grab' }}
                 onPointerEnter={() => { clearHover(); setHoveredId(m.id) }}
                 onPointerLeave={scheduleHide}
                 onPointerDown={(e) => handleNodePointerDown(e, m.id)}
@@ -766,8 +804,8 @@ export default function OrgTree() {
             const collapsible = true  // 全ノードで折りたたみ可
             const isCollapsed = !!m?.collapsed
             // 折りたたみ中 or 閲覧モードでは子追加・削除できない
-            const showAddButtons = !isCollapsed && !isReadOnly
-            const showDeleteButton = !isReadOnly
+            const showAddButtons = !isCollapsed && !editDisabled
+            const showDeleteButton = !editDisabled
             return (
               <g
                 onPointerEnter={clearHover}
