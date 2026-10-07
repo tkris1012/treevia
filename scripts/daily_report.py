@@ -124,8 +124,8 @@ def summary(day, users, user_docs, members, charts, now):
                 f'  {sum(1 for _, t in rows if within(t, 30)):>4}')
     out = [f'━━ Treevia 日次報告 {day}（{WEEKDAYS[day.weekday()]}）━━━━━━━━━━━━━━━']
     out.append(f' 新規登録       {new:>4}人   （前日比 {diff(new, prev)}）')
-    out.append(f' 有料人数       {sum(paid.values()):>4}人')
-    out.append(f'   ライト/プロ  {paid["light"]:>4} / {paid["pro"]}')
+    out.append(f' 有料           {sum(paid.values()):>4}人   ライト  プロ')
+    out.append(f'{"":<25}{paid["light"]:>6}{paid["pro"]:>6}')
     out.append(f' 無料人数       {len(free):>4}人   アクティブ→ 当日  7日  30日')
     for lo, hi in FREE_BANDS:
         out.append(band_row(f'{lo}〜{hi}未満', [r for r in free if lo <= r[0] < hi]))
