@@ -45,7 +45,7 @@ export default function CreateChartModal({ onClose, onCreate }) {
           type="text"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="例: 全国組織図"
+          placeholder="例: 山田チーム"
           style={{
             padding: '10px 12px', borderRadius: 8,
             border: '1px solid #D1D5DB', fontSize: 15, outline: 'none',
