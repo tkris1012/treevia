@@ -2,7 +2,7 @@
 """日次報告（読み取り専用）。日付の区切りは JST。
 
 標準の出力は「総ユーザー数・新規登録・有料人数（ライト/プロ）・無料人数（組織図の人数帯別）」だけ。
-総ユーザー数＝有料＋無料（集計した時点の値）。
+総ユーザー数＝有料＋無料（集計した時点の値）。Markdown の表で出力する。
 --detail を付けると、アクティブ・メンバー追加・プラン変更・アラート・直近7日も出す。
 
 使い方（Cloud Shell）:
@@ -120,21 +120,23 @@ def summary(day, users, user_docs, members, charts, now):
 
     def band_row(name, rows):
         # 当日のアクティブは Auth の最終利用時刻しか無いため、今日を集計するときだけ出す
-        today = f'{sum(1 for _, t in rows if in_day(t, day)):>4}' if is_today else '   -'
-        return (f'   {name:<10} {len(rows):>4}人  {today}  {sum(1 for _, t in rows if within(t, 7)):>4}'
-                f'  {sum(1 for _, t in rows if within(t, 30)):>4}')
-    out = [f'━━ Treevia 日次報告 {day}（{WEEKDAYS[day.weekday()]}）━━━━━━━━━━━━━━━']
-    out.append(f' 総ユーザー数   {len(users):>4}人')
-    out.append(f' 新規登録       {new:>4}人   （前日比 {diff(new, prev)}）')
-    out.append(f' 有料           {sum(paid.values()):>4}人   ライト  プロ')
-    out.append(f'{"":<25}{paid["light"]:>6}{paid["pro"]:>6}')
-    out.append(f' 無料人数       {len(free):>4}人   アクティブ→ 当日  7日  30日')
+        today = sum(1 for _, t in rows if in_day(t, day)) if is_today else '-'
+        return (f'| {name} | {len(rows)} | {today} | {sum(1 for _, t in rows if within(t, 7))} '
+                f'| {sum(1 for _, t in rows if within(t, 30))} |')
+
+    out = [f'**Treevia 日次報告 {day}（{WEEKDAYS[day.weekday()]}）**', '']
+    out.append('| 総ユーザー数 | 新規登録 | 有料（ライト / プロ） | 無料 |')
+    out.append('|---|---|---|---|')
+    out.append(f'| {len(users)} | {new}（前日比 {diff(new, prev)}） '
+               f'| {sum(paid.values())}（{paid["light"]} / {paid["pro"]}） | {len(free)} |')
+    out.append('')
+    out.append('| 無料の人数帯 | 人数 | 当日アクティブ | 7日アクティブ | 30日アクティブ |')
+    out.append('|---|---|---|---|---|')
     for lo, hi in FREE_BANDS:
         out.append(band_row(f'{lo}〜{hi}未満', [r for r in free if lo <= r[0] < hi]))
     over = [r for r in free if r[0] >= FREE_BANDS[-1][1]]
     if over:  # 上限を超えている人（旧データなど）がいるときだけ出す
         out.append(band_row(f'{FREE_BANDS[-1][1]}以上', over))
-    out.append('━' * 46)
     return '\n'.join(out)
 
 
@@ -246,4 +248,5 @@ if __name__ == '__main__':
     user_docs = fetch_user_docs()
     print(summary(day, users, user_docs, members, charts, now))
     if detail:
+        print()
         print(report(day, users, user_docs, members, charts, now))
