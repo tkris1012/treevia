@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """日次報告（読み取り専用）。日付の区切りは JST。
 
-標準の出力は「新規登録・有料人数（ライト/プロ）・無料人数（組織図の人数帯別）」だけ。
+標準の出力は「総ユーザー数・新規登録・有料人数（ライト/プロ）・無料人数（組織図の人数帯別）」だけ。
+総ユーザー数＝有料＋無料（集計した時点の値）。
 --detail を付けると、アクティブ・メンバー追加・プラン変更・アラート・直近7日も出す。
 
 使い方（Cloud Shell）:
@@ -123,6 +124,7 @@ def summary(day, users, user_docs, members, charts, now):
         return (f'   {name:<10} {len(rows):>4}人  {today}  {sum(1 for _, t in rows if within(t, 7)):>4}'
                 f'  {sum(1 for _, t in rows if within(t, 30)):>4}')
     out = [f'━━ Treevia 日次報告 {day}（{WEEKDAYS[day.weekday()]}）━━━━━━━━━━━━━━━']
+    out.append(f' 総ユーザー数   {len(users):>4}人')
     out.append(f' 新規登録       {new:>4}人   （前日比 {diff(new, prev)}）')
     out.append(f' 有料           {sum(paid.values()):>4}人   ライト  プロ')
     out.append(f'{"":<25}{paid["light"]:>6}{paid["pro"]:>6}')
