@@ -146,7 +146,7 @@ Firebase Console → Authentication → Settings → 承認済みドメイン �
 |---|---|
 | `user_stats.py` | 総ユーザー数・新規登録・利用者数・有料プラン人数などを集計 |
 | `chart_stats.py` | 組織図ごとのメンバー数の分布と、無料プランで100人に近い組織図を集計 |
-| `daily_report.py` | 日次報告（新規登録・有料人数・無料人数の人数帯別）。`--detail` でアラートなどの詳細も出す |
+| `daily_report.py` | 日次報告（新規登録・有料人数・無料人数の人数帯別とそのアクティブ数）。`--detail` でアラートなどの詳細も出す |
 | `reconcile.py` | Stripe の有効サブスクと Firestore のプランのずれを照合 |
 | `setup_monitoring.py` | Cloud Functions の死活監視とアラートを作成 |
 
