@@ -1,10 +1,17 @@
 #!/usr/bin/env python3
-"""日次報告（読み取り専用）。1日の新規登録・利用・メンバー追加・プラン変更と、
-対応が必要なユーザー（アラート）を1画面にまとめる。日付の区切りは JST。
+"""日次報告（読み取り専用）。日付の区切りは JST。
+
+標準の出力は「新規登録・有料人数（ライト/プロ）・無料人数（組織図の人数帯別）」だけ。
+--detail を付けると、アクティブ・メンバー追加・プラン変更・アラート・直近7日も出す。
 
 使い方（Cloud Shell）:
     TOKEN=$(gcloud auth print-access-token) python3 scripts/daily_report.py
     TOKEN=... python3 scripts/daily_report.py 2026-10-02   # 過去日を指定
+    TOKEN=... python3 scripts/daily_report.py --detail     # 詳細つき
+
+無料人数の人数帯は、そのユーザーの組織図のうち一番人数が多いもので分ける
+（無料プランの上限は組織図1つあたり100人）。組織図が無い人は 0〜50未満 に入る。
+人数帯は今の時点の値で、過去日を指定しても当時の値にはならない。
 
 認証と TREEVIA_EXCLUDE（集計から外すユーザー）は user_stats.py と同じ。
 
@@ -29,6 +36,7 @@ PAID_IDLE_DAYS = 14       # 有料なのにこの日数使っていない
 EMPTY_AFTER_DAYS = 3      # 登録からこの日数たっても組織図が空
 EMPTY_WITHIN_DAYS = 14    # 古い放置アカウントは毎日出さない
 WEEKDAYS = '月火水木金土日'
+FREE_BANDS = [(0, 50), (50, 70), (70, 90), (90, 100)]
 BARS = '▁▂▃▄▅▆▇█'
 
 
@@ -92,6 +100,30 @@ def daily_counts(users, members, d):
 
 def diff(a, b):
     return f'{a - b:+d}' if a != b else '±0'
+
+
+def summary(day, users, user_docs, members, charts):
+    emails = {u['localId']: u.get('email') for u in users}
+    plan_of = lambda uid: user_docs.get(uid, {}).get('plan', 'free')
+    new = daily_counts(users, members, day)['new']
+    prev = daily_counts(users, members, day - dt.timedelta(days=1))['new']
+    paid = {p: sum(1 for uid in emails if plan_of(uid) == p) for p in PRICE}
+    largest = {}
+    for c in charts.values():
+        largest[c['uid']] = max(largest.get(c['uid'], 0), c['count'])
+    free = [largest.get(uid, 0) for uid in emails if plan_of(uid) not in PRICE]
+    out = [f'━━ Treevia 日次報告 {day}（{WEEKDAYS[day.weekday()]}）━━━━━━━━━━━━━━━']
+    out.append(f' 新規登録       {new:>4}人   （前日比 {diff(new, prev)}）')
+    out.append(f' 有料人数       {sum(paid.values()):>4}人')
+    out.append(f'   ライト/プロ  {paid["light"]:>4} / {paid["pro"]}')
+    out.append(f' 無料人数       {len(free):>4}人')
+    for lo, hi in FREE_BANDS:
+        out.append(f'   {f"{lo}〜{hi}未満":<10} {sum(1 for n in free if lo <= n < hi):>4}人')
+    over = sum(1 for n in free if n >= FREE_BANDS[-1][1])
+    if over:  # 上限を超えている人（旧データなど）がいるときだけ出す
+        out.append(f'   {f"{FREE_BANDS[-1][1]}以上":<10} {over:>4}人')
+    out.append('━' * 46)
+    return '\n'.join(out)
 
 
 def report(day, users, user_docs, members, charts, now):
@@ -187,8 +219,10 @@ def report(day, users, user_docs, members, charts, now):
 if __name__ == '__main__':
     if not TOKEN:
         raise SystemExit('TOKEN か TREEVIA_GCP_SA_B64 を環境変数で渡してください（user_stats.py の docstring 参照）')
+    args = [a for a in sys.argv[1:] if a != '--detail']
+    detail = '--detail' in sys.argv[1:]
     now = dt.datetime.now(dt.timezone.utc).timestamp()
-    day = dt.date.fromisoformat(sys.argv[1]) if len(sys.argv) > 1 else dt.datetime.fromtimestamp(now, JST).date()
+    day = dt.date.fromisoformat(args[0]) if args else dt.datetime.fromtimestamp(now, JST).date()
     all_users = fetch_auth_users()
     ex = excluded_uids(all_users)
     users = [u for u in all_users if u['localId'] not in ex]
@@ -197,4 +231,7 @@ if __name__ == '__main__':
     for m in members:
         if m['chart'] in charts:
             charts[m['chart']]['count'] += 1
-    print(report(day, users, fetch_user_docs(), members, charts, now))
+    user_docs = fetch_user_docs()
+    print(summary(day, users, user_docs, members, charts))
+    if detail:
+        print(report(day, users, user_docs, members, charts, now))
