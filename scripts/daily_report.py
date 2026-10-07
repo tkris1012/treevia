@@ -12,6 +12,8 @@
 無料人数の人数帯は、そのユーザーの組織図のうち一番人数が多いもので分ける
 （無料プランの上限は組織図1つあたり100人）。組織図が無い人は 0〜50未満 に入る。
 人数帯は今の時点の値で、過去日を指定しても当時の値にはならない。
+各人数帯のアクティブ（当日・直近7日・直近30日に使った人数）も今の時点から数える。
+当日の列は、今日を集計するときだけ出す（Auth には最終利用時刻しか無いため）。
 
 認証と TREEVIA_EXCLUDE（集計から外すユーザー）は user_stats.py と同じ。
 
@@ -102,7 +104,7 @@ def diff(a, b):
     return f'{a - b:+d}' if a != b else '±0'
 
 
-def summary(day, users, user_docs, members, charts):
+def summary(day, users, user_docs, members, charts, now):
     emails = {u['localId']: u.get('email') for u in users}
     plan_of = lambda uid: user_docs.get(uid, {}).get('plan', 'free')
     new = daily_counts(users, members, day)['new']
@@ -111,17 +113,25 @@ def summary(day, users, user_docs, members, charts):
     largest = {}
     for c in charts.values():
         largest[c['uid']] = max(largest.get(c['uid'], 0), c['count'])
-    free = [largest.get(uid, 0) for uid in emails if plan_of(uid) not in PRICE]
+    free = [(largest.get(u['localId'], 0), last_used(u)) for u in users if plan_of(u['localId']) not in PRICE]
+    is_today = day == dt.datetime.fromtimestamp(now, JST).date()
+    within = lambda t, days: t is not None and now - t <= days * DAY
+
+    def band_row(name, rows):
+        # 当日のアクティブは Auth の最終利用時刻しか無いため、今日を集計するときだけ出す
+        today = f'{sum(1 for _, t in rows if in_day(t, day)):>4}' if is_today else '   -'
+        return (f'   {name:<10} {len(rows):>4}人  {today}  {sum(1 for _, t in rows if within(t, 7)):>4}'
+                f'  {sum(1 for _, t in rows if within(t, 30)):>4}')
     out = [f'━━ Treevia 日次報告 {day}（{WEEKDAYS[day.weekday()]}）━━━━━━━━━━━━━━━']
     out.append(f' 新規登録       {new:>4}人   （前日比 {diff(new, prev)}）')
     out.append(f' 有料人数       {sum(paid.values()):>4}人')
     out.append(f'   ライト/プロ  {paid["light"]:>4} / {paid["pro"]}')
-    out.append(f' 無料人数       {len(free):>4}人')
+    out.append(f' 無料人数       {len(free):>4}人   アクティブ→ 当日  7日  30日')
     for lo, hi in FREE_BANDS:
-        out.append(f'   {f"{lo}〜{hi}未満":<10} {sum(1 for n in free if lo <= n < hi):>4}人')
-    over = sum(1 for n in free if n >= FREE_BANDS[-1][1])
+        out.append(band_row(f'{lo}〜{hi}未満', [r for r in free if lo <= r[0] < hi]))
+    over = [r for r in free if r[0] >= FREE_BANDS[-1][1]]
     if over:  # 上限を超えている人（旧データなど）がいるときだけ出す
-        out.append(f'   {f"{FREE_BANDS[-1][1]}以上":<10} {over:>4}人')
+        out.append(band_row(f'{FREE_BANDS[-1][1]}以上', over))
     out.append('━' * 46)
     return '\n'.join(out)
 
@@ -232,6 +242,6 @@ if __name__ == '__main__':
         if m['chart'] in charts:
             charts[m['chart']]['count'] += 1
     user_docs = fetch_user_docs()
-    print(summary(day, users, user_docs, members, charts))
+    print(summary(day, users, user_docs, members, charts, now))
     if detail:
         print(report(day, users, user_docs, members, charts, now))
