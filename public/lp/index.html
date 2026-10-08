@@ -104,228 +104,325 @@
   }
   </script>
 
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet" />
+
   <style>
     :root {
-      --purple: #15A24A;        /* 互換のため名前は残しつつブランド緑に */
-      --purple-dark: #0E7C39;
-      --ink: #0F3D2E;           /* ロゴのワードマーク濃緑 */
-      --gray: #5B6B62;
-      --line: #E3EAE5;
-      --bg: #EFFBF3;            /* 薄緑 */
-      --soft: #BBE8CC;          /* 薄緑ボーダー */
-      --tag: #E3F8EC;           /* タグ背景 */
-      --shadow: rgba(21,162,74,0.32);
-      --blue: #0066C2;          /* ロゴのノード青（アクセント） */
+      --bg: #050B08;
+      --bg2: #08130E;
+      --surface: rgba(255,255,255,0.04);
+      --surface2: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.09);
+      --border2: rgba(255,255,255,0.16);
+      --text: #ECF7F0;
+      --muted: #9DB2A6;
+      --dim: #6D8277;
+      --green: #15A24A;
+      --green2: #22C55E;
+      --mint: #6EE7B7;
+      --cyan: #38BDF8;
+      --glow: rgba(34,197,94,0.45);
+      --radius: 20px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Segoe UI", Meiryo, sans-serif;
-      color: var(--ink);
-      line-height: 1.7;
-      background: #fff;
+      font-family: "Inter", "Noto Sans JP", -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Segoe UI", Meiryo, sans-serif;
+      color: var(--text);
+      background: var(--bg);
+      line-height: 1.75;
       -webkit-font-smoothing: antialiased;
+      overflow-x: hidden;
     }
     a { color: inherit; text-decoration: none; }
-    .wrap { max-width: 980px; margin: 0 auto; padding: 0 20px; }
-    .btn {
-      display: inline-block;
-      background: var(--purple);
-      color: #fff;
-      font-weight: 700;
-      font-size: 16px;
-      padding: 15px 30px;
-      border-radius: 12px;
-      box-shadow: 0 6px 20px var(--shadow);
-      transition: transform .12s, background .12s;
-    }
-    .btn:hover { background: var(--purple-dark); transform: translateY(-1px); }
-    .btn.secondary {
-      background: #fff; color: var(--purple);
-      border: 1.5px solid var(--soft); box-shadow: none;
-    }
-    .section { padding: 72px 0; }
-    .eyebrow { color: var(--purple); font-weight: 700; font-size: 13px; letter-spacing: .08em; }
-    h2.title { font-size: 28px; font-weight: 800; margin: 8px 0 36px; line-height: 1.4; }
+    img, video { display: block; max-width: 100%; }
+    .wrap { max-width: 1160px; margin: 0 auto; padding: 0 24px; }
 
-    /* ===== Header ===== */
+    /* ── ボタン ── */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      font-weight: 700; font-size: 16px; color: #04120A;
+      background: linear-gradient(135deg, #4ADE80 0%, #22C55E 45%, #15A24A 100%);
+      padding: 15px 28px; border-radius: 999px;
+      box-shadow: 0 0 0 1px rgba(255,255,255,.12) inset, 0 10px 30px -6px var(--glow);
+      transition: transform .15s, box-shadow .15s;
+      white-space: nowrap;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px rgba(255,255,255,.2) inset, 0 16px 40px -6px var(--glow); }
+    .btn.ghost {
+      color: var(--text); background: rgba(255,255,255,.06);
+      box-shadow: 0 0 0 1px var(--border2) inset; backdrop-filter: blur(8px);
+    }
+    .btn.ghost:hover { background: rgba(255,255,255,.1); box-shadow: 0 0 0 1px rgba(255,255,255,.28) inset; }
+    .btn.sm { padding: 10px 18px; font-size: 14px; }
+    .btn .play { width: 22px; height: 22px; border-radius: 50%; background: rgba(255,255,255,.14); display: grid; place-items: center; }
+
+    /* ── ヘッダー ── */
     header {
       position: sticky; top: 0; z-index: 50;
-      background: rgba(255,255,255,0.9); backdrop-filter: blur(8px);
-      border-bottom: 1px solid var(--line);
+      background: rgba(5,11,8,.62); backdrop-filter: saturate(160%) blur(16px); -webkit-backdrop-filter: saturate(160%) blur(16px);
+      border-bottom: 1px solid var(--border);
     }
-    .nav { display: flex; align-items: center; min-height: 60px; padding: 8px 0; }
-    .brand { display: flex; flex-direction: column; gap: 2px; }
-    .logo { font-weight: 800; font-size: 19px; display: flex; align-items: center; gap: 6px; }
-    .logo-img { height: 46px; width: auto; display: block; }
-    .footer-logo { height: 34px; width: auto; margin-bottom: 12px; }
-    .nav .spacer { flex: 1; }
-    .nav .btn { padding: 9px 18px; font-size: 14px; }
-    .nav-link { font-size: 14px; font-weight: 700; color: var(--ink); margin-right: 18px; white-space: nowrap; }
-    .nav-link:hover { color: var(--purple); }
-    @media (max-width: 480px) { .nav-link { display: none; } }
-    @media (max-width: 480px) { .logo-img { height: 38px; } }
+    .nav { display: flex; align-items: center; gap: 28px; height: 68px; }
+    .brand img { height: 34px; width: auto; }
+    .nav-links { display: flex; gap: 26px; margin-left: 12px; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: var(--muted); transition: color .15s; }
+    .nav-links a:hover { color: var(--text); }
+    .spacer { flex: 1; }
 
-    /* ===== Hero ===== */
-    .hero { background: linear-gradient(180deg, var(--bg) 0%, #fff 100%); padding: 72px 0 64px; }
-    .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 44px; align-items: center; }
-    .hero h1 { font-size: 40px; font-weight: 900; line-height: 1.3; letter-spacing: -0.01em; }
-    .hero h1 .hl { color: var(--purple); }
-    .hero p.lead { font-size: 17px; color: var(--gray); margin: 20px 0 28px; }
-    .hero .cta-row { display: flex; gap: 12px; flex-wrap: wrap; }
-    .hero .note { font-size: 12.5px; color: var(--gray); margin-top: 14px; }
-
-    /* ===== CSS ツリーモック ===== */
-    .mock {
-      background: #EBEBEB; border-radius: 16px; padding: 28px 16px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.12); border: 1px solid #ddd;
+    /* ── 共通の見出し ── */
+    .section { padding: 120px 0; position: relative; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: "Inter", sans-serif; font-size: 13px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+      color: var(--mint);
     }
-    .tree { display: flex; flex-direction: column; align-items: center; }
-    .node {
-      background: #fff; border-radius: 10px; padding: 8px 6px; width: 96px;
-      text-align: center; box-shadow: 0 1px 4px rgba(0,0,0,0.12);
-      border-top: 4px solid var(--purple); font-size: 12px; font-weight: 700;
-    }
-    .node.blue { border-top-color: var(--blue); }
-    .leg-badge.blue { color: var(--blue); border-color: #BBD6F2; }
-    .node .av { font-size: 20px; }
-    .node small { display: block; font-weight: 600; color: var(--gray); font-size: 10px; }
-    .row { display: flex; gap: 28px; margin-top: 22px; position: relative; }
-    .row::before {
-      content: ""; position: absolute; top: -22px; left: 25%; right: 25%;
-      border-top: 2px solid #C4C4C4;
-    }
-    .branch { display: flex; flex-direction: column; align-items: center; position: relative; }
-    .branch::before {
-      content: ""; position: absolute; top: -22px; height: 22px; border-left: 2px solid #C4C4C4;
-    }
-    .leg-badge {
-      display: inline-block; font-size: 10px; font-weight: 700; color: var(--purple);
-      background: #fff; border: 1px solid var(--soft); border-radius: 999px;
-      padding: 2px 8px; margin-bottom: 8px;
+    .eyebrow::before { content: ""; width: 18px; height: 2px; border-radius: 2px; background: linear-gradient(90deg, var(--mint), transparent); }
+    .title { word-break: auto-phrase; text-wrap: balance; margin-top: 14px; font-size: clamp(30px, 4.2vw, 48px); font-weight: 900; line-height: 1.25; letter-spacing: -.01em; }
+    .sub { margin-top: 18px; font-size: 17px; color: var(--muted); max-width: 640px; }
+    .center { text-align: center; }
+    .center .sub { margin-left: auto; margin-right: auto; }
+    .grad {
+      background: linear-gradient(100deg, #86EFAC 0%, #22C55E 40%, #38BDF8 100%);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
     }
 
-    /* ===== Problem ===== */
-    .problem { background: #fff; }
-    .prob-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
-    .prob-card { border: 1px solid var(--line); border-radius: 14px; padding: 22px; background: #FCFCFD; }
-    .prob-card .ic { font-size: 26px; }
-    .prob-card h3 { font-size: 15px; margin: 10px 0 6px; }
-    .prob-card p { font-size: 13px; color: var(--gray); }
-
-    /* ===== Features ===== */
-    .features { background: var(--bg); }
-    .feat { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; align-items: center; margin-bottom: 40px; }
-    .feat:last-child { margin-bottom: 0; }
-    .feat.rev .feat-text { order: 2; }
-    .feat-ic { font-size: 40px; }
-    .feat h3 { font-size: 22px; font-weight: 800; margin: 8px 0 10px; }
-    .feat p { font-size: 15px; color: var(--gray); }
-    .feat-visual {
-      background: #fff; border-radius: 14px; min-height: 180px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 56px; box-shadow: 0 8px 24px rgba(0,0,0,0.06); border: 1px solid var(--line);
+    /* ── ヒーロー ── */
+    .hero { position: relative; padding: 96px 0 40px; overflow: hidden; }
+    .hero::before {
+      content: ""; position: absolute; inset: 0; pointer-events: none;
+      background-image: linear-gradient(rgba(255,255,255,.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.045) 1px, transparent 1px);
+      background-size: 56px 56px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 30%, transparent 75%);
+      -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 30%, #000 30%, transparent 75%);
     }
-    /* アプリ実スクショ */
-    .shot { display: block; width: 100%; height: auto; border-radius: 16px;
-      box-shadow: 0 14px 44px rgba(0,0,0,0.16); border: 1px solid var(--line); }
-    .shot-mobile { max-width: 270px; margin: 0 auto; }
-    .feat-visual.shot-wrap { background: transparent; border: none; box-shadow: none;
-      min-height: auto; padding: 0; }
-    /* 特徴イラスト */
-    .feat-illus { width: 82%; height: auto; display: block; }
-    /* 使い方の具体例（ユースケース）ボックス */
-    .usecase { margin-top: 16px; padding: 14px 16px; background: #F3FAF6; border-left: 3px solid var(--purple); border-radius: 8px; }
-    .usecase-label { font-size: 12px; font-weight: 800; color: var(--purple); margin-bottom: 6px; }
-    .usecase p { font-size: 13px; color: var(--ink); font-weight: 700; margin: 0 0 8px; }
-    .usecase ol { margin: 0; padding-left: 18px; font-size: 13px; color: var(--gray); line-height: 1.7; }
-    .usecase li { margin-bottom: 2px; }
-
-    /* ===== Updates（アップデート情報） ===== */
-    .updates-list { max-width: 640px; margin: 0 auto; display: flex; flex-direction: column; gap: 0; }
-    .update-item {
-      display: flex; gap: 18px; padding: 18px 0;
-      border-bottom: 1px solid var(--line);
+    .orb { position: absolute; border-radius: 50%; filter: blur(90px); pointer-events: none; }
+    .orb.a { width: 620px; height: 620px; left: 50%; top: -220px; transform: translateX(-60%); background: radial-gradient(circle, rgba(34,197,94,.42), transparent 65%); }
+    .orb.b { width: 520px; height: 520px; right: -180px; top: 260px; background: radial-gradient(circle, rgba(56,189,248,.22), transparent 65%); }
+    .orb.c { width: 460px; height: 460px; left: -200px; top: 420px; background: radial-gradient(circle, rgba(110,231,183,.16), transparent 65%); }
+    .hero-text { position: relative; text-align: center; max-width: 860px; margin: 0 auto; }
+    .pill {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 6px 16px 6px 6px; border-radius: 999px;
+      background: rgba(255,255,255,.05); border: 1px solid var(--border2);
+      font-size: 13px; font-weight: 500; color: var(--muted);
     }
-    .update-item:first-child { padding-top: 0; }
-    .update-item:last-child { border-bottom: none; }
-    .update-date { flex-shrink: 0; width: 96px; font-size: 12.5px; color: var(--gray); font-weight: 700; padding-top: 2px; }
-    .update-body h4 { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
-    .update-body p { font-size: 13.5px; color: var(--gray); line-height: 1.7; }
-    .updates-more { text-align: center; margin-top: 28px; }
-    .updates-more a { font-size: 13.5px; color: var(--purple); font-weight: 700; }
-    @media (max-width: 480px) {
-      .update-item { flex-direction: column; gap: 4px; }
-      .update-date { width: auto; }
-    }
-    .feat-visual.img-cover { padding: 0; min-height: auto; border: none; box-shadow: none; background: transparent; }
-    .feat-cover { width: 100%; height: 240px; object-fit: cover; border-radius: 14px; display: block;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.12); border: 1px solid var(--line); }
-    /* 画像主役の特徴ブロック（見出し・説明が画像内に含まれるもの） */
-    .feat-full { margin-bottom: 40px; }
-    .feat-full-img { width: 100%; height: auto; display: block; border-radius: 16px;
-      box-shadow: 0 12px 40px rgba(0,0,0,0.10); border: 1px solid var(--line); }
+    .pill b { background: linear-gradient(135deg, #4ADE80, #15A24A); color: #04120A; font-family: "Inter", sans-serif; font-size: 11px; font-weight: 800; letter-spacing: .08em; padding: 3px 10px; border-radius: 999px; }
+    .hero h1 { word-break: auto-phrase; margin-top: 26px; font-size: clamp(38px, 6.4vw, 76px); font-weight: 900; line-height: 1.12; letter-spacing: -.02em; }
+    .hero .lead { margin: 24px auto 0; font-size: clamp(16px, 1.6vw, 19px); color: var(--muted); max-width: 640px; }
+    .cta-row { margin-top: 36px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+    .checks { margin-top: 22px; display: flex; gap: 22px; justify-content: center; flex-wrap: wrap; font-size: 13px; color: var(--dim); }
+    .checks span { display: inline-flex; align-items: center; gap: 6px; }
+    .checks svg { color: var(--green2); }
 
-    /* ===== Steps ===== */
-    .steps-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 18px; }
-    .step { text-align: center; padding: 10px; }
-    .step .num {
-      width: 44px; height: 44px; border-radius: 50%; background: var(--purple); color: #fff;
-      font-weight: 800; font-size: 18px; display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 14px;
+    /* ── デバイスフレーム ── */
+    .stage { position: relative; margin: 72px auto 0; max-width: 1040px; }
+    .browser {
+      position: relative; border-radius: 16px; overflow: hidden;
+      background: #0B1712; border: 1px solid var(--border2);
+      box-shadow: 0 40px 120px -30px rgba(34,197,94,.35), 0 30px 80px -20px rgba(0,0,0,.8);
     }
-    .step h3 { font-size: 16px; margin-bottom: 6px; }
-    .step p { font-size: 13px; color: var(--gray); }
-
-    /* ===== Pricing ===== */
-    .pricing { background: var(--bg); }
-    .price-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
-    .plan {
-      background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 26px 22px;
-      display: flex; flex-direction: column;
+    .browser .bar { height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 14px; background: #0F1D17; border-bottom: 1px solid var(--border); }
+    .browser .bar i { width: 11px; height: 11px; border-radius: 50%; background: #2B3A33; }
+    .browser .bar i:nth-child(1) { background: #FF5F57; } .browser .bar i:nth-child(2) { background: #FEBC2E; } .browser .bar i:nth-child(3) { background: #28C840; }
+    .browser .url { margin: 0 auto; font-family: "Inter", sans-serif; font-size: 12px; color: var(--dim); background: rgba(255,255,255,.05); border: 1px solid var(--border); padding: 4px 14px; border-radius: 8px; display: flex; align-items: center; gap: 6px; }
+    .browser video, .browser .ph { width: 100%; aspect-ratio: 1280 / 800; object-fit: cover; background: #EBEBEB; }
+    .phone {
+      position: relative; width: 100%; border-radius: 44px; padding: 10px;
+      background: linear-gradient(145deg, #2A3A33, #0C1511); border: 1px solid rgba(255,255,255,.14);
+      box-shadow: 0 40px 90px -20px rgba(0,0,0,.85), 0 0 60px -10px rgba(34,197,94,.25);
     }
-    .plan.feat-plan { border: 2px solid var(--purple); box-shadow: 0 10px 30px rgba(21,162,74,0.15); }
-    .plan .pname { font-weight: 800; font-size: 17px; }
-    .plan .pprice { font-size: 30px; font-weight: 900; margin: 8px 0 4px; }
-    .plan .pprice small { font-size: 13px; font-weight: 600; color: var(--gray); }
-    .plan ul { list-style: none; margin: 16px 0 0; }
-    .plan li { font-size: 13.5px; padding: 6px 0 6px 24px; position: relative; color: #374151; }
-    .plan li::before { content: "✓"; position: absolute; left: 0; color: var(--purple); font-weight: 800; }
-    .plan .pname-row { display: flex; align-items: center; gap: 8px; }
-    .plan .tag {
-      font-size: 11px; font-weight: 700; color: var(--purple);
-      background: var(--tag); border-radius: 6px; padding: 2px 8px;
+    .phone::before { content: ""; position: absolute; top: 20px; left: 50%; transform: translateX(-50%); width: 30%; height: 22px; border-radius: 20px; background: #050B08; z-index: 2; }
+    .phone video, .phone .ph { width: 100%; aspect-ratio: 390 / 844; object-fit: cover; border-radius: 34px; background: #EBEBEB; }
+    .hero .phone { position: absolute; width: 23%; right: -4%; bottom: -10%; }
+    .float-chip {
+      position: absolute; display: flex; align-items: center; gap: 10px;
+      padding: 12px 16px; border-radius: 14px; font-size: 13px; font-weight: 700;
+      background: rgba(10,22,16,.78); border: 1px solid var(--border2); backdrop-filter: blur(12px);
+      box-shadow: 0 20px 40px -12px rgba(0,0,0,.6);
+      animation: floaty 6s ease-in-out infinite;
+    }
+    .float-chip .dot { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; background: rgba(34,197,94,.16); color: var(--green2); }
+    .float-chip small { display: block; font-size: 11px; font-weight: 500; color: var(--muted); }
+    .float-chip.l { left: -5%; top: 22%; }
+    .float-chip.r { left: 6%; bottom: 8%; animation-delay: -3s; }
+    @keyframes floaty { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-10px) } }
+
+    /* ── 数字の帯 ── */
+    .stats { margin-top: 120px; display: grid; grid-template-columns: repeat(4, 1fr); border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); overflow: hidden; }
+    .stat { padding: 28px 24px; border-right: 1px solid var(--border); }
+    .stat:last-child { border-right: none; }
+    .stat .n { font-family: "Inter", sans-serif; font-size: 34px; font-weight: 800; letter-spacing: -.02em; }
+    .stat .n small { font-size: 16px; font-weight: 700; margin-left: 2px; color: var(--muted); }
+    .stat .l { margin-top: 4px; font-size: 13px; color: var(--muted); }
+    .about { margin: 40px auto 0; max-width: 780px; text-align: center; font-size: 14px; color: var(--dim); line-height: 1.95; }
+    .about strong { color: var(--muted); }
+
+    /* ── 悩み ── */
+    .cards3 { margin-top: 56px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .card {
+      position: relative; padding: 30px 28px; border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.02));
+      border: 1px solid var(--border);
+      transition: border-color .2s, transform .2s;
+    }
+    .card:hover { border-color: var(--border2); transform: translateY(-4px); }
+    .card .ic { width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center; color: #FCA5A5; background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.2); }
+    .card h3 { margin-top: 20px; font-size: 19px; font-weight: 700; }
+    .card p { margin-top: 8px; font-size: 14.5px; color: var(--muted); }
+    .bridge { word-break: auto-phrase; text-wrap: balance; margin-top: 64px; text-align: center; font-size: clamp(20px, 2.6vw, 28px); font-weight: 900; }
+
+    /* ── 機能ショーケース ── */
+    .features { background: linear-gradient(180deg, var(--bg) 0%, var(--bg2) 50%, var(--bg) 100%); }
+    .showcase { margin-top: 56px; display: grid; grid-template-columns: 360px 1fr; gap: 40px; align-items: start; }
+    .tabs { display: flex; flex-direction: column; gap: 8px; }
+    .tab {
+      position: relative; text-align: left; width: 100%; cursor: pointer;
+      padding: 18px 20px; border-radius: 16px; border: 1px solid transparent;
+      background: transparent; color: var(--muted); font: inherit;
+      transition: background .2s, border-color .2s, color .2s;
+    }
+    .tab:hover { background: var(--surface); color: var(--text); }
+    .tab .t { display: flex; align-items: center; gap: 12px; font-size: 16px; font-weight: 700; }
+    .tab .t em { font-style: normal; font-family: "Inter", sans-serif; font-size: 12px; font-weight: 800; color: var(--dim); letter-spacing: .05em; }
+    .tab .d { display: none; margin-top: 8px; font-size: 14px; line-height: 1.8; color: var(--muted); }
+    .tab .prog { position: absolute; left: 20px; right: 20px; bottom: 0; height: 2px; border-radius: 2px; background: rgba(255,255,255,.08); overflow: hidden; display: none; }
+    .tab .prog i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--green2), var(--mint)); }
+    .tab.on { background: var(--surface2); border-color: var(--border2); color: var(--text); }
+    .tab.on .t em { color: var(--mint); }
+    .tab.on .d, .tab.on .prog { display: block; }
+    .viewer { position: relative; }
+    .seg { display: inline-flex; padding: 4px; border-radius: 999px; background: var(--surface); border: 1px solid var(--border); margin-bottom: 18px; }
+    .seg button { font: inherit; font-size: 13px; font-weight: 700; color: var(--muted); background: none; border: none; padding: 8px 18px; border-radius: 999px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    .seg button.on { color: #04120A; background: linear-gradient(135deg, #4ADE80, #22C55E); }
+    .seg button:disabled { opacity: .35; cursor: not-allowed; }
+    .vstage { position: relative; min-height: 200px; display: grid; place-items: center; }
+    .vstage .browser { width: 100%; }
+    .vstage .phone { width: min(300px, 70%); }
+    .vstage .hidden { display: none; }
+    .vcap { margin-top: 18px; font-size: 13px; color: var(--dim); text-align: center; }
+
+    /* ── 2デバイス ── */
+    .duo { margin-top: 64px; display: grid; grid-template-columns: 1fr 240px; gap: 36px; align-items: end; }
+    .duo-points { margin-top: 56px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .point { padding: 24px; border-radius: 18px; background: var(--surface); border: 1px solid var(--border); }
+    .point .ic2 { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; color: var(--mint); background: rgba(110,231,183,.1); border: 1px solid rgba(110,231,183,.2); }
+    .point h4 { margin-top: 16px; font-size: 16px; font-weight: 700; }
+    .point p { margin-top: 6px; font-size: 14px; color: var(--muted); }
+
+    /* ── 使い方の例 ── */
+    .usecase { margin-top: 28px; padding: 28px 30px; border-radius: var(--radius); background: linear-gradient(135deg, rgba(34,197,94,.1), rgba(56,189,248,.06)); border: 1px solid rgba(110,231,183,.22); }
+    .usecase .lab { font-size: 12px; font-weight: 800; letter-spacing: .1em; color: var(--mint); }
+    .usecase p { margin-top: 6px; font-weight: 700; }
+    .usecase ol { margin: 12px 0 0 20px; color: var(--muted); font-size: 14.5px; }
+    .usecase li { margin-top: 4px; }
+
+    /* ── ステップ ── */
+    .steps { margin-top: 56px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; position: relative; }
+    .step { padding: 30px 28px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); }
+    .step .num { font-family: "Inter", sans-serif; font-size: 52px; font-weight: 800; line-height: 1; letter-spacing: -.04em; }
+    .step h3 { margin-top: 16px; font-size: 19px; font-weight: 700; }
+    .step p { margin-top: 6px; font-size: 14.5px; color: var(--muted); }
+
+    /* ── アップデート ── */
+    .updates { margin-top: 48px; border-top: 1px solid var(--border); }
+    .update { display: grid; grid-template-columns: 140px 1fr; gap: 24px; padding: 24px 4px; border-bottom: 1px solid var(--border); }
+    .update .date { font-family: "Inter", sans-serif; font-size: 14px; font-weight: 700; color: var(--mint); }
+    .update h4 { font-size: 17px; font-weight: 700; }
+    .update p { margin-top: 4px; font-size: 14.5px; color: var(--muted); }
+    .more { margin-top: 22px; text-align: right; }
+    .more a { font-size: 14px; font-weight: 700; color: var(--mint); }
+
+    /* ── 料金 ── */
+    .prices { margin-top: 56px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; }
+    .plan { position: relative; padding: 34px 30px; border-radius: 24px; background: var(--surface); border: 1px solid var(--border); display: flex; flex-direction: column; }
+    .plan.best { background: linear-gradient(180deg, rgba(34,197,94,.14), rgba(34,197,94,.03)); border-color: rgba(74,222,128,.5); box-shadow: 0 30px 80px -30px rgba(34,197,94,.5); }
+    .plan .tag { position: absolute; top: -13px; left: 30px; font-size: 12px; font-weight: 800; color: #04120A; background: linear-gradient(135deg, #4ADE80, #22C55E); padding: 4px 12px; border-radius: 999px; }
+    .plan .pn { font-size: 15px; font-weight: 700; color: var(--muted); }
+    .plan .pp { margin-top: 10px; font-family: "Inter", sans-serif; font-size: 46px; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; }
+    .plan .pp small { font-size: 15px; font-weight: 600; color: var(--muted); margin-left: 4px; letter-spacing: 0; }
+    .plan ul { list-style: none; margin-top: 24px; display: grid; gap: 12px; font-size: 15px; flex: 1; }
+    .plan li { display: flex; gap: 10px; align-items: flex-start; }
+    .plan li svg { flex-shrink: 0; margin-top: 5px; color: var(--green2); }
+    .plan .btn { margin-top: 28px; width: 100%; }
+
+    /* ── FAQ ── */
+    .faq-list { margin: 48px auto 0; max-width: 820px; display: grid; gap: 12px; }
+    details { border-radius: 16px; background: var(--surface); border: 1px solid var(--border); transition: border-color .2s; }
+    details[open] { border-color: var(--border2); }
+    summary { list-style: none; cursor: pointer; padding: 20px 56px 20px 24px; font-weight: 700; font-size: 16px; position: relative; }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: ""; position: absolute; right: 24px; top: 50%; width: 10px; height: 10px; border-right: 2px solid var(--mint); border-bottom: 2px solid var(--mint); transform: translateY(-70%) rotate(45deg); transition: transform .2s; }
+    details[open] summary::after { transform: translateY(-30%) rotate(-135deg); }
+    details p { padding: 0 24px 22px; font-size: 15px; color: var(--muted); }
+
+    /* ── 最後のCTA ── */
+    .final { padding: 40px 0 120px; }
+    .final-box {
+      position: relative; overflow: hidden; text-align: center; padding: 80px 32px; border-radius: 32px;
+      background: radial-gradient(ellipse at 50% 0%, rgba(34,197,94,.35), transparent 60%), linear-gradient(180deg, #0C1D15, #07110C);
+      border: 1px solid rgba(110,231,183,.25);
+    }
+    .final-box h2 { word-break: auto-phrase; text-wrap: balance; font-size: clamp(28px, 4vw, 46px); font-weight: 900; line-height: 1.3; }
+    .final-box p { margin-top: 14px; color: var(--muted); }
+    .final-box .btn { margin-top: 32px; }
+
+    footer { padding: 56px 0 48px; border-top: 1px solid var(--border); font-size: 13px; color: var(--dim); text-align: center; }
+    footer img { height: 30px; width: auto; margin: 0 auto 14px; opacity: .9; }
+    footer a:hover { color: var(--text); }
+
+    /* ── スクロールで表示 ── */
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity .8s cubic-bezier(.2,.7,.2,1), transform .8s cubic-bezier(.2,.7,.2,1); }
+    .reveal.in { opacity: 1; transform: none; }
+    @media (prefers-reduced-motion: reduce) {
+      .reveal { opacity: 1; transform: none; transition: none; }
+      .float-chip { animation: none; }
+      html { scroll-behavior: auto; }
     }
 
-    /* ===== FAQ ===== */
-    .faq details {
-      border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 12px; background: #fff;
+    /* ── タブレット・スマホ ── */
+    @media (max-width: 960px) {
+      .nav-links { display: none; }
+      .showcase { grid-template-columns: 1fr; gap: 24px; }
+      .tabs { flex-direction: row; overflow-x: auto; gap: 8px; padding-bottom: 4px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+      .tabs::-webkit-scrollbar { display: none; }
+      .tab { flex: 0 0 auto; width: auto; padding: 10px 16px; border-radius: 999px; border-color: var(--border); }
+      .tab .d, .tab.on .d, .tab .prog, .tab.on .prog { display: none; }
+      .tab .t { font-size: 14px; gap: 8px; }
+      .tab-desc { display: block !important; }
+      .duo { grid-template-columns: 1fr 160px; gap: 18px; }
     }
-    .faq summary { font-weight: 700; font-size: 15px; cursor: pointer; list-style: none; }
-    .faq summary::-webkit-details-marker { display: none; }
-    .faq summary::after { content: "＋"; float: right; color: var(--purple); }
-    .faq details[open] summary::after { content: "−"; }
-    .faq p { font-size: 14px; color: var(--gray); margin-top: 10px; }
-
-    /* ===== Final CTA ===== */
-    .final {
-      background: linear-gradient(135deg, var(--purple) 0%, var(--blue) 100%); color: #fff; text-align: center;
-    }
-    .final h2 { font-size: 28px; font-weight: 800; }
-    .final p { font-size: 16px; opacity: .92; margin: 14px 0 28px; }
-    .final .btn { background: #fff; color: var(--purple); box-shadow: 0 6px 24px rgba(0,0,0,0.2); }
-
-    footer { background: #1F2937; color: #9CA3AF; font-size: 13px; padding: 28px 0; text-align: center; }
-    footer a { color: #8FE0AC; }
-
-    /* ===== Responsive ===== */
-    @media (max-width: 760px) {
-      .hero-grid, .feat, .feat.rev .feat-text { grid-template-columns: 1fr; order: 0; }
-      .hero h1 { font-size: 30px; }
-      .prob-grid, .steps-grid, .price-grid { grid-template-columns: 1fr; }
-      h2.title { font-size: 23px; }
-      .section { padding: 52px 0; }
-      .hero-mock { order: -1; }
+    .tab-desc { display: none; margin-bottom: 16px; font-size: 14.5px; color: var(--muted); }
+    @media (max-width: 720px) {
+      .section { padding: 84px 0; }
+      .wrap { padding: 0 16px; }
+      .nav { gap: 12px; }
+      .brand img { height: 28px; }
+      .hero { padding-top: 56px; }
+      .hero h1 { font-size: 30px; letter-spacing: -.03em; }
+      .hero h1 .grad { font-size: 46px; }
+      .title { font-size: 26px; }
+      .bridge { font-size: 19px; }
+      .stage { margin-top: 48px; padding-right: 14%; }
+      .hero .phone { width: 34%; right: 0; bottom: -14%; border-radius: 30px; padding: 6px; }
+      .hero .phone video, .hero .phone .ph { border-radius: 25px; }
+      .hero .phone::before { top: 12px; height: 14px; }
+      .float-chip { display: none; }
+      .browser .bar { height: 28px; } .browser .bar i { width: 8px; height: 8px; } .browser .url { font-size: 10px; padding: 2px 10px; }
+      .stats { grid-template-columns: repeat(2, 1fr); margin-top: 96px; }
+      .stat { border-bottom: 1px solid var(--border); }
+      .stat:nth-child(2) { border-right: none; }
+      .stat:nth-child(3), .stat:nth-child(4) { border-bottom: none; }
+      .stat .n { font-size: 28px; }
+      .cards3, .steps, .prices, .duo-points { grid-template-columns: 1fr; }
+      .duo { grid-template-columns: 1fr; }
+      .duo .phone { width: 62%; margin: 0 auto; }
+      .update { grid-template-columns: 1fr; gap: 4px; }
+      .plan.best { order: -1; }
+      .final-box { padding: 56px 20px; border-radius: 24px; }
     }
   </style>
 </head>
@@ -335,41 +432,61 @@
   <header>
     <div class="wrap nav">
       <a href="/treevia/?from=lp" aria-label="Treevia — つながりが、見える。組織が、育つ。" class="brand">
-        <img src="logo-full.png" alt="Treevia — つながりが、見える。組織が、育つ。" class="logo-img" />
+        <img src="logo-white.png" alt="Treevia — つながりが、見える。組織が、育つ。" />
       </a>
+      <nav class="nav-links">
+        <a href="#features">機能</a>
+        <a href="#devices">PC・スマホ</a>
+        <a href="#pricing">料金</a>
+        <a href="#faq">FAQ</a>
+        <a href="#updates">アップデート</a>
+      </nav>
       <div class="spacer"></div>
-      <a href="#updates" class="nav-link">アップデート</a>
-      <a class="btn" href="/treevia/?from=lp" onclick="gtag('event','start_free_click',{link_location:'header'})">無料で始める</a>
+      <a class="btn sm" href="/treevia/?from=lp" onclick="gtag('event','start_free_click',{link_location:'header'})">無料で始める</a>
     </div>
   </header>
 
   <!-- Hero -->
   <section class="hero">
-    <div class="wrap hero-grid">
-      <div class="hero-text">
-        <h1>バイナリーの組織図を、<br><span class="hl">3分で。</span></h1>
-        <p class="lead">
-          左右のラインが一目でわかる組織図ツール。<br>
-          Excelや手書きをやめて、スマホでサクサク管理・共有。
-        </p>
-        <div class="cta-row">
-          <a class="btn" href="/treevia/?from=lp" onclick="gtag('event','start_free_click',{link_location:'hero'})">無料で始める</a>
-          <a class="btn secondary" href="#how">使い方を見る</a>
-        </div>
-        <p class="note">クレカ登録不要 ・ 無料プランで写真もOK ・ チームに共有できます</p>
-      </div>
-
-      <!-- アプリ実スクショ -->
-      <div class="hero-mock">
-        <img src="shot-tree.jpg" alt="Treeviaの組織図画面" class="shot shot-tree" />
-      </div>
-    </div>
-  </section>
-
-  <!-- Treeviaとは（AI検索・要約向けの明確な定義文） -->
-  <section class="section problem" style="padding-bottom: 0;">
+    <div class="orb a"></div><div class="orb b"></div><div class="orb c"></div>
     <div class="wrap">
-      <p style="font-size: 15px; color: var(--ink); max-width: 720px; margin: 0 auto; text-align: center; line-height: 1.9;">
+      <div class="hero-text reveal">
+        <span class="pill"><b>NEW</b>ロック機能で、見せながらの説明も安心</span>
+        <h1>バイナリーの組織図を、<br><span class="grad">3分で。</span></h1>
+        <p class="lead">左右のラインが一目でわかる組織図ツール。<br>Excelや手書きをやめて、PCでもスマホでもサクサク管理・共有。</p>
+        <div class="cta-row">
+          <a class="btn" href="/treevia/?from=lp" onclick="gtag('event','start_free_click',{link_location:'hero'})">無料で始める
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a class="btn ghost" href="#features"><span class="play"><svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4v16l13-8z"/></svg></span>実際の操作を見る</a>
+        </div>
+        <div class="checks">
+          <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>クレカ登録不要</span>
+          <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>インストール不要</span>
+          <span><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>無料で100人まで</span>
+        </div>
+      </div>
+
+      <div class="stage reveal">
+        <div class="browser">
+          <div class="bar"><i></i><i></i><i></i>
+            <div class="url"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>tkris1012.github.io/treevia</div>
+          </div>
+          <video class="lazyv" muted playsinline loop preload="none" poster="media/add-pc.jpg" data-src="media/add-pc" aria-label="PCでメンバーを追加する実際の画面"></video>
+        </div>
+        <div class="phone"><video class="lazyv" muted playsinline loop preload="none" poster="media/drag-sp.jpg" data-src="media/drag-sp" aria-label="スマホでメンバーをドラッグして組み替える実際の画面"></video></div>
+        <div class="float-chip l"><span class="dot"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></span><div>ワンクリックで追加<small>名前と役職を入れるだけ</small></div></div>
+        <div class="float-chip r"><span class="dot"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></span><div>PC・スマホで自動同期<small>どこからでも最新</small></div></div>
+      </div>
+
+      <div class="stats reveal">
+        <div class="stat"><div class="n">3<small>分</small></div><div class="l">登録から組織図の完成まで</div></div>
+        <div class="stat"><div class="n">100<small>人</small></div><div class="l">無料プランで登録できる人数</div></div>
+        <div class="stat"><div class="n">0<small>円</small></div><div class="l">初期費用・クレカ登録なし</div></div>
+        <div class="stat"><div class="n">PC<small>×</small>SP</div><div class="l">どちらでも同じデータを編集</div></div>
+      </div>
+
+      <!-- Treeviaとは（AI検索・要約向けの明確な定義文） -->
+      <p class="about">
         <strong>Treevia（ツリービア）</strong>は、バイナリー（左右2分岐）の組織図をスマホで簡単に作成・共有できる無料のWebアプリです。
         無料プランは組織図1つ・メンバー100人まで、ライトプラン（月額380円）は組織図5つ・メンバー500人まで、
         プロプラン（月額980円）は組織図・メンバーとも無制限で利用でき、いずれもクレジットカード登録なしで始められます。
@@ -378,75 +495,113 @@
   </section>
 
   <!-- Problem -->
-  <section class="section problem">
+  <section class="section">
     <div class="wrap">
-      <div class="eyebrow">こんな悩みありませんか？</div>
-      <h2 class="title">組織管理、こうなりがち。</h2>
-      <div class="prob-grid">
-        <div class="prob-card">
-          <div class="ic">📄</div>
+      <div class="center reveal">
+        <div class="eyebrow">Problem</div>
+        <h2 class="title">組織管理、こうなりがち。</h2>
+      </div>
+      <div class="cards3">
+        <div class="card reveal">
+          <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9.5 12.5l5 5M14.5 12.5l-5 5"/></svg></div>
           <h3>Excel・手書きが限界</h3>
           <p>人が増えるたびに作り直し。最新版がどれか分からなくなる。</p>
         </div>
-        <div class="prob-card">
-          <div class="ic">⚖️</div>
+        <div class="card reveal">
+          <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 7h14M5 7l-3 7a4 4 0 0 0 6 0zM19 7l-3 7a4 4 0 0 0 6 0z"/></svg></div>
           <h3>左右のバランスが見えない</h3>
           <p>どちらのラインが伸びているか、ぱっと把握できない。</p>
         </div>
-        <div class="prob-card">
-          <div class="ic">📤</div>
+        <div class="card reveal">
+          <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M9 9h.01M15 9h.01M9 13c1.5-1 4.5-1 6 0"/></svg></div>
           <h3>チームに共有しづらい</h3>
           <p>毎回スクショや口頭説明。みんなが同じ図を見られない。</p>
         </div>
       </div>
+      <p class="bridge reveal">その悩み、<span class="grad">Treevia</span>がまとめて解決します。</p>
     </div>
   </section>
 
-  <!-- Features -->
-  <section class="section features">
+  <!-- Features (showcase) -->
+  <section class="section features" id="features">
     <div class="wrap">
-      <div class="eyebrow">TREEVIA でできること</div>
-      <h2 class="title">バイナリーのための、シンプルな組織図。</h2>
-
-      <div class="feat-full">
-        <img src="feature-tree-full.jpg" alt="左右ツリーで直感的に — バイナリーそのままの左右構造。＋ボタンで下の人を追加、ドラッグで組み替え。頭の中の組織図がそのまま形になります。" class="feat-full-img" />
+      <div class="center reveal">
+        <div class="eyebrow">Features</div>
+        <h2 class="title">バイナリーのための、<br>シンプルな組織図。</h2>
+        <p class="sub">下の画面はすべて実際のアプリの操作です。PCとスマホを切り替えて、操作感を確かめてください。</p>
       </div>
 
-      <div class="feat rev">
-        <div class="feat-text">
-          <div class="feat-ic">🔗</div>
-          <h3>チームに共有できる</h3>
-          <p>共有リンクを送るだけで、メンバーの誰もが同じ組織図を閲覧可能。全員の認識がそろいます。</p>
+      <div class="showcase reveal" id="showcase">
+        <div class="tabs" role="tablist">
+          <button class="tab on" role="tab" data-key="add"><div class="t"><em>01</em>タップで追加・編集</div><div class="d">＋ボタンで左右に追加。名前・役職・写真・段数を入れるだけで、頭の中の組織図がそのまま形になります。</div><div class="prog"><i></i></div></button>
+          <button class="tab" role="tab" data-key="drag"><div class="t"><em>02</em>ドラッグで組み替え</div><div class="d">メンバーをつかんで移動するだけ。配下ごとまとめて組み替えられ、移動前には確認も出ます。</div><div class="prog"><i></i></div></button>
+          <button class="tab" role="tab" data-key="share"><div class="t"><em>03</em>リンクでチームに共有</div><div class="d">共有リンクを送るだけで、メンバーの誰もがログイン不要で同じ組織図を閲覧できます。</div><div class="prog"><i></i></div></button>
+          <button class="tab" role="tab" data-key="bookmark"><div class="t"><em>04</em>ブックマークで最新を把握</div><div class="d">もらったリンクをブックマークすれば、一覧から開くだけ。更新されると「更新あり」が付きます。</div><div class="prog"><i></i></div></button>
+          <button class="tab" role="tab" data-key="print"><div class="t"><em>05</em>印刷・PDF出力</div><div class="d">1枚に収める出力も、A4/A3の複数ページに分けるポスター分割も。仕上がりをプレビューで確認できます。</div><div class="prog"><i></i></div></button>
+          <button class="tab" role="tab" data-key="lock"><div class="t"><em>06</em>ロックで誤操作防止</div><div class="d">鍵アイコンをタップするだけ。眺める操作はそのままに、うっかり移動・削除を防ぎます。</div><div class="prog"><i></i></div></button>
         </div>
-        <div class="feat-visual img-cover"><img src="illus-share.jpg" alt="チームでスマホから組織図を共有するイメージ" class="feat-cover" /></div>
-      </div>
 
-      <div class="feat">
-        <div class="feat-text">
-          <div class="feat-ic">📱</div>
-          <h3>スマホでサクサク</h3>
-          <p>移動中でも外出先でも、スマホからそのまま編集・確認。写真付きで顔が分かる組織図に。</p>
-        </div>
-        <div class="feat-visual"><img src="illus-mobile.jpg" alt="スマホでドラッグしてサクサク編集するイメージ" class="feat-illus" /></div>
-      </div>
-
-      <div class="feat rev">
-        <div class="feat-text">
-          <div class="feat-ic">🔖</div>
-          <h3>複数チームを、ひとつの画面でリアルタイム把握</h3>
-          <p>メンバーの共有リンクをブックマークしておけば、組織図が更新されるたびに、あなたの一覧にも自動で反映。何十人・何百人のチームがいくつあっても、開くだけで最新状況が分かります。</p>
-          <div class="usecase">
-            <div class="usecase-label">こんな使い方</div>
-            <p>50人・120人・200人の3チームを率いるリーダーの場合</p>
-            <ol>
-              <li>各チームのリーダーに「Treeviaで組織図を作って、共有リンクを送って」と伝える</li>
-              <li>もらったリンクを開いて「ブックマーク」をタップ</li>
-              <li>自分の一覧に3チーム分がまとめて並ぶ</li>
-              <li>各リーダーが更新するたび、開くだけで最新状況を確認（LINEで画像を送ってもらう必要なし）</li>
-            </ol>
+        <div class="viewer">
+          <p class="tab-desc" id="tabDesc"></p>
+          <div class="seg" role="group" aria-label="表示するデバイス">
+            <button data-dev="pc" class="on"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg>PC</button>
+            <button data-dev="sp"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="7" y="2" width="10" height="20" rx="2.5"/><path d="M11 18h2"/></svg>スマホ</button>
           </div>
+          <div class="vstage">
+            <div class="browser" id="vPc">
+              <div class="bar"><i></i><i></i><i></i><div class="url">tkris1012.github.io/treevia</div></div>
+              <video muted playsinline preload="none" aria-label="PCでの実際の操作画面"></video>
+            </div>
+            <div class="phone hidden" id="vSp"><video muted playsinline preload="none" aria-label="スマホでの実際の操作画面"></video></div>
+          </div>
+          <p class="vcap" id="vcap"></p>
         </div>
-        <div class="feat-visual shot-wrap"><img src="shot-bookmark.jpg" alt="組織図一覧に複数チームがブックマークとして並び、リアルタイムで状況を確認できる画面" class="shot" /></div>
+      </div>
+
+      <div class="usecase reveal">
+        <div class="lab">こんな使い方</div>
+        <p>50人・120人・200人の3チームを率いるリーダーの場合</p>
+        <ol>
+          <li>各チームのリーダーに「Treeviaで組織図を作って、共有リンクを送って」と伝える</li>
+          <li>もらったリンクを開いて「ブックマーク」をタップ</li>
+          <li>自分の一覧に3チーム分がまとめて並ぶ</li>
+          <li>各リーダーが更新するたび、開くだけで最新状況を確認（LINEで画像を送ってもらう必要なし）</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- Devices -->
+  <section class="section" id="devices">
+    <div class="wrap">
+      <div class="center reveal">
+        <div class="eyebrow">Multi-device</div>
+        <h2 class="title">PCでもスマホでも、<br><span class="grad">同じ操作感。</span></h2>
+        <p class="sub">ブラウザで動くのでインストール不要。会社のPCで作って、移動中にスマホで確認。データは自動で同期されます。</p>
+      </div>
+      <div class="duo reveal">
+        <div class="browser">
+          <div class="bar"><i></i><i></i><i></i><div class="url">tkris1012.github.io/treevia</div></div>
+          <video class="lazyv" muted playsinline loop preload="none" poster="media/print-pc.jpg" data-src="media/print-pc" aria-label="PCで印刷プレビューを確認する実際の画面"></video>
+        </div>
+        <div class="phone"><video class="lazyv" muted playsinline loop preload="none" poster="media/bookmark-sp.jpg" data-src="media/bookmark-sp" aria-label="スマホでブックマークした組織図の更新を確認する実際の画面"></video></div>
+      </div>
+      <div class="duo-points">
+        <div class="point reveal">
+          <div class="ic2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg></div>
+          <h4>リアルタイム同期</h4>
+          <p>どの端末で編集しても、すぐに全端末へ反映。最新版を探す必要はもうありません。</p>
+        </div>
+        <div class="point reveal">
+          <div class="ic2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg></div>
+          <h4>写真付きで顔がわかる</h4>
+          <p>メンバーに写真を付けられるので、人数が増えても誰がどこにいるかひと目で分かります。</p>
+        </div>
+        <div class="point reveal">
+          <div class="ic2"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3 6.5 7 1-5 4.8 1.2 7L12 18l-6.2 3.3L7 14.3 2 9.5l7-1z"/></svg></div>
+          <h4>役職・段数を色で表示</h4>
+          <p>役職カラーと段数バッジで、組織の中での位置や進み具合が一目瞭然です。</p>
+        </div>
       </div>
     </div>
   </section>
@@ -454,169 +609,263 @@
   <!-- How / Steps -->
   <section class="section" id="how">
     <div class="wrap">
-      <div class="eyebrow">かんたん3ステップ</div>
-      <h2 class="title">登録して、すぐ作れます。</h2>
-      <div class="steps-grid">
-        <div class="step">
-          <div class="num">1</div>
-          <h3>無料登録</h3>
-          <p>メールでログインするだけ。クレカ登録は不要です。</p>
-        </div>
-        <div class="step">
-          <div class="num">2</div>
-          <h3>メンバーを追加</h3>
-          <p>＋ボタンで左右に追加。まずはサンプルから始めてもOK。</p>
-        </div>
-        <div class="step">
-          <div class="num">3</div>
-          <h3>チームに共有</h3>
-          <p>リンクを送るだけ。みんなが同じ組織図を見られます。</p>
-        </div>
+      <div class="center reveal">
+        <div class="eyebrow">How it works</div>
+        <h2 class="title">登録して、すぐ作れます。</h2>
       </div>
-      <div style="text-align:center; margin-top:36px;">
+      <div class="steps">
+        <div class="step reveal"><div class="num grad">01</div><h3>無料登録</h3><p>メールでログインするだけ。クレカ登録は不要です。</p></div>
+        <div class="step reveal"><div class="num grad">02</div><h3>メンバーを追加</h3><p>＋ボタンで左右に追加。名前と役職を入れるだけです。</p></div>
+        <div class="step reveal"><div class="num grad">03</div><h3>チームに共有</h3><p>リンクを送るだけ。みんなが同じ組織図を見られます。</p></div>
+      </div>
+      <div class="center" style="margin-top:44px;">
         <a class="btn" href="/treevia/?from=lp" onclick="gtag('event','start_free_click',{link_location:'how'})">無料で始める</a>
       </div>
     </div>
   </section>
 
   <!-- Updates -->
-  <section class="section" id="updates">
+  <section class="section" id="updates" style="padding-top:40px;">
     <div class="wrap">
-      <div class="eyebrow">アップデート情報</div>
-      <h2 class="title">今も、継続的に改善中です。</h2>
-      <div class="updates-list">
-        <div class="update-item">
-          <div class="update-date">2026.10.06</div>
-          <div class="update-body">
+      <div class="reveal">
+        <div class="eyebrow">Updates</div>
+        <h2 class="title">今も、<wbr>継続的に<wbr>改善中です。</h2>
+      </div>
+      <div class="updates reveal">
+        <div class="update">
+          <div class="date">2026.10.06</div>
+          <div>
             <h4>組織図を「ロック」できるように</h4>
             <p>鍵アイコンをタップするだけ。眺めている間のうっかり操作を防げます。</p>
           </div>
         </div>
-        <div class="update-item">
-          <div class="update-date">2026.10.01</div>
-          <div class="update-body">
+        <div class="update">
+          <div class="date">2026.10.01</div>
+          <div>
             <h4>メンバーに「段数」を設定できるように</h4>
             <p>1〜20の段数がカードの右上に表示され、段数が上がるほど目立つ色になります。</p>
           </div>
         </div>
-        <div class="update-item">
-          <div class="update-date">2026.09.30</div>
-          <div class="update-body">
+        <div class="update">
+          <div class="date">2026.09.30</div>
+          <div>
             <h4>ブックマークの更新が一覧でわかるように</h4>
             <p>更新された組織図に「更新あり」が付くので、変わったチームだけすぐ確認できます。</p>
           </div>
         </div>
       </div>
-      <div class="updates-more">
-        <a href="./updates.html">更新履歴をすべて見る →</a>
-      </div>
+      <div class="more"><a href="./updates.html">更新履歴をすべて見る →</a></div>
     </div>
   </section>
 
   <!-- Pricing -->
-  <section class="section pricing">
+  <section class="section" id="pricing">
     <div class="wrap">
-      <div class="eyebrow">料金プラン</div>
-      <h2 class="title">まずは無料で。必要になったら拡張。</h2>
-      <div class="price-grid">
-        <div class="plan">
-          <div class="pname">無料</div>
-          <div class="pprice">¥0</div>
+      <div class="center reveal">
+        <div class="eyebrow">Pricing</div>
+        <h2 class="title">まずは無料で。<br>必要になったら拡張。</h2>
+      </div>
+      <div class="prices">
+        <div class="plan reveal">
+          <div class="pn">無料</div>
+          <div class="pp">¥0</div>
           <ul>
-            <li>組織図 1つ</li>
-            <li>メンバー 100人まで</li>
-            <li>共有リンク</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>組織図 1つ</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>メンバー 100人まで</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>共有リンク</li>
           </ul>
+          <a class="btn ghost" href="/treevia/?from=lp" onclick="gtag('event','start_free_click',{link_location:'pricing'})">無料で始める</a>
         </div>
-        <div class="plan feat-plan">
-          <div class="pname-row">
-            <div class="pname">ライト</div>
-            <div class="tag">人気</div>
-          </div>
-          <div class="pprice">¥380<small> /月</small></div>
+        <div class="plan best reveal">
+          <div class="tag">人気</div>
+          <div class="pn">ライト</div>
+          <div class="pp">¥380<small>/月</small></div>
           <ul>
-            <li>組織図 5つ</li>
-            <li>メンバー 500人</li>
-            <li>共有リンク</li>
-            <li>印刷・PDF出力</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>組織図 5つ</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>メンバー 500人</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>共有リンク</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>印刷・PDF出力</li>
           </ul>
+          <a class="btn" href="/treevia/?from=lp" onclick="gtag('event','start_free_click',{link_location:'pricing'})">無料で始める</a>
         </div>
-        <div class="plan">
-          <div class="pname">プロ</div>
-          <div class="pprice">¥980<small> /月</small></div>
+        <div class="plan reveal">
+          <div class="pn">プロ</div>
+          <div class="pp">¥980<small>/月</small></div>
           <ul>
-            <li>組織図 無制限</li>
-            <li>メンバー 無制限</li>
-            <li>共有リンク（透かしなし）</li>
-            <li>印刷・PDF出力</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>組織図 無制限</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>メンバー 無制限</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>共有リンク（透かしなし）</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>印刷・PDF出力</li>
           </ul>
+          <a class="btn ghost" href="/treevia/?from=lp" onclick="gtag('event','start_free_click',{link_location:'pricing'})">無料で始める</a>
         </div>
       </div>
+      <p class="center" style="margin-top:20px;font-size:13px;color:var(--dim);">有料プランへの切り替えは、無料で始めたあとアプリ内からいつでもできます。</p>
     </div>
   </section>
 
   <!-- FAQ -->
-  <section class="section faq" id="faq">
+  <section class="section" id="faq" style="padding-top:40px;">
     <div class="wrap">
-      <div class="eyebrow">よくある質問</div>
-      <h2 class="title">FAQ</h2>
-      <details>
-        <summary>本当に無料で使えますか？</summary>
-        <p>はい。無料プランでも組織図の作成・写真・共有リンクまで使えます。クレジットカードの登録も不要です。</p>
-      </details>
-      <details>
-        <summary>バイナリー以外の組織でも使えますか？</summary>
-        <p>使えます。左右2つのラインで枝分かれする構造なので、バイナリー型の組織と特に相性が良い設計です。</p>
-      </details>
-      <details>
-        <summary>スマホだけで使えますか？</summary>
-        <p>はい。ブラウザで動くのでアプリのインストールは不要。スマホ・PCどちらからでも同じデータを編集できます。</p>
-      </details>
-      <details>
-        <summary>チームのメンバーに見せるには？</summary>
-        <p>共有リンクを発行して送るだけです。受け取った人はログイン不要で組織図を閲覧できます。</p>
-      </details>
-      <details>
-        <summary>料金プランはいくらですか？</summary>
-        <p>無料プラン（組織図1つ・100人まで）、ライトプラン月額380円（組織図5つ・500人まで・印刷/PDF出力あり）、プロプラン月額980円（組織図・メンバー無制限・共有リンクの透かしなし・印刷/PDF出力あり）の3種類です。</p>
-      </details>
-      <details>
-        <summary>MLMやネットワークビジネスのダウンライン管理に使えますか？</summary>
-        <p>使えます。バイナリー（左右2分岐）はMLM・ネットワークビジネスで一般的な組織構造のため、Treeviaのツリー構造がそのままダウンライン管理に活用できます。</p>
-      </details>
-      <details>
-        <summary>共有された組織図を自分用にコピーできますか？</summary>
-        <p>共有元が許可している場合、共有リンクから開いた組織図をワンタップで自分のアカウントに複製し、自由に編集できます。</p>
-      </details>
-      <details>
-        <summary>組織図を印刷できますか？</summary>
-        <p>ライトプラン・プロプランで印刷・PDF出力に対応しています。1枚に収める出力と、大きな組織図をA4/A3の複数ページに分割して出力するポスター分割の2種類が選べます。</p>
-      </details>
+      <div class="center reveal">
+        <div class="eyebrow">FAQ</div>
+        <h2 class="title">よくある質問</h2>
+      </div>
+      <div class="faq-list reveal">
+        <details>
+          <summary>本当に無料で使えますか？</summary>
+          <p>はい。無料プランでも組織図の作成・写真・共有リンクまで使えます。クレジットカードの登録も不要です。</p>
+        </details>
+        <details>
+          <summary>バイナリー以外の組織でも使えますか？</summary>
+          <p>使えます。左右2つのラインで枝分かれする構造なので、バイナリー型の組織と特に相性が良い設計です。</p>
+        </details>
+        <details>
+          <summary>スマホだけで使えますか？</summary>
+          <p>はい。ブラウザで動くのでアプリのインストールは不要。スマホ・PCどちらからでも同じデータを編集できます。</p>
+        </details>
+        <details>
+          <summary>チームのメンバーに見せるには？</summary>
+          <p>共有リンクを発行して送るだけです。受け取った人はログイン不要で組織図を閲覧できます。</p>
+        </details>
+        <details>
+          <summary>料金プランはいくらですか？</summary>
+          <p>無料プラン（組織図1つ・100人まで）、ライトプラン月額380円（組織図5つ・500人まで・印刷/PDF出力あり）、プロプラン月額980円（組織図・メンバー無制限・共有リンクの透かしなし・印刷/PDF出力あり）の3種類です。</p>
+        </details>
+        <details>
+          <summary>MLMやネットワークビジネスのダウンライン管理に使えますか？</summary>
+          <p>使えます。バイナリー（左右2分岐）はMLM・ネットワークビジネスで一般的な組織構造のため、Treeviaのツリー構造がそのままダウンライン管理に活用できます。</p>
+        </details>
+        <details>
+          <summary>共有された組織図を自分用にコピーできますか？</summary>
+          <p>共有元が許可している場合、共有リンクから開いた組織図をワンタップで自分のアカウントに複製し、自由に編集できます。</p>
+        </details>
+        <details>
+          <summary>組織図を印刷できますか？</summary>
+          <p>ライトプラン・プロプランで印刷・PDF出力に対応しています。1枚に収める出力と、大きな組織図をA4/A3の複数ページに分割して出力するポスター分割の2種類が選べます。</p>
+        </details>
+      </div>
     </div>
   </section>
 
   <!-- Final CTA -->
-  <section class="section final">
+  <section class="final">
     <div class="wrap">
-      <h2>組織図づくり、今日から軽くなる。</h2>
-      <p>登録は1分。まずは無料で試してみてください。</p>
-      <a class="btn" href="/treevia/?from=lp" onclick="gtag('event','start_free_click',{link_location:'final'})">無料で始める</a>
+      <div class="final-box reveal">
+        <h2>組織図づくり、<br><span class="grad">今日から軽くなる。</span></h2>
+        <p>登録は1分。まずは無料で試してみてください。</p>
+        <a class="btn" href="/treevia/?from=lp" onclick="gtag('event','start_free_click',{link_location:'final'})">無料で始める
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+      </div>
     </div>
   </section>
 
   <footer>
     <div class="wrap">
-      <img src="logo-white.png" alt="Treevia" class="footer-logo" /><br>
+      <img src="logo-white.png" alt="Treevia" />
       バイナリーの組織図ツール ・ <a href="/treevia/?from=lp">アプリを開く</a>
-      <div style="margin-top:14px;font-size:12px;line-height:2;">
+      <div style="margin-top:14px;line-height:2;">
         <a href="./tokushoho.html">特定商取引法に基づく表記</a> ・
         <a href="./privacy.html">プライバシーポリシー</a> ・
         <a href="./terms.html">利用規約</a> ・
         <a href="./contact.html">お問い合わせ</a>
       </div>
-      <div style="margin-top:12px;font-size:12px;color:#9CA3AF;">© URBAN LIFE COMMUNITY</div>
+      <div style="margin-top:12px;">© URBAN LIFE COMMUNITY</div>
     </div>
   </footer>
+
+  <script>
+  (function () {
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    // H.264 が再生できないブラウザ（一部の Chromium など）では WebM を使う
+    var EXT = document.createElement('video').canPlayType('video/mp4; codecs="avc1.64001F"') ? '.mp4' : '.webm'
+
+    // スクロールで表示
+    var reveals = document.querySelectorAll('.reveal')
+    if ('IntersectionObserver' in window) {
+      var ro = new IntersectionObserver(function (es) {
+        es.forEach(function (e) { if (e.isIntersecting) { e.target.classList.add('in'); ro.unobserve(e.target) } })
+      }, { threshold: 0.12 })
+      reveals.forEach(function (el) { ro.observe(el) })
+    } else reveals.forEach(function (el) { el.classList.add('in') })
+
+    // ヒーローなどのループ動画：見えている間だけ読み込んで再生
+    function playSafe(v) { var p = v.play(); if (p && p.catch) p.catch(function () {}) }
+    var lazy = document.querySelectorAll('video.lazyv')
+    if ('IntersectionObserver' in window) {
+      var vo = new IntersectionObserver(function (es) {
+        es.forEach(function (e) {
+          var v = e.target
+          if (e.isIntersecting) {
+            if (!v.getAttribute('src')) v.src = v.dataset.src + EXT
+            if (!reduce) playSafe(v)
+          } else if (!v.paused) v.pause()
+        })
+      }, { threshold: 0.05 })
+      lazy.forEach(function (v) { vo.observe(v) })
+    } else lazy.forEach(function (v) { v.src = v.dataset.src + EXT })
+
+    // 機能ショーケース：タブ × デバイス
+    var DATA = {
+      add: { pc: 1, sp: 1, cap: '＋ボタン → 名前と役職を入力 → 保存' },
+      drag: { pc: 1, sp: 1, cap: 'メンバーをつかんで、空いている枠へドロップ' },
+      share: { pc: 1, sp: 0, cap: '共有をオンにして、リンクをコピーするだけ' },
+      bookmark: { pc: 0, sp: 1, cap: '一覧の「更新あり」から開くと、新しいメンバーが増えている' },
+      print: { pc: 1, sp: 0, cap: 'スライダーで分割枚数を調整して、プレビューで確認' },
+      lock: { pc: 0, sp: 1, cap: 'ロック中は触っても組織図が崩れない' }
+    }
+    var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'))
+    var segBtns = document.querySelectorAll('.seg button')
+    var vPc = document.getElementById('vPc'), vSp = document.getElementById('vSp')
+    var videoPc = vPc.querySelector('video'), videoSp = vSp.querySelector('video')
+    var cap = document.getElementById('vcap'), desc = document.getElementById('tabDesc')
+    var showcase = document.getElementById('showcase')
+    var cur = 'add', dev = window.matchMedia('(max-width: 720px)').matches ? 'sp' : 'pc'
+    var auto = true, visible = false
+
+    function activeVideo() { return dev === 'pc' ? videoPc : videoSp }
+    function render(start) {
+      var d = DATA[cur]
+      if (!d[dev]) dev = d.pc ? 'pc' : 'sp'
+      tabs.forEach(function (t) { var on = t.dataset.key === cur; t.classList.toggle('on', on); t.setAttribute('aria-selected', on); t.querySelector('.prog i').style.width = '0' })
+      segBtns.forEach(function (b) { b.classList.toggle('on', b.dataset.dev === dev); b.disabled = !d[b.dataset.dev] })
+      vPc.classList.toggle('hidden', dev !== 'pc'); vSp.classList.toggle('hidden', dev !== 'sp')
+      var v = activeVideo(), other = dev === 'pc' ? videoSp : videoPc
+      other.pause()
+      var src = 'media/' + cur + '-' + dev + EXT
+      if (v.getAttribute('src') !== src) { v.setAttribute('poster', 'media/' + cur + '-' + dev + '.jpg'); v.src = src }
+      v.loop = !auto
+      cap.textContent = d.cap
+      desc.textContent = tabs.filter(function (t) { return t.dataset.key === cur })[0].querySelector('.d').textContent
+      if (start !== false && visible && !reduce) { v.currentTime = 0; playSafe(v) }
+    }
+    function next() {
+      var i = tabs.findIndex(function (t) { return t.dataset.key === cur })
+      cur = tabs[(i + 1) % tabs.length].dataset.key
+      render()
+      var t = tabs.filter(function (t) { return t.dataset.key === cur })[0]
+      if (t.parentNode.scrollWidth > t.parentNode.clientWidth) t.parentNode.scrollTo({ left: t.offsetLeft - 16, behavior: 'smooth' })
+    }
+    ;[videoPc, videoSp].forEach(function (v) {
+      v.addEventListener('ended', function () { if (auto) next() })
+      v.addEventListener('timeupdate', function () {
+        if (v !== activeVideo() || !v.duration) return
+        var t = tabs.filter(function (t) { return t.dataset.key === cur })[0]
+        t.querySelector('.prog i').style.width = (v.currentTime / v.duration * 100) + '%'
+      })
+    })
+    tabs.forEach(function (t) { t.addEventListener('click', function () { auto = false; cur = t.dataset.key; render() }) })
+    segBtns.forEach(function (b) { b.addEventListener('click', function () { if (b.disabled) return; auto = false; dev = b.dataset.dev; render() }) })
+    if ('IntersectionObserver' in window) {
+      new IntersectionObserver(function (es) {
+        visible = es[0].isIntersecting
+        if (visible) { if (!activeVideo().getAttribute('src')) render(); else if (!reduce) playSafe(activeVideo()) }
+        else activeVideo().pause()
+      }, { threshold: 0.2 }).observe(showcase)
+    } else { visible = true; render() }
+    render(false)
+  })()
+  </script>
 
 </body>
 </html>
