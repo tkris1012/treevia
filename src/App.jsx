@@ -11,6 +11,8 @@ import RoleManager from './components/UI/RoleManager.jsx'
 import ChartListPage from './components/ChartList/ChartListPage.jsx'
 import CopySharedChartButton from './components/UI/CopySharedChartButton.jsx'
 import PostCopyShareModal from './components/UI/PostCopyShareModal.jsx'
+import ConnectionBanner from './components/UI/ConnectionBanner.jsx'
+import Spinner from './components/UI/Spinner.jsx'
 
 export default function App() {
   const user           = useStore((s) => s.user)
@@ -18,6 +20,7 @@ export default function App() {
   const currentChartId = useStore((s) => s.currentChartId)
   const confirm        = useStore((s) => s.confirm)
   const shareConfig    = useStore((s) => s.shareConfig)
+  const authReady      = useStore((s) => s.authReady)
 
   useSync()
 
@@ -38,6 +41,16 @@ export default function App() {
         {shareConfig?.allowCopy && <CopySharedChartButton />}
         {showCTA && <ShareFooterCTA />}
         {confirm && <ConfirmDialog />}
+        <ConnectionBanner />
+      </div>
+    )
+  }
+
+  // ログイン確認中（ここでログイン画面を出すと、ログイン済みの人にも一瞬見えてしまう）
+  if (!authReady) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, display: 'grid', placeItems: 'center', background: '#F9FAFB' }}>
+        <Spinner size={36} label="読み込み中…" />
       </div>
     )
   }
@@ -53,6 +66,7 @@ export default function App() {
         {confirm && <ConfirmDialog />}
         <UpgradeModal />
         <RoleManager />
+        <ConnectionBanner />
       </>
     )
   }
@@ -66,6 +80,7 @@ export default function App() {
       <UpgradeModal />
       <RoleManager />
       <PostCopyShareModal />
+      <ConnectionBanner />
     </div>
   )
 }

@@ -16,6 +16,7 @@ import BookmarkShareButton from '../UI/BookmarkShareButton.jsx'
 import RenameChartModal from '../ChartList/RenameChartModal.jsx'
 import TreeNode from './TreeNode.jsx'
 import DropZone from './DropZone.jsx'
+import Spinner from '../UI/Spinner.jsx'
 
 const MIN_SCALE = 0.15
 const MAX_SCALE = 3
@@ -534,16 +535,19 @@ export default function OrgTree() {
   const drag            = dragRef.current
   const activeControlId = hoveredId || longPressId
   const isEmpty         = Object.keys(members).length === 0
+  const membersLoaded   = useStore((s) => s.membersLoaded)
+  const isLoading       = isEmpty && !membersLoaded
 
   // 新規作成した空の組織図に入った直後は、ボタンを挟まず自動で最初のメンバーを追加する
   const autoAddRoot    = useStore((s) => s.autoAddRoot)
   const setAutoAddRoot = useStore((s) => s.setAutoAddRoot)
   useEffect(() => {
-    if (!isReadOnly && isEmpty && autoAddRoot) {
+    // 読み込みが終わって本当に空だと確定してから追加する（読み込み前に追加すると重複しうる）
+    if (!isReadOnly && isEmpty && membersLoaded && autoAddRoot) {
       setAutoAddRoot(false)
       addRootNode()
     }
-  }, [isReadOnly, isEmpty, autoAddRoot, setAutoAddRoot, addRootNode])
+  }, [isReadOnly, isEmpty, membersLoaded, autoAddRoot, setAutoAddRoot, addRootNode])
 
   const filterChip = (
     <div style={{ ...BAR_CHIP, display: 'flex', alignItems: 'center', gap: 6, fontWeight: 600, pointerEvents: 'auto' }}>
@@ -574,8 +578,8 @@ export default function OrgTree() {
       }}
       onDragStart={(e) => e.preventDefault()}
     >
-      {/* ツールバー（左下） — 閲覧モード・ロック中は非表示 */}
-      {!editDisabled && (
+      {/* ツールバー（左下） — 閲覧モード・ロック中・読み込み中は非表示 */}
+      {!editDisabled && !isLoading && (
         <div style={{ position: 'absolute', bottom: 'max(16px, env(safe-area-inset-bottom))', left: 16, zIndex: 10 }}>
           <button
             onClick={addRootNode}
@@ -709,8 +713,17 @@ export default function OrgTree() {
         ⊞ 全体表示
       </button>
 
+      {/* 読み込み中 */}
+      {isLoading && (
+        <div style={{
+          position: 'absolute', inset: 0, display: 'grid', placeItems: 'center', zIndex: 5, pointerEvents: 'none',
+        }}>
+          <Spinner size={36} label="組織図を読み込み中…" />
+        </div>
+      )}
+
       {/* メンバーゼロガイド */}
-      {isEmpty && (
+      {isEmpty && !isLoading && (
         <div style={{
           position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
           alignItems: 'center', justifyContent: 'center', gap: 14, zIndex: 5,

@@ -7,12 +7,18 @@ import { subscribeShareConfig, subscribeChartContentUpdatedAt } from '../../lib/
 import { hasUnseenUpdate, formatRelative } from '../../lib/bookmarkUpdates.js'
 import AccountMenu from '../Auth/AccountMenu.jsx'
 import CreateChartModal from './CreateChartModal.jsx'
+import Spinner from '../UI/Spinner.jsx'
 import RenameChartModal from './RenameChartModal.jsx'
 import RenameBookmarkModal from './RenameBookmarkModal.jsx'
 
 export default function ChartListPage() {
   const charts = useStore((s) => s.charts)
   const bookmarks = useStore((s) => s.bookmarks)
+  const chartsLoaded = useStore((s) => s.chartsLoaded)
+  const bookmarksLoaded = useStore((s) => s.bookmarksLoaded)
+  const isEmpty = charts.length === 0 && bookmarks.length === 0
+  // 何も届いていないうちは「ようこそ」ではなく回転マーク（届いた分があればそれを先に出す）
+  const loading = isEmpty && (!chartsLoaded || !bookmarksLoaded)
   const removeBookmarkAction = useStore((s) => s.removeBookmarkAction)
   const createNewChart = useStore((s) => s.createNewChart)
   const deleteChartById = useStore((s) => s.deleteChartById)
@@ -89,7 +95,9 @@ export default function ChartListPage() {
       {/* Body */}
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: 24 }}>
         {/* 初回ウェルカム（組織図ゼロのとき）— アクティブ化の入口 */}
-        {charts.length === 0 && bookmarks.length === 0 ? (
+        {loading ? (
+          <Spinner size={36} label="組織図を読み込み中…" style={{ marginTop: 96 }} />
+        ) : isEmpty ? (
           <div style={{
             marginTop: 40,
             background: 'white', borderRadius: 16,
