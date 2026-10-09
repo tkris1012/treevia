@@ -37,11 +37,11 @@ function generateToken() {
 // === 役職（アカウント共通・users/{uid}/_meta/roles）=========
 const rolesDoc = (uid) => doc(db, 'users', uid, '_meta', 'roles')
 
-export function subscribeUserRoles(uid, callback) {
+export function subscribeUserRoles(uid, callback, onError) {
   return onSnapshot(
     rolesDoc(uid),
-    (snap) => callback(snap.exists() && Array.isArray(snap.data().list) ? snap.data().list : []),
-    (err) => { console.warn('roles subscribe failed', err); callback([]) },
+    (snap) => callback(snap.exists() && Array.isArray(snap.data().list) ? snap.data().list : [], { fromCache: snap.metadata.fromCache }),
+    onError || ((err) => { console.warn('roles subscribe failed', err); callback([]) }),
   )
 }
 
@@ -70,11 +70,11 @@ export async function seedDefaultRolesIfNeeded(uid, defaultRoles) {
 
 // === ユーザープラン購読 =====================================
 // users/{uid} ドキュメントの plan フィールドを購読（無ければ 'free'）
-export function subscribeUserPlan(uid, callback) {
+export function subscribeUserPlan(uid, callback, onError) {
   return onSnapshot(
     doc(db, 'users', uid),
-    (snap) => callback(snap.exists() ? (snap.data().plan || 'free') : 'free'),
-    (err) => { console.warn('plan subscribe failed', err); callback('free') },
+    (snap) => callback(snap.exists() ? (snap.data().plan || 'free') : 'free', { fromCache: snap.metadata.fromCache }),
+    onError || ((err) => { console.warn('plan subscribe failed', err); callback('free') }),
   )
 }
 
@@ -147,13 +147,26 @@ export async function deleteChart(uid, chartId) {
   await batch.commit()
 }
 
-export function subscribeCharts(uid, callback) {
+// 購読系の callback には (データ, { fromCache }) を渡す。fromCache は端末に保存した
+// データだけで返したかどうかで、「まだ読み込み中」と「本当に0件」を見分けるのに使う。
+// onError を渡すと、購読が失敗して止まったときに呼ばれる（呼び出し側で再接続する）。
+const meta = (snap) => ({ fromCache: snap.metadata.fromCache })
+
+export function subscribeCharts(uid, callback, onError) {
   const q = query(chartsCol(uid), orderBy('updatedAt', 'desc'))
   return onSnapshot(q, (snap) => {
     const list = []
     snap.forEach((d) => list.push({ id: d.id, ...d.data() }))
-    callback(list)
-  })
+    callback(list, meta(snap))
+  }, onError)
+}
+
+export function subscribeMembers(uid, chartId, callback, onError) {
+  return onSnapshot(membersCol(uid, chartId), (snap) => {
+    const map = {}
+    snap.forEach((d) => { map[d.id] = { id: d.id, ...d.data() } })
+    callback(map, meta(snap))
+  }, onError)
 }
 
 async function touchChart(uid, chartId, { content = true } = {}) {
@@ -339,18 +352,14 @@ export async function getShareTokenInfo(token) {
   return snap.exists() ? snap.data() : null
 }
 
-export function subscribePublicMembers(uid, chartId, callback) {
-  return onSnapshot(membersCol(uid, chartId), (snap) => {
-    const map = {}
-    snap.forEach((d) => { map[d.id] = { id: d.id, ...d.data() } })
-    callback(map)
-  })
+export function subscribePublicMembers(uid, chartId, callback, onError) {
+  return subscribeMembers(uid, chartId, callback, onError)
 }
 
-export function subscribeShareConfig(uid, chartId, callback) {
+export function subscribeShareConfig(uid, chartId, callback, onError) {
   return onSnapshot(shareConfigDoc(uid, chartId), (snap) => {
-    callback(snap.exists() ? snap.data() : null)
-  })
+    callback(snap.exists() ? snap.data() : null, meta(snap))
+  }, onError)
 }
 
 // 共有組織図の「中身が最後に変わった時刻」。共有停止中は読めないので null を返す
@@ -392,7 +401,7 @@ export async function getBookmark(uid, ownerUid, chartId) {
   return snap.exists() ? { id: snap.id, ...snap.data() } : null
 }
 
-export function subscribeBookmarks(uid, callback) {
+export function subscribeBookmarks(uid, callback, onError) {
   const q = query(bookmarksCol(uid), orderBy('addedAt', 'desc'))
   return onSnapshot(
     q,
@@ -400,9 +409,9 @@ export function subscribeBookmarks(uid, callback) {
       const list = []
       // 既読記録の直後にサーバー時刻が未確定(null)だと「更新あり」が一瞬点くので推定値を使う
       snap.forEach((d) => list.push({ id: d.id, ...d.data({ serverTimestamps: 'estimate' }) }))
-      callback(list)
+      callback(list, meta(snap))
     },
-    (err) => { console.warn('bookmarks subscribe failed', err); callback([]) },
+    onError || ((err) => { console.warn('bookmarks subscribe failed', err); callback([], { fromCache: false }) }),
   )
 }
 

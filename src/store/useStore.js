@@ -28,6 +28,20 @@ export const useStore = create((set, get) => ({
   // --- Auth ---
   user: null,
   setUser: (user) => set({ user }),
+  authReady: false,                    // 最初のログイン確認が終わったか（終わるまでは読み込み中表示）
+  setAuthReady: (v) => set({ authReady: !!v }),
+
+  // --- 読み込み状態 ---
+  // 「まだ届いていない」と「本当に0件」を見分けるためのフラグ。false の間は回転マークを出す
+  chartsLoaded: false,
+  setChartsLoaded: (v) => set({ chartsLoaded: !!v }),
+  bookmarksLoaded: false,
+  setBookmarksLoaded: (v) => set({ bookmarksLoaded: !!v }),
+  membersLoaded: false,
+  setMembersLoaded: (v) => set({ membersLoaded: !!v }),
+  // 'ok' | 'retrying'（自動で再接続中） | 'failed'（何度か失敗。引き続き自動で再試行）
+  connState: 'ok',
+  setConnState: (v) => set({ connState: v }),
 
   // --- Plan（料金プラン） ---
   plan: 'free',                        // 'free' | 'light' | 'pro'
