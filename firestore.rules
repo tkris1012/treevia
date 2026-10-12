@@ -25,8 +25,9 @@ service cloud.firestore {
       }
 
       // 各組織図の共有設定（共有は全プランで可。削除は本人なら常に可）
+      // 1件ずつの取得（get）だけを公開し、一覧取得（list）は禁止する。
       match /_meta/share {
-        allow read: if true;
+        allow get: if true;
         allow delete: if request.auth != null && request.auth.uid == uid;
         allow create, update: if request.auth != null && request.auth.uid == uid;
       }
@@ -43,7 +44,7 @@ service cloud.firestore {
     // 役職定義（色・名称）は共有閲覧ページでの表示に使うため公開読み取り可。
     // 書込みは本人のみ。役職は表示メタ情報で、メンバーの個人情報は含まない。
     match /users/{uid}/_meta/roles {
-      allow read: if true;
+      allow get: if true;
       allow write: if request.auth != null && request.auth.uid == uid;
     }
 
@@ -53,8 +54,11 @@ service cloud.firestore {
     }
 
     // 共有トークン: token → { uid, chartId }
+    // トークンを知っている人だけが引けるよう、1件ずつの取得（get）だけを許可する。
+    // read（= get + list）にすると誰でも全トークンを一覧でき、リンクを知らなくても
+    // 共有中のすべての組織図を読めてしまうため、list は必ず禁止しておくこと。
     match /shareTokens/{token} {
-      allow read: if true;
+      allow get: if true;
       allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
       allow update, delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
