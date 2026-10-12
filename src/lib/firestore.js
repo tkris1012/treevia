@@ -27,10 +27,19 @@ const bookmarkDoc    = (uid, bookmarkId) => doc(db, 'users', uid, 'bookmarks', b
 const bookmarkId     = (ownerUid, chartId) => `${ownerUid}_${chartId}`
 
 // === ユーティリティ ==========================================
+// 共有リンクの合言葉。推測されないよう暗号用の乱数（crypto.getRandomValues）を使い、
+// 偏りが出ないように範囲外の値は捨てて引き直す（57文字 × 12桁 ≒ 70ビット）。
 function generateToken() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'
+  const limit = 256 - (256 % chars.length)
   let token = ''
-  for (let i = 0; i < 12; i++) token += chars[Math.floor(Math.random() * chars.length)]
+  while (token.length < 12) {
+    const buf = new Uint8Array(16)
+    crypto.getRandomValues(buf)
+    for (const b of buf) {
+      if (b < limit && token.length < 12) token += chars[b % chars.length]
+    }
+  }
   return token
 }
 
