@@ -11,6 +11,14 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
+    # 当面メジャー更新を見送るもの（マイナー・パッチと安全上の修正は引き続き提案される）
+    # - eslint 10: eslint-plugin-react が未対応で npm ci が失敗する
+    # - tailwindcss 4: 設定方式が変わりビルドが失敗する（使用箇所が少なく急ぐ理由がない）
+    ignore:
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "tailwindcss"
+        update-types: ["version-update:semver-major"]
     groups:
       minor-and-patch:
         update-types: ["minor", "patch"]
