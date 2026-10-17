@@ -1,7 +1,9 @@
+import { useState } from 'react'
 import { Star, Check, CreditCard } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
+import { auth } from '../../lib/firebase.js'
 import { PLANS, PLAN_ORDER, FREE_MEMBER_LIMIT } from '../../constants/plans.js'
-import { buildCheckoutUrl, isBillingLive } from '../../constants/billing.js'
+import { buildCheckoutUrl, isBillingLive, openBillingPortal } from '../../constants/billing.js'
 
 const FEATURE_COPY = {
   members: {
@@ -91,6 +93,7 @@ export default function UpgradeModal() {
 
 // 現在のプランより上位の有料プランへのアップグレードボタンを並べる
 function UpgradeButtons({ plan, user }) {
+  const [busy, setBusy] = useState(false)
   const currentIdx = PLAN_ORDER.indexOf(plan)
   const targets = PLAN_ORDER.filter(
     (p, i) => i > currentIdx && p !== 'free',
@@ -131,21 +134,60 @@ function UpgradeButtons({ plan, user }) {
     window.location.href = url
   }
 
+  // ライト → プロは、新しく購入すると今のライトと二重に課金されてしまうため、
+  // 今のサブスクをプロに切り替える確認画面（Stripe）を開く
+  async function switchToPro() {
+    setBusy(true)
+    try {
+      const idToken = await auth.currentUser.getIdToken()
+      await openBillingPortal(idToken, { flow: 'upgrade_pro' }) // 成功時は確認画面へ遷移
+    } catch (e) {
+      console.error('プロへの切り替え画面を開けませんでした:', e)
+      const code = e?.message || ''
+      if (code.includes('no_customer') || code.includes('no_subscription')) {
+        // オンライン決済のサブスクがない（手動で付与されたライトなど）→ 通常の購入へ
+        startCheckout('pro')
+        return
+      }
+      if (code.includes('already_pro')) {
+        alert('すでにプロプランへの切り替えが完了しています。反映まで少しお待ちいただき、画面を再読み込みしてください。')
+      } else if (code.includes('unauthenticated') || code.includes('invalid_token')) {
+        alert('ログイン情報の有効期限が切れている可能性があります。一度ログアウトして再ログイン後にお試しください。')
+      } else {
+        alert('プロへの切り替え画面を開けませんでした。時間をおいて再度お試しいただくか、メニューの「プラン管理」からお手続きください。')
+      }
+      setBusy(false)
+    }
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 4 }}>
-      {targets.map((target) => (
-        <button
-          key={target}
-          onClick={() => startCheckout(target)}
-          style={{
-            width: '100%', padding: '12px', borderRadius: 10, border: 'none',
-            background: target === 'pro' ? '#7C3AED' : '#8B5CF6',
-            color: 'white', fontSize: 14, fontWeight: 700, cursor: 'pointer',
-          }}
-        >
-          {PLANS[target].name}にアップグレード（¥{PLANS[target].price}/月）
-        </button>
-      ))}
+      {targets.map((target) => {
+        const isSwitch = plan === 'light' && target === 'pro'
+        return (
+          <button
+            key={target}
+            disabled={busy}
+            onClick={() => (isSwitch ? switchToPro() : startCheckout(target))}
+            style={{
+              width: '100%', padding: '12px', borderRadius: 10, border: 'none',
+              background: target === 'pro' ? '#7C3AED' : '#8B5CF6',
+              color: 'white', fontSize: 14, fontWeight: 700,
+              cursor: busy ? 'wait' : 'pointer', opacity: busy ? 0.7 : 1,
+            }}
+          >
+            {isSwitch && busy
+              ? '切り替え画面を開いています…'
+              : `${PLANS[target].name}にアップグレード（¥${PLANS[target].price}/月）`}
+          </button>
+        )
+      })}
+      {plan === 'light' && targets.includes('pro') && (
+        <div style={{ fontSize: 11, color: '#6B7280', lineHeight: 1.6, textAlign: 'center' }}>
+          今のライトプランがプロに切り替わります（二重に請求されません）。<br />
+          今月の残り日数分の差額は日割りで精算されます。
+        </div>
+      )}
     </div>
   )
 }
