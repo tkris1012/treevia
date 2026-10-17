@@ -83,7 +83,7 @@
       {
         "@type": "Question",
         "name": "料金プランはいくらですか？",
-        "acceptedAnswer": { "@type": "Answer", "text": "無料プラン（組織図1つ・100人まで）、ライトプラン月額380円（組織図5つ・500人まで・印刷/PDF出力あり）、プロプラン月額980円（組織図・メンバー無制限・共有リンクの透かしなし・印刷/PDF出力あり）の3種類です。" }
+        "acceptedAnswer": { "@type": "Answer", "text": "無料プラン（組織図1つ・100人まで）、ライトプラン月額380円（組織図5つ・500人まで・自分の組織図の印刷/PDF出力あり）、プロプラン月額980円（組織図・メンバー無制限・共有リンクの透かしなし・ブックマークした組織図も含めて印刷/PDF出力あり）の3種類です。" }
       },
       {
         "@type": "Question",
@@ -98,7 +98,7 @@
       {
         "@type": "Question",
         "name": "組織図を印刷できますか？",
-        "acceptedAnswer": { "@type": "Answer", "text": "ライトプラン・プロプランで印刷・PDF出力に対応しています。1枚に収める出力と、大きな組織図をA4/A3の複数ページに分割して出力するポスター分割の2種類が選べます。" }
+        "acceptedAnswer": { "@type": "Answer", "text": "自分の組織図はライトプラン・プロプランで印刷・PDF出力できます。ブックマークや共有リンクで開いた他の人の組織図の印刷・PDF出力は、プロプランのみの機能です。1枚に収める出力と、大きな組織図をA4/A3の複数ページに分割して出力するポスター分割の2種類が選べます。" }
       }
     ]
   }
@@ -346,7 +346,7 @@
     .plan .pp { margin-top: 10px; font-family: "Inter", sans-serif; font-size: 46px; font-weight: 800; letter-spacing: -.03em; line-height: 1.1; }
     .plan .pp small { font-size: 15px; font-weight: 600; color: var(--muted); margin-left: 4px; letter-spacing: 0; }
     .plan ul { list-style: none; margin-top: 24px; display: grid; gap: 12px; font-size: 15px; flex: 1; }
-    .plan li { display: flex; gap: 10px; align-items: flex-start; }
+    .plan li { display: flex; gap: 10px; align-items: flex-start; word-break: auto-phrase; }
     .plan li svg { flex-shrink: 0; margin-top: 5px; color: var(--green2); }
     .plan .btn { margin-top: 28px; width: 100%; }
 
@@ -533,7 +533,7 @@
           <button class="tab" role="tab" data-key="drag"><div class="t"><em>02</em>ドラッグで組み替え</div><div class="d">メンバーをつかんで移動するだけ。配下ごとまとめて組み替えられ、移動前には確認も出ます。</div><div class="prog"><i></i></div></button>
           <button class="tab" role="tab" data-key="share"><div class="t"><em>03</em>リンクでチームに共有</div><div class="d">共有リンクを送るだけで、メンバーの誰もがログイン不要で同じ組織図を閲覧できます。</div><div class="prog"><i></i></div></button>
           <button class="tab" role="tab" data-key="bookmark"><div class="t"><em>04</em>ブックマークで最新を把握</div><div class="d">もらったリンクをブックマークすれば、一覧から開くだけ。更新されると「更新あり」が付きます。</div><div class="prog"><i></i></div></button>
-          <button class="tab" role="tab" data-key="print"><div class="t"><em>05</em>印刷・PDF出力</div><div class="d">1枚に収める出力も、A4/A3の複数ページに分けるポスター分割も。仕上がりをプレビューで確認できます。</div><div class="prog"><i></i></div></button>
+          <button class="tab" role="tab" data-key="print"><div class="t"><em>05</em>印刷・PDF出力</div><div class="d">1枚に収める出力も、A4/A3の複数ページに分けるポスター分割も。仕上がりをプレビューで確認できます（ブックマークした組織図の印刷はプロプラン）。</div><div class="prog"><i></i></div></button>
           <button class="tab" role="tab" data-key="lock"><div class="t"><em>06</em>ロックで誤操作防止</div><div class="d">鍵アイコンをタップするだけ。眺める操作はそのままに、うっかり移動・削除を防ぎます。</div><div class="prog"><i></i></div></button>
         </div>
 
@@ -677,7 +677,7 @@
             <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>組織図 5つ</li>
             <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>メンバー 500人</li>
             <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>共有リンク</li>
-            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>印刷・PDF出力</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>印刷・PDF出力（自分の組織図）</li>
           </ul>
           <a class="btn" href="/treevia/?from=lp" onclick="gtag('event','start_free_click',{link_location:'pricing'})">無料で始める</a>
         </div>
@@ -688,7 +688,7 @@
             <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>組織図 無制限</li>
             <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>メンバー 無制限</li>
             <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>共有リンク（透かしなし）</li>
-            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>印刷・PDF出力</li>
+            <li><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>印刷・PDF出力（ブックマークも可）</li>
           </ul>
           <a class="btn ghost" href="/treevia/?from=lp" onclick="gtag('event','start_free_click',{link_location:'pricing'})">無料で始める</a>
         </div>
@@ -723,7 +723,7 @@
         </details>
         <details>
           <summary>料金プランはいくらですか？</summary>
-          <p>無料プラン（組織図1つ・100人まで）、ライトプラン月額380円（組織図5つ・500人まで・印刷/PDF出力あり）、プロプラン月額980円（組織図・メンバー無制限・共有リンクの透かしなし・印刷/PDF出力あり）の3種類です。</p>
+          <p>無料プラン（組織図1つ・100人まで）、ライトプラン月額380円（組織図5つ・500人まで・自分の組織図の印刷/PDF出力あり）、プロプラン月額980円（組織図・メンバー無制限・共有リンクの透かしなし・ブックマークした組織図も含めて印刷/PDF出力あり）の3種類です。</p>
         </details>
         <details>
           <summary>MLMやネットワークビジネスのダウンライン管理に使えますか？</summary>
@@ -735,7 +735,7 @@
         </details>
         <details>
           <summary>組織図を印刷できますか？</summary>
-          <p>ライトプラン・プロプランで印刷・PDF出力に対応しています。1枚に収める出力と、大きな組織図をA4/A3の複数ページに分割して出力するポスター分割の2種類が選べます。</p>
+          <p>自分の組織図はライトプラン・プロプランで印刷・PDF出力できます。ブックマークや共有リンクで開いた他の人の組織図の印刷・PDF出力は、プロプランのみの機能です。1枚に収める出力と、大きな組織図をA4/A3の複数ページに分割して出力するポスター分割の2種類が選べます。</p>
         </details>
       </div>
     </div>

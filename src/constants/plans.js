@@ -46,7 +46,8 @@ export function canExport(plan) {
   return plan === 'pro'
 }
 
-// 印刷・PDF出力：ライト・プロで利用可（無料は不可）
+// 印刷・PDF出力：自分の組織図はライト・プロで利用可（無料は不可）。
+// ブックマーク／共有リンクで開いた他人の組織図は、閲覧者がプロのときだけ（OrgTree の viewerPrintAllowed）
 export function canPrint(plan) {
   return plan === 'light' || plan === 'pro'
 }
