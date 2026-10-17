@@ -15,11 +15,30 @@
 //   STRIPE_PRICE_PRO       … 通常の環境変数から (--set-env-vars)
 
 const functions = require('@google-cloud/functions-framework')
-const admin = require('firebase-admin')
+const { initializeApp } = require('firebase-admin/app')
+const { getFirestore, FieldValue } = require('firebase-admin/firestore')
+const { getAuth } = require('firebase-admin/auth')
 const Stripe = require('stripe')
 
-admin.initializeApp()
-const db = admin.firestore()
+initializeApp()
+const db = getFirestore()
+
+// Stripe クライアント。STRIPE_TEST_API_HOST はローカル検証用の偽 Stripe サーバーを
+// 指すためのもので、Cloud Run 上（K_SERVICE がある本番）では絶対に使わない。
+function stripeClient() {
+  const testHost = !process.env.K_SERVICE && process.env.STRIPE_TEST_API_HOST
+  if (testHost) {
+    const [host, port] = testHost.split(':')
+    return new Stripe(process.env.STRIPE_SECRET_KEY, { host, port: Number(port), protocol: 'http' })
+  }
+  return new Stripe(process.env.STRIPE_SECRET_KEY)
+}
+
+// ポータルからの戻り先として許可する URL（それ以外は既定値に置き換える）
+const APP_URL = 'https://tkris1012.github.io/treevia/'
+function safeReturnUrl(url) {
+  return typeof url === 'string' && url.startsWith(APP_URL) ? url : APP_URL
+}
 
 // 過去に事故を起こした「テンプレの仮値」。誤って本番デプロイに紛れ込んでいたら
 // 起動時に必ず気づけるよう明示的にブロックリスト化する。
@@ -61,7 +80,7 @@ functions.http('stripeWebhook', async (req, res) => {
     return
   }
 
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+  const stripe = stripeClient()
   const sig = req.headers['stripe-signature']
 
   // 署名検証: Stripe 以外からの偽リクエストはここで弾く
@@ -82,6 +101,9 @@ functions.http('stripeWebhook', async (req, res) => {
     switch (event.type) {
       case 'checkout.session.completed':
         await handleCheckoutCompleted(stripe, event.data.object)
+        break
+      case 'customer.subscription.updated':
+        await handleSubscriptionUpdated(event.data.object)
         break
       case 'customer.subscription.deleted':
         await handleSubscriptionEnded(event.data.object)
@@ -121,11 +143,40 @@ async function handleCheckoutCompleted(stripe, session) {
       plan,
       stripeCustomerId: session.customer || null,
       stripeSubscriptionId: session.subscription || null,
-      updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     },
     { merge: true },
   )
   console.log(`プラン更新: ${uid} → ${plan}`)
+}
+
+// サブスクの内容が変わった（ポータルでのライト⇔プロの切り替えなど） → プランを合わせる
+// 解約予約（cancel_at_period_end）などでも届くが、その場合は価格が同じなので何もしない。
+async function handleSubscriptionUpdated(subscription) {
+  const priceId = subscription.items?.data?.[0]?.price?.id
+  const plan = planForPrice(priceId)
+  if (!plan) {
+    console.error(`未知の price のサブスク更新（プランが正しく切り替わっていない可能性。要対応）: sub=${subscription.id} price=${priceId}`)
+    return
+  }
+  if (!['active', 'trialing', 'past_due'].includes(subscription.status)) {
+    console.log(`サブスク更新 status=${subscription.status} のためプランは変更しない: sub=${subscription.id}`)
+    return
+  }
+  const snap = await db
+    .collection('users')
+    .where('stripeSubscriptionId', '==', subscription.id)
+    .limit(1)
+    .get()
+  if (snap.empty) {
+    // 新規購入の直後は checkout.session.completed より先に届くことがあるので、ここでは警告にしない
+    console.log(`サブスク更新: 対象ユーザーなし（新規購入の直後など） sub=${subscription.id}`)
+    return
+  }
+  const ref = snap.docs[0].ref
+  if (snap.docs[0].data().plan === plan) return
+  await ref.set({ plan, updatedAt: FieldValue.serverTimestamp() }, { merge: true })
+  console.log(`プラン切り替え: ${ref.id} → ${plan}`)
 }
 
 // サブスク終了 (解約・支払い失敗による失効) → 無料に戻す
@@ -140,7 +191,7 @@ async function handleSubscriptionEnded(subscription) {
     return
   }
   await snap.docs[0].ref.set(
-    { plan: 'free', updatedAt: admin.firestore.FieldValue.serverTimestamp() },
+    { plan: 'free', updatedAt: FieldValue.serverTimestamp() },
     { merge: true },
   )
   console.log(`プラン解約: ${snap.docs[0].id} → free`)
@@ -177,7 +228,7 @@ functions.http('createPortalSession', async (req, res) => {
 
   let uid
   try {
-    const decoded = await admin.auth().verifyIdToken(idToken)
+    const decoded = await getAuth().verifyIdToken(idToken)
     uid = decoded.uid
   } catch (err) {
     console.warn('ポータル: トークン検証に失敗:', err.message)
@@ -195,13 +246,50 @@ functions.http('createPortalSession', async (req, res) => {
   }
   console.log(`ポータル発行: uid=${uid} customer=${customerId}`)
 
-  // 戻り先 URL（アプリ）。リクエストで受け取り、無ければ既定値。
-  const returnUrl =
-    (req.body && typeof req.body.returnUrl === 'string' && req.body.returnUrl) ||
-    'https://tkris1012.github.io/treevia/'
+  // 戻り先 URL（アプリ）。リクエストで受け取るが、アプリ以外の URL は既定値に置き換える。
+  const returnUrl = safeReturnUrl(req.body && req.body.returnUrl)
 
   try {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+    const stripe = stripeClient()
+
+    // ライト → プロの切り替え：新しく購入させず（二重課金になる）、今のサブスクの
+    // 価格をプロに変える確認画面を開く。差額は Stripe が日割りで計算する。
+    // 切り替え後は customer.subscription.updated が Webhook に届き、plan が pro になる。
+    if (req.body && req.body.flow === 'upgrade_pro') {
+      const subId = snap.data().stripeSubscriptionId
+      if (!subId) {
+        console.warn(`切り替え: stripeSubscriptionId なし uid=${uid}`)
+        res.status(404).json({ error: 'no_subscription' })
+        return
+      }
+      const sub = await stripe.subscriptions.retrieve(subId)
+      const item = sub.items?.data?.[0]
+      if (!item || sub.customer !== customerId) {
+        console.error(`切り替え: サブスクの内容が保存済みの情報と一致しない uid=${uid} sub=${subId}`)
+        res.status(409).json({ error: 'subscription_mismatch' })
+        return
+      }
+      if (planForPrice(item.price?.id) === 'pro') {
+        res.status(409).json({ error: 'already_pro' })
+        return
+      }
+      const session = await stripe.billingPortal.sessions.create({
+        customer: customerId,
+        return_url: returnUrl,
+        flow_data: {
+          type: 'subscription_update_confirm',
+          subscription_update_confirm: {
+            subscription: subId,
+            items: [{ id: item.id, price: process.env.STRIPE_PRICE_PRO, quantity: item.quantity || 1 }],
+          },
+          after_completion: { type: 'redirect', redirect: { return_url: returnUrl } },
+        },
+      })
+      console.log(`切り替え画面を発行: uid=${uid} sub=${subId}`)
+      res.status(200).json({ url: session.url })
+      return
+    }
+
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: returnUrl,

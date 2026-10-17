@@ -46,14 +46,16 @@ export const PORTAL_FUNCTION_URL =
   'https://asia-northeast1-mlm-org-chart.cloudfunctions.net/createPortalSession'
 
 // idToken は Firebase の auth.currentUser.getIdToken() を渡す。
-export async function openBillingPortal(idToken) {
+// flow: 'upgrade_pro' を指定すると、ライトのサブスクをプロに切り替える確認画面を開く
+// （新しく購入させないので二重課金にならない。差額は日割りで精算される）。
+export async function openBillingPortal(idToken, { flow } = {}) {
   const res = await fetch(PORTAL_FUNCTION_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${idToken}`,
     },
-    body: JSON.stringify({ returnUrl: window.location.href }),
+    body: JSON.stringify({ returnUrl: window.location.href, ...(flow ? { flow } : {}) }),
   })
   if (!res.ok) {
     const data = await res.json().catch(() => ({}))

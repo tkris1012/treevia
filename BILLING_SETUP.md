@@ -99,9 +99,29 @@ Stripe ダッシュボード →「開発者」→「Webhook」→「エンド�
 - エンドポイント URL: ステップ 6 の関数 URL
 - リッスンするイベント:
   - `checkout.session.completed`
+  - `customer.subscription.updated`（ライト⇄プロの切り替えを反映）
   - `customer.subscription.deleted`
 - 作成後に表示される「署名シークレット」(`whsec_...`) を控え、
   `firebase functions:secrets:set STRIPE_WEBHOOK_SECRET` で登録 → 再デプロイ
+
+## ステップ 7.5: プランの切り替え（ライト → プロ）を有効にする
+
+ライトのユーザーが決済リンクでプロを買うと、**別のサブスクがもう1本でき、ライトと二重に課金される**。
+そのためアプリでは、ライトのユーザーの「プロにアップグレード」は
+`createPortalSession` に `flow: 'upgrade_pro'` を渡し、Stripe の
+**切り替え確認画面**（今のサブスクの品目をプロの価格に変える）を開くようにしている。
+
+Stripe ダッシュボード →「設定」→「Billing」→「カスタマーポータル」で:
+
+- 「顧客がプランを切り替え可能」を **オン**
+- 商品に **ライト（¥380）とプロ（¥980）** の両方の価格を追加
+- 比例配分（日割り）: **「直ちに請求」または「次回請求時に精算」**（どちらでもよい）
+- 保存
+
+切り替えが終わると Stripe が `customer.subscription.updated` を送り、
+Webhook がサブスクの価格から `users/{uid}.plan` を更新する（プロ → ライトに戻した場合も同様）。
+価格が `STRIPE_PRICE_LIGHT` / `STRIPE_PRICE_PRO` のどちらでもないときは
+「未知の price のサブスク更新」とエラーログを出してプランは変えない。
 
 ## ステップ 8: テスト決済
 
@@ -109,6 +129,8 @@ Stripe ダッシュボード →「開発者」→「Webhook」→「エンド�
 2. Stripe のテストカード `4242 4242 4242 4242`（有効期限は未来、CVC 任意）で決済
 3. Firestore の `users/{uid}.plan` が `light` / `pro` に変わることを確認
 4. アプリのプラン制限が解除されることを確認
+5. ライトの状態で「プロにアップグレード」→ 切り替え確認画面で確定 →
+   `plan` が `pro` になり、Stripe の顧客のサブスクが **1本のまま** であることを確認
 
 ## ステップ 9: 本番化
 
