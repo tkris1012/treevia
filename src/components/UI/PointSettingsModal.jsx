@@ -7,7 +7,7 @@ import { MAX_POINT_TYPES } from '../../lib/points.js'
 // 左右ポイントの設定（組織図ごと）。種別とポイントを登録し、メンバーには種別を選ぶ。
 const newId = () => 'pt_' + Math.random().toString(36).slice(2, 10)
 const EXAMPLE = [
-  { id: 'pt_business', name: 'ビジネス会員', points: '1' },
+  { id: 'pt_business', name: 'ビジネス', points: '1' },
   { id: 'pt_user', name: 'ユーザー', points: '0.5' },
 ]
 
@@ -79,7 +79,7 @@ export default function PointSettingsModal({ onClose }) {
             <div key={r.id}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <input value={r.name} onChange={(e) => update(i, { name: e.target.value })} maxLength={50}
-                  placeholder="例：ビジネス会員" aria-label="種別の名前"
+                  placeholder="例：ビジネス" aria-label="種別の名前"
                   style={{ ...INPUT, flex: 1, minWidth: 0, borderColor: errors[i] && !r.name.trim() ? '#F87171' : '#D1D5DB' }} />
                 <div style={{ width: 88, position: 'relative' }}>
                   <input value={r.points} onChange={(e) => update(i, { points: e.target.value })} inputMode="decimal"
