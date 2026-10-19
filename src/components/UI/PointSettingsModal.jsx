@@ -7,11 +7,12 @@ import { MAX_POINT_TYPES } from '../../lib/points.js'
 // 左右ポイントの設定（組織図ごと）。種別とポイントを登録し、メンバーには種別を選ぶ。
 const newId = () => 'pt_' + Math.random().toString(36).slice(2, 10)
 const EXAMPLE = [
-  { id: 'pt_business', name: 'ビジネス', points: '1' },
-  { id: 'pt_user', name: 'ユーザー', points: '0.5' },
+  { id: 'pt_business', name: 'ビジネス', points: '' },
+  { id: 'pt_user', name: 'ユーザー', points: '' },
 ]
 
 function toNumber(v) {
+  if (String(v).trim() === '') return null // 空欄は 0 扱いにせず、入力してもらう
   const n = Number(String(v).trim())
   return Number.isFinite(n) && n >= 0 && n <= 100000 ? n : null
 }
@@ -29,14 +30,16 @@ export default function PointSettingsModal({ onClose }) {
     : EXAMPLE.map((t) => ({ ...t, id: newId() })))
   const [def, setDef] = useState(() => String(Number(chart?.pointDefault) || 0))
   const [busy, setBusy] = useState(false)
+  const [tried, setTried] = useState(false) // 未入力の注意は、保存を押してから出す
 
   const update = (i, patch) => setRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)))
   const errors = rows.map((r) => (!r.name.trim() ? '名前を入力' : toNumber(r.points) == null ? '0以上の数字' : ''))
   const defError = toNumber(def) == null
-  const canSave = !busy && !defError && errors.every((e) => !e)
+  const valid = !defError && errors.every((e) => !e)
 
   async function handleSave() {
-    if (!canSave || !user || !currentChartId) return
+    if (busy || !user || !currentChartId) return
+    if (!valid) { setTried(true); return }
     setBusy(true)
     try {
       const types = rows.map((r) => ({ id: r.id, name: r.name.trim().slice(0, 50), points: toNumber(r.points) }))
@@ -80,11 +83,11 @@ export default function PointSettingsModal({ onClose }) {
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <input value={r.name} onChange={(e) => update(i, { name: e.target.value })} maxLength={50}
                   placeholder="例：ビジネス" aria-label="種別の名前"
-                  style={{ ...INPUT, flex: 1, minWidth: 0, borderColor: errors[i] && !r.name.trim() ? '#F87171' : '#D1D5DB' }} />
+                  style={{ ...INPUT, flex: 1, minWidth: 0, borderColor: tried && !r.name.trim() ? '#F87171' : '#D1D5DB' }} />
                 <div style={{ width: 88, position: 'relative' }}>
                   <input value={r.points} onChange={(e) => update(i, { points: e.target.value })} inputMode="decimal"
-                    aria-label="ポイント"
-                    style={{ ...INPUT, width: '100%', paddingRight: 22, boxSizing: 'border-box', borderColor: toNumber(r.points) == null ? '#F87171' : '#D1D5DB' }} />
+                    aria-label="ポイント" placeholder="例：1"
+                    style={{ ...INPUT, width: '100%', paddingRight: 22, boxSizing: 'border-box', borderColor: tried && toNumber(r.points) == null ? '#F87171' : '#D1D5DB' }} />
                   <span style={{ position: 'absolute', right: 8, top: 8, fontSize: 13, color: '#9CA3AF' }}>p</span>
                 </div>
                 <button onClick={() => setRows((rs) => rs.filter((_, j) => j !== i))} title="この種別を削除"
@@ -92,11 +95,11 @@ export default function PointSettingsModal({ onClose }) {
                   <Trash2 size={16} />
                 </button>
               </div>
-              {errors[i] && <div style={{ fontSize: 11, color: '#DC2626', marginTop: 2 }}>{errors[i]}</div>}
+              {tried && errors[i] && <div style={{ fontSize: 11, color: '#DC2626', marginTop: 2 }}>{errors[i]}</div>}
             </div>
           ))}
           {rows.length < MAX_POINT_TYPES && (
-            <button onClick={() => setRows((rs) => [...rs, { id: newId(), name: '', points: '1' }])}
+            <button onClick={() => setRows((rs) => [...rs, { id: newId(), name: '', points: '' }])}
               style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 4, fontSize: 13, fontWeight: 600, color: '#7C3AED', background: 'none', border: 'none', cursor: 'pointer', padding: '4px 0' }}>
               <Plus size={15} /> 種別を追加
             </button>
@@ -107,7 +110,7 @@ export default function PointSettingsModal({ onClose }) {
           <div style={{ flex: 1 }}>種別が未設定のメンバー</div>
           <div style={{ width: 88, position: 'relative' }}>
             <input value={def} onChange={(e) => setDef(e.target.value)} inputMode="decimal" aria-label="未設定のメンバーのポイント"
-              style={{ ...INPUT, width: '100%', paddingRight: 22, boxSizing: 'border-box', borderColor: defError ? '#F87171' : '#D1D5DB' }} />
+              style={{ ...INPUT, width: '100%', paddingRight: 22, boxSizing: 'border-box', borderColor: tried && defError ? '#F87171' : '#D1D5DB' }} />
             <span style={{ position: 'absolute', right: 8, top: 8, fontSize: 13, color: '#9CA3AF' }}>p</span>
           </div>
           <div style={{ width: 30 }} />
@@ -124,11 +127,14 @@ export default function PointSettingsModal({ onClose }) {
           </div>
         )}
 
-        <button onClick={handleSave} disabled={!canSave}
+        {tried && !valid && (
+          <div style={{ fontSize: 12, color: '#DC2626', textAlign: 'center' }}>未入力の項目があります（ポイントは0以上の数字）</div>
+        )}
+        <button onClick={handleSave} disabled={busy}
           style={{
             width: '100%', padding: '12px', borderRadius: 10, border: 'none',
             background: '#7C3AED', color: 'white', fontSize: 15, fontWeight: 700,
-            cursor: busy ? 'wait' : 'pointer', opacity: canSave ? 1 : 0.6,
+            cursor: busy ? 'wait' : 'pointer', opacity: busy ? 0.6 : 1,
           }}>
           {busy ? '保存中…' : '保存'}
         </button>
