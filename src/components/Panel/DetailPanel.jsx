@@ -146,7 +146,7 @@ export default function DetailPanel() {
         }}
       >
         {/* Header */}
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid #F0F0F0', display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid #F0F0F0', display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{ flex: 1, fontWeight: 600, fontSize: 15, color: '#1F1F1F' }}>メンバー編集</div>
           <button
             onClick={handleClose}
@@ -156,14 +156,14 @@ export default function DetailPanel() {
           </button>
         </div>
 
-        {/* Body */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+        {/* Body（ノートPCやスマホでもスクロールせずに全部見えるよう、項目名は左に置いて縦を詰める） */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px' }}>
 
-          {/* Photo */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+          {/* 写真 ＋ 名前 */}
+          <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 10 }}>
             <div
               style={{
-                width: 100, height: 100, borderRadius: 10,
+                width: 72, height: 72, minWidth: 72, borderRadius: 10,
                 border: `2px solid ${style.border}`,
                 overflow: 'hidden', background: '#F0F0F0',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -175,9 +175,9 @@ export default function DetailPanel() {
               {photoPreview ? (
                 <img src={photoPreview} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               ) : (
-                <div style={{ textAlign: 'center', fontSize: 12, color: '#9CA3AF' }}>
-                  <div style={{ display: 'flex', justifyContent: 'center' }}><Camera size={28} strokeWidth={1.5} /></div>
-                  <div>タップして追加</div>
+                <div style={{ textAlign: 'center', fontSize: 10, color: '#9CA3AF', lineHeight: 1.3 }}>
+                  <div style={{ display: 'flex', justifyContent: 'center' }}><Camera size={22} strokeWidth={1.5} /></div>
+                  <div>写真</div>
                 </div>
               )}
             </div>
@@ -190,93 +190,100 @@ export default function DetailPanel() {
               onChange={handlePhotoChange}
             />
 
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                style={{ fontSize: 12, padding: '4px 10px', border: '1px solid #D1D5DB', borderRadius: 6, cursor: 'pointer', background: 'white', color: '#374151' }}
-              >
-                写真を選択
-              </button>
-              {photoPreview && (
-                <button
-                  onClick={handleRemovePhoto}
-                  style={{ fontSize: 12, padding: '4px 10px', border: '1px solid #FCA5A5', borderRadius: 6, cursor: 'pointer', background: 'white', color: '#EF4444' }}
-                >
-                  削除
-                </button>
-              )}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <label style={{ display: 'block' }}>
+                <div style={LABEL}>名前 *</div>
+                <input
+                  ref={nameInputRef}
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
+                  placeholder="名前を入力"
+                  style={INPUT}
+                  onFocus={(e) => e.target.style.borderColor = '#7C3AED'}
+                  onBlur={(e) => e.target.style.borderColor = '#D1D5DB'}
+                />
+              </label>
+              <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+                <button type="button" onClick={() => fileInputRef.current?.click()} style={LINK_BTN}>写真を選択</button>
+                {photoPreview && (
+                  <button type="button" onClick={handleRemovePhoto} style={{ ...LINK_BTN, color: '#EF4444' }}>写真を削除</button>
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Name */}
-          <label style={{ display: 'block', marginBottom: 16 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 6 }}>名前 *</div>
-            <input
-              ref={nameInputRef}
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleSave() } }}
-              placeholder="名前を入力"
-              style={{
-                width: '100%', padding: '8px 12px', borderRadius: 8,
-                border: '1px solid #D1D5DB', fontSize: 15, outline: 'none',
-                boxSizing: 'border-box',
-              }}
-              onFocus={(e) => e.target.style.borderColor = '#7C3AED'}
-              onBlur={(e) => e.target.style.borderColor = '#D1D5DB'}
-            />
-          </label>
-
-          {/* Job */}
-          <label style={{ display: 'block', marginBottom: 16 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 6 }}>職業</div>
+          {/* 職業 */}
+          <Row label="職業">
             <input
               type="text"
               value={job}
               onChange={(e) => setJob(e.target.value)}
               placeholder="職業を入力（任意）"
-              style={{
-                width: '100%', padding: '8px 12px', borderRadius: 8,
-                border: '1px solid #D1D5DB', fontSize: 15, outline: 'none',
-                boxSizing: 'border-box',
-              }}
+              style={INPUT}
               onFocus={(e) => e.target.style.borderColor = '#7C3AED'}
               onBlur={(e) => e.target.style.borderColor = '#D1D5DB'}
             />
-          </label>
+          </Row>
 
           {/* 段数（ルート以外） */}
           {!isRoot && (
-            <label style={{ display: 'block', marginBottom: 16 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 6 }}>段数</div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Row label="段数">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <select
                   value={dan}
                   onChange={(e) => setDan(e.target.value)}
-                  style={{
-                    flex: 1, padding: '8px 12px', borderRadius: 8,
-                    border: '1px solid #D1D5DB', fontSize: 15, outline: 'none',
-                    boxSizing: 'border-box', background: 'white', color: dan ? '#1F2937' : '#9CA3AF',
-                    cursor: 'pointer',
-                  }}
+                  style={{ ...INPUT, flex: 1, background: 'white', color: dan ? '#1F2937' : '#9CA3AF', cursor: 'pointer' }}
                 >
                   <option value="">未設定</option>
                   {DAN_OPTIONS.map((n) => (
                     <option key={n} value={String(n)}>{n}段</option>
                   ))}
                 </select>
-                <div style={{ width: 44, display: 'flex', justifyContent: 'center' }}>
+                <div style={{ width: 40, display: 'flex', justifyContent: 'center' }}>
                   <DanBadge dan={dan} />
                 </div>
               </div>
-            </label>
+            </Row>
+          )}
+
+          {/* 種別（左右ポイントの設定がある組織図だけ） */}
+          {pointConfig && (
+            <>
+              <Row label="種別">
+                <select value={pointType} onChange={(e) => setPointType(e.target.value)}
+                  style={{ ...INPUT, background: 'white', color: '#1F2937', cursor: 'pointer' }}>
+                  <option value="">未設定（{formatPoints(pointConfig.def)}）</option>
+                  {pointConfig.types.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}（{formatPoints(t.points)}）</option>
+                  ))}
+                  {pointType && !pointConfig.types.some((t) => t.id === pointType) && (
+                    <option value={pointType}>削除された種別（{formatPoints(pointConfig.def)}として計算）</option>
+                  )}
+                </select>
+              </Row>
+              {legPoints?.[member.id] && (
+                <div style={{ display: 'flex', gap: 6, margin: '-2px 0 10px 62px' }}>
+                  {['left', 'right'].map((side) => (
+                    <div key={side} style={{
+                      flex: 1, background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 8,
+                      padding: '3px 8px', fontSize: 12, color: '#92400E', whiteSpace: 'nowrap',
+                    }}>
+                      {side === 'left' ? '左' : '右'}{' '}
+                      <b style={{ fontSize: 13, color: '#78350F' }}>{formatPoints(legPoints[member.id][side].points)}</b>
+                      <span style={{ marginLeft: 4 }}>{legPoints[member.id][side].count}人</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
 
           {/* 役職 */}
-          <label style={{ display: 'block', marginBottom: 24 }}>
-            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 6 }}>
-              <div style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', flex: 1 }}>役職</div>
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: 4 }}>
+              <div style={{ ...LABEL, flex: 1, marginBottom: 0 }}>役職</div>
               <button
                 type="button"
                 onClick={openRoleManager}
@@ -285,7 +292,7 @@ export default function DetailPanel() {
                 役職を管理
               </button>
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
               <RoleChip label="なし" active={!role} onClick={() => setRole('')} />
               {roles.map((r) => (
                 <RoleChip
@@ -301,75 +308,42 @@ export default function DetailPanel() {
                 <RoleChip label={`${role}（削除済み）`} active onClick={() => {}} />
               )}
             </div>
-          </label>
-
-          {/* 種別（左右ポイントの設定がある組織図だけ） */}
-          {pointConfig && (
-            <div style={{ marginBottom: 24 }}>
-              <label style={{ display: 'block' }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 6 }}>種別（ポイント）</div>
-                <select value={pointType} onChange={(e) => setPointType(e.target.value)}
-                  style={{ width: '100%', padding: '9px 10px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 14, background: 'white', color: '#1F2937' }}>
-                  <option value="">未設定（{formatPoints(pointConfig.def)}）</option>
-                  {pointConfig.types.map((t) => (
-                    <option key={t.id} value={t.id}>{t.name}（{formatPoints(t.points)}）</option>
-                  ))}
-                  {pointType && !pointConfig.types.some((t) => t.id === pointType) && (
-                    <option value={pointType}>削除された種別（{formatPoints(pointConfig.def)}として計算）</option>
-                  )}
-                </select>
-              </label>
-              {legPoints?.[member.id] && (
-                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                  {['left', 'right'].map((side) => (
-                    <div key={side} style={{ flex: 1, background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 8, padding: '6px 10px' }}>
-                      <div style={{ fontSize: 11, color: '#92400E' }}>{side === 'left' ? '左の系列' : '右の系列'}</div>
-                      <div style={{ fontSize: 15, fontWeight: 700, color: '#78350F' }}>
-                        {formatPoints(legPoints[member.id][side].points)}
-                        <span style={{ fontSize: 11, fontWeight: 500, color: '#92400E', marginLeft: 6 }}>{legPoints[member.id][side].count}人</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
+          </div>
 
           {/* 操作（スマホでの追加・削除導線） */}
-          <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #F0F0F0' }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 10 }}>操作</div>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
-              <button
-                onClick={() => handleAddChild('left')}
-                disabled={hasLeft}
-                style={addBtnStyle(hasLeft)}
-              >
-                ＋ 左に追加
-              </button>
-              <button
-                onClick={() => handleAddChild('right')}
-                disabled={hasRight}
-                style={addBtnStyle(hasRight)}
-              >
-                ＋ 右に追加
-              </button>
-            </div>
+          <div style={{ paddingTop: 12, borderTop: '1px solid #F0F0F0', display: 'flex', gap: 6 }}>
+            <button
+              onClick={() => handleAddChild('left')}
+              disabled={hasLeft}
+              style={addBtnStyle(hasLeft)}
+            >
+              ＋ 左に追加
+            </button>
+            <button
+              onClick={() => handleAddChild('right')}
+              disabled={hasRight}
+              style={addBtnStyle(hasRight)}
+            >
+              ＋ 右に追加
+            </button>
             <button
               onClick={handleDeleteMember}
+              title="このメンバーを削除"
+              aria-label="このメンバーを削除"
               style={{
-                width: '100%', padding: '10px', borderRadius: 8,
+                width: 42, flexShrink: 0, borderRadius: 8,
                 border: '1px solid #FCA5A5', background: 'white',
-                fontSize: 14, cursor: 'pointer', color: '#EF4444', fontWeight: 600,
-                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+                cursor: 'pointer', color: '#EF4444',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}
             >
-              <Trash2 size={15} /> このメンバーを削除
+              <Trash2 size={16} />
             </button>
           </div>
         </div>
 
         {/* Footer (編集の保存/キャンセル) */}
-        <div style={{ padding: '16px 20px', borderTop: '1px solid #F0F0F0', display: 'flex', gap: 10 }}>
+        <div style={{ padding: '12px 16px', borderTop: '1px solid #F0F0F0', display: 'flex', gap: 10 }}>
           <button
             onClick={handleClose}
             style={{
@@ -413,7 +387,7 @@ function RoleChip({ label, color, active, onClick }) {
       type="button"
       onClick={onClick}
       style={{
-        padding: '6px 12px', borderRadius: 999, fontSize: 13, fontWeight: 600,
+        padding: '4px 10px', borderRadius: 999, fontSize: 12, fontWeight: 600,
         cursor: 'pointer', whiteSpace: 'nowrap',
         border: `2px solid ${active ? style.border : '#E5E7EB'}`,
         background: active ? style.fill : 'white',
@@ -425,9 +399,27 @@ function RoleChip({ label, color, active, onClick }) {
   )
 }
 
+// 項目名を左に置いた1行（縦を詰めるため）
+function Row({ label, children }) {
+  return (
+    <label style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+      <div style={{ ...LABEL, width: 52, flexShrink: 0, marginBottom: 0 }}>{label}</div>
+      <div style={{ flex: 1, minWidth: 0 }}>{children}</div>
+    </label>
+  )
+}
+
+const LABEL = { fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 4 }
+const INPUT = {
+  width: '100%', padding: '7px 10px', borderRadius: 8,
+  border: '1px solid #D1D5DB', fontSize: 15, outline: 'none',
+  boxSizing: 'border-box',
+}
+const LINK_BTN = { fontSize: 12, color: '#6B7280', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline' }
+
 function addBtnStyle(disabled) {
   return {
-    flex: 1, padding: '10px', borderRadius: 8,
+    flex: 1, padding: '9px 6px', borderRadius: 8,
     border: '1px solid #A7F3D0',
     background: disabled ? '#F3F4F6' : 'white',
     fontSize: 14, fontWeight: 600,
