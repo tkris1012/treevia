@@ -2,6 +2,44 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // ── 書き込み内容の検査 ──────────────────────────────────────
+    // 本人の書き込みでも、アプリが使わない項目や極端に大きな値は拒否する
+    // （アプリを通さず直接書き込まれたとき、保存容量＝料金を悪用されないため）。
+    // アプリで保存する項目を増やしたら、ここの一覧にも追加すること。
+    function signedInAs(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+    function onlyKeys(keys) {
+      return request.resource.data.keys().hasOnly(keys);
+    }
+    // 文字列の項目が上限文字数以内か（項目なし・null は可）
+    function strMax(field, max) {
+      let d = request.resource.data;
+      return !(field in d) || d[field] == null || (d[field] is string && d[field].size() <= max);
+    }
+    function planOf(uid) {
+      let p = /databases/$(database)/documents/users/$(uid);
+      return exists(p) ? get(p).data.get('plan', 'free') : 'free';
+    }
+    // 写真は 160px の JPEG（実データは最大 約22KB）。余裕をみて 100KB まで
+    function validMember() {
+      return onlyKeys(['name', 'role', 'job', 'dan', 'photo', 'parentId', 'position', 'collapsed', 'createdAt', 'updatedAt'])
+        && strMax('name', 500) && strMax('role', 200) && strMax('job', 500)
+        && strMax('photo', 100000) && strMax('parentId', 128) && strMax('position', 16);
+    }
+    function validChart() {
+      return onlyKeys(['title', 'isSample', 'createdAt', 'updatedAt', 'contentUpdatedAt']) && strMax('title', 200);
+    }
+    // 透かしなし（branding=false）にできるのはプロだけ。
+    // すでに false のものはそのまま更新できる（プロから戻した人は、共有画面を開くと自動で透かしありに戻る）
+    function validShare(uid) {
+      let d = request.resource.data;
+      return onlyKeys(['enabled', 'token', 'branding', 'allowCopy', 'updatedAt']) && strMax('token', 64)
+        && (d.get('branding', true) != false
+            || (resource != null && resource.data.get('branding', true) == false)
+            || planOf(uid) == 'pro');
+    }
+
     // ユーザードキュメント（plan を保持）。本人のみ閲覧可、書込みはサーバー（決済Webhook）のみ。
     match /users/{uid} {
       allow read: if request.auth != null && request.auth.uid == uid;
@@ -14,14 +52,16 @@ service cloud.firestore {
       allow read: if (request.auth != null && request.auth.uid == uid)
                   || (exists(/databases/$(database)/documents/users/$(uid)/charts/$(chartId)/_meta/share)
                       && get(/databases/$(database)/documents/users/$(uid)/charts/$(chartId)/_meta/share).data.enabled == true);
-      allow write: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if signedInAs(uid) && validChart();
+      allow delete: if signedInAs(uid);
 
       // 各組織図配下のメンバー
       match /members/{memberId} {
         allow read: if (request.auth != null && request.auth.uid == uid)
                     || (exists(/databases/$(database)/documents/users/$(uid)/charts/$(chartId)/_meta/share)
                         && get(/databases/$(database)/documents/users/$(uid)/charts/$(chartId)/_meta/share).data.enabled == true);
-        allow write: if request.auth != null && request.auth.uid == uid;
+        allow create, update: if signedInAs(uid) && validMember();
+        allow delete: if signedInAs(uid);
       }
 
       // 各組織図の共有設定（共有は全プランで可。削除は本人なら常に可）
@@ -29,28 +69,33 @@ service cloud.firestore {
       match /_meta/share {
         allow get: if true;
         allow delete: if request.auth != null && request.auth.uid == uid;
-        allow create, update: if request.auth != null && request.auth.uid == uid;
+        allow create, update: if signedInAs(uid) && validShare(uid);
       }
     }
 
-    // 旧パス（後方互換 — 移行用に owner read/write のみ許可、最終的には削除予定）
+    // 旧パス（後方互換 — 移行で読んで消すだけ。新しく書き込むことはない）
     match /users/{uid}/members/{memberId} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, delete: if signedInAs(uid);
     }
     match /users/{uid}/_meta/{doc} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, delete: if signedInAs(uid);
     }
 
     // 役職定義（色・名称）は共有閲覧ページでの表示に使うため公開読み取り可。
     // 書込みは本人のみ。役職は表示メタ情報で、メンバーの個人情報は含まない。
     match /users/{uid}/_meta/roles {
       allow get: if true;
-      allow write: if request.auth != null && request.auth.uid == uid;
+      allow create, update: if signedInAs(uid) && onlyKeys(['list', 'updatedAt'])
+                            && request.resource.data.list is list && request.resource.data.list.size() <= 100;
+      allow delete: if signedInAs(uid);
     }
 
     // ブックマーク（他人の共有組織図を一覧からすぐ開けるように保存）。本人のみ読み書き可。
     match /users/{uid}/bookmarks/{bookmarkId} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read, delete: if signedInAs(uid);
+      allow create, update: if signedInAs(uid)
+        && onlyKeys(['token', 'ownerUid', 'chartId', 'label', 'addedAt', 'lastViewedAt'])
+        && strMax('token', 64) && strMax('ownerUid', 128) && strMax('chartId', 128) && strMax('label', 200);
     }
 
     // 共有トークン: token → { uid, chartId }
@@ -59,8 +104,12 @@ service cloud.firestore {
     // 共有中のすべての組織図を読めてしまうため、list は必ず禁止しておくこと。
     match /shareTokens/{token} {
       allow get: if true;
-      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid;
-      allow update, delete: if request.auth != null && resource.data.uid == request.auth.uid;
+      allow create: if request.auth != null && request.resource.data.uid == request.auth.uid
+                    && onlyKeys(['uid', 'chartId', 'createdAt']) && strMax('chartId', 128);
+      allow update: if request.auth != null && resource.data.uid == request.auth.uid
+                    && request.resource.data.uid == request.auth.uid
+                    && onlyKeys(['uid', 'chartId', 'createdAt']) && strMax('chartId', 128);
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid;
     }
 
     // その他すべて拒否
