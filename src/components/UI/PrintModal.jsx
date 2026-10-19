@@ -7,6 +7,7 @@ import {
   estimatePages, generateChartPdf, posterGrid, pageContentMM,
   DEFAULT_MAX_TILES, MAX_TILES_LIMIT, PX_TO_MM, MARGIN_MM,
 } from '../../lib/printChart.js'
+import { useLegPoints } from '../../lib/points.js'
 
 const PAD = 48 // 図の周囲の余白(px)
 const PREVIEW_MAX = 300 // プレビュー全体（用紙の組み合わせ）の最大辺(px)
@@ -28,6 +29,8 @@ function collectSubtree(all, rootId) {
 // （まず仕上がりを見てもらってから上位プランを案内する）。'checking' はプラン確認中。
 export default function PrintModal({ onClose, title, lockedPlan = null, onUpgrade }) {
   const members = useStore((s) => s.members)
+  const legPoints = useLegPoints()
+  const showAllPoints = useStore((s) => s.showAllPoints)
   const charts = useStore((s) => s.charts)
   const currentChartId = useStore((s) => s.currentChartId)
   const chartTitle = title || charts.find((c) => c.id === currentChartId)?.title || '組織図'
@@ -396,7 +399,8 @@ export default function PrintModal({ onClose, title, lockedPlan = null, onUpgrad
           if (!m) return null
           return (
             <div key={id} style={{ position: 'absolute', left: p.x + ox, top: p.y + oy, width: NODE_W }}>
-              <TreeNode member={m} isRoot={isRoot(m)} forPrint />
+              <TreeNode member={m} isRoot={isRoot(m)} forPrint
+                legs={legPoints && (showAllPoints || isRoot(m)) ? legPoints[id] : null} />
             </div>
           )
         })}

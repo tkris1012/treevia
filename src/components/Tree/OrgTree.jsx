@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useMemo, useReducer } from 'react'
 import {
   ArrowLeft, TreeDeciduous, Undo2, Redo2, Link2, Printer, Palette,
-  Trash2, ChevronRight, ChevronDown, Eye, Pencil, Lock, LockOpen,
+  Trash2, ChevronRight, ChevronDown, Eye, Pencil, Lock, LockOpen, Coins,
 } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { navigateToList } from '../../store/useSync.js'
@@ -12,6 +12,8 @@ import { buildFilterOptions } from '../../constants/roles.js'
 import { canUseShare, canPrint } from '../../constants/plans.js'
 import ShareModal from '../UI/ShareModal.jsx'
 import PrintModal from '../UI/PrintModal.jsx'
+import PointSettingsModal from '../UI/PointSettingsModal.jsx'
+import { useLegPoints } from '../../lib/points.js'
 import BookmarkShareButton from '../UI/BookmarkShareButton.jsx'
 import RenameChartModal from '../ChartList/RenameChartModal.jsx'
 import TreeNode from './TreeNode.jsx'
@@ -144,6 +146,10 @@ export default function OrgTree() {
   const [shareOpen, setShareOpen] = useState(false)
   const [printOpen, setPrintOpen] = useState(false)
   const [renameOpen, setRenameOpen] = useState(false)
+  const [pointsOpen, setPointsOpen] = useState(false)
+  const legPoints = useLegPoints()
+  const showAllPoints = useStore((s) => s.showAllPoints)
+  const setShowAllPoints = useStore((s) => s.setShowAllPoints)
   const shareAllowed = canUseShare(plan)
   const printAllowed = canPrint(plan)
   const viewerPrintAllowed = viewerPlan === 'pro'
@@ -642,9 +648,16 @@ export default function OrgTree() {
               </div>
             </div>
 
-            {/* 2段目：フィルタ */}
+            {/* 2段目：フィルタ ＋ ポイントの表示切り替え */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
               {filterChip}
+              {legPoints && (
+                <button onClick={() => setShowAllPoints(!showAllPoints)} aria-pressed={showAllPoints}
+                  title="左右ポイントを全員に表示／ルートのみ"
+                  style={{ ...BAR_BTN, ...(showAllPoints ? { background: '#FFFBEB', borderColor: '#FCD34D', color: '#92400E' } : {}) }}>
+                  <Coins size={14} /> {showAllPoints ? 'ポイント：全員' : 'ポイント：ルート'}
+                </button>
+              )}
             </div>
           </>
         ) : (
@@ -698,6 +711,12 @@ export default function OrgTree() {
               {filterChip}
               {!locked && (
                 <button onClick={openRoleManager} title="役職を管理" style={BAR_BTN}><Palette size={14} /> 役職</button>
+              )}
+              {!locked && (
+                <button onClick={() => setPointsOpen(true)} title="左右ポイントの設定"
+                  style={{ ...BAR_BTN, ...(legPoints ? { background: '#FFFBEB', borderColor: '#FCD34D', color: '#92400E' } : {}) }}>
+                  <Coins size={14} /> ポイント
+                </button>
               )}
               {locked ? (
                 <button key="locked" onClick={toggleLocked} title="タップでロック解除" aria-pressed="true" style={{
@@ -932,6 +951,7 @@ export default function OrgTree() {
                   member={m}
                   isRoot={isRootNode(m, members)}
                   isDragging={draggedDescendants.has(m.id) && !!drag}
+                  legs={legPoints && (showAllPoints || isRootNode(m, members)) ? legPoints[m.id] : null}
                 />
               </div>
             )
@@ -947,6 +967,7 @@ export default function OrgTree() {
 
       {/* 共有モーダル */}
       {shareOpen && <ShareModal onClose={() => setShareOpen(false)} />}
+      {pointsOpen && <PointSettingsModal onClose={() => setPointsOpen(false)} />}
       {printOpen && <PrintModal onClose={() => setPrintOpen(false)} title={chartTitle} lockedPlan={printLock} onUpgrade={handlePrintUpgrade} />}
       {renameOpen && currentChartId && (
         <RenameChartModal
