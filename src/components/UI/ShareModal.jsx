@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link2, X, Check } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
-import { setShareEnabled, regenerateShareToken, setShareAllowCopy } from '../../lib/firestore.js'
+import { setShareEnabled, regenerateShareToken, setShareAllowCopy, setShareShowPoints } from '../../lib/firestore.js'
+import { usePointConfig } from '../../lib/points.js'
 import { canRemoveShareBranding } from '../../constants/plans.js'
 
 export default function ShareModal({ onClose }) {
@@ -18,6 +19,8 @@ export default function ShareModal({ onClose }) {
   const enabled   = !!shareConfig?.enabled
   const token     = shareConfig?.token
   const allowCopy = !!shareConfig?.allowCopy
+  const showPoints = shareConfig?.showPoints !== false
+  const pointConfig = usePointConfig()
   // Pro は透かしなし、それ以外は透かし(CTA)あり
   const branding = !canRemoveShareBranding(plan)
 
@@ -46,6 +49,18 @@ export default function ShareModal({ onClose }) {
     } catch (e) {
       console.error('toggle share failed', e)
       alert('共有設定の変更に失敗しました')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function handleToggleShowPoints() {
+    setBusy(true)
+    try {
+      setShareConfig(await setShareShowPoints(user.uid, currentChartId, !showPoints))
+    } catch (e) {
+      console.error('toggle showPoints failed', e)
+      alert('ポイント表示の変更に失敗しました')
     } finally {
       setBusy(false)
     }
@@ -253,6 +268,44 @@ export default function ShareModal({ onClose }) {
                 }} />
               </button>
             </div>
+
+            {/* 左右ポイントを共有ページに出すか（ポイント設定がある組織図だけ） */}
+            {pointConfig && (
+              <div style={{
+                display: 'flex', alignItems: 'center', gap: 12,
+                padding: '12px 14px', borderRadius: 10,
+                background: showPoints ? '#FFFBEB' : '#F9FAFB',
+                border: `1px solid ${showPoints ? '#FDE68A' : '#E5E7EB'}`,
+              }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#1F2937' }}>
+                    左右ポイントを{showPoints ? '表示する' : '表示しない'}
+                  </div>
+                  <div style={{ fontSize: 11, color: '#6B7280', marginTop: 2 }}>
+                    {showPoints ? '閲覧者にも左右の合計ポイントが見えます' : '共有ページではポイントを隠します'}
+                  </div>
+                </div>
+                <button
+                  onClick={handleToggleShowPoints}
+                  disabled={busy}
+                  aria-pressed={showPoints}
+                  aria-label="左右ポイントを共有ページに表示"
+                  style={{
+                    width: 48, height: 26, borderRadius: 999, border: 'none',
+                    background: showPoints ? '#F59E0B' : '#D1D5DB',
+                    cursor: busy ? 'wait' : 'pointer', position: 'relative',
+                    transition: 'background 0.15s', opacity: busy ? 0.6 : 1,
+                  }}
+                >
+                  <span style={{
+                    position: 'absolute', top: 3, left: showPoints ? 25 : 3,
+                    width: 20, height: 20, borderRadius: '50%',
+                    background: 'white', transition: 'left 0.15s',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.20)',
+                  }} />
+                </button>
+              </div>
+            )}
 
             {/* 透かし（CTA）の案内 */}
             {branding ? (

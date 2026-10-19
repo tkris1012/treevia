@@ -23,18 +23,23 @@ service cloud.firestore {
     }
     // 写真は 160px の JPEG（実データは最大 約22KB）。余裕をみて 100KB まで
     function validMember() {
-      return onlyKeys(['name', 'role', 'job', 'dan', 'photo', 'parentId', 'position', 'collapsed', 'createdAt', 'updatedAt'])
+      return onlyKeys(['name', 'role', 'job', 'dan', 'photo', 'parentId', 'position', 'collapsed', 'pointType', 'createdAt', 'updatedAt'])
         && strMax('name', 500) && strMax('role', 200) && strMax('job', 500)
-        && strMax('photo', 100000) && strMax('parentId', 128) && strMax('position', 16);
+        && strMax('photo', 100000) && strMax('parentId', 128) && strMax('position', 16) && strMax('pointType', 64);
     }
+    // pointTypes: 会員種別ごとのポイント [{ id, name, points }]（最大50件）
     function validChart() {
-      return onlyKeys(['title', 'isSample', 'createdAt', 'updatedAt', 'contentUpdatedAt']) && strMax('title', 200);
+      let d = request.resource.data;
+      return onlyKeys(['title', 'isSample', 'createdAt', 'updatedAt', 'contentUpdatedAt', 'pointTypes', 'pointDefault'])
+        && strMax('title', 200)
+        && (!('pointTypes' in d) || (d.pointTypes is list && d.pointTypes.size() <= 50))
+        && (!('pointDefault' in d) || d.pointDefault is number);
     }
     // 透かしなし（branding=false）にできるのはプロだけ。
     // すでに false のものはそのまま更新できる（プロから戻した人は、共有画面を開くと自動で透かしありに戻る）
     function validShare(uid) {
       let d = request.resource.data;
-      return onlyKeys(['enabled', 'token', 'branding', 'allowCopy', 'updatedAt']) && strMax('token', 64)
+      return onlyKeys(['enabled', 'token', 'branding', 'allowCopy', 'showPoints', 'updatedAt']) && strMax('token', 64)
         && (d.get('branding', true) != false
             || (resource != null && resource.data.get('branding', true) == false)
             || planOf(uid) == 'pro');

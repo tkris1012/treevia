@@ -137,6 +137,14 @@ export const useStore = create((set, get) => ({
   setViewerName: (n) => set({ viewerName: n }),
   viewerChartTitle: null,              // 閲覧モード時の組織図タイトル
   setViewerChartTitle: (t) => set({ viewerChartTitle: t }),
+  viewerPointConfig: null,             // 閲覧モード時のポイント設定 { types, def }
+  setViewerPointConfig: (c) => set({ viewerPointConfig: c }),
+  // 左右ポイントを全員のノードに出すか（オフならルートだけ）。端末ごとの表示の好み
+  showAllPoints: (() => { try { return localStorage.getItem('treevia:points:all') === '1' } catch (_) { return false } })(),
+  setShowAllPoints: (v) => {
+    try { localStorage.setItem('treevia:points:all', v ? '1' : '0') } catch (_) { /* noop */ }
+    set({ showAllPoints: !!v })
+  },
   viewerOwnerUid: null,                // 閲覧モード時、共有元オーナーのuid（ブックマーク保存用）
   setViewerOwnerUid: (uid) => set({ viewerOwnerUid: uid }),
   viewerChartId: null,                 // 閲覧モード時、共有元のchartId（ブックマーク保存用）

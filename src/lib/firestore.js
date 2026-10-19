@@ -131,6 +131,15 @@ export async function createSampleChart(uid) {
   return chartId
 }
 
+// 左右ポイントの設定（会員種別ごとのポイントと、未設定のメンバーのポイント）
+export async function saveChartPointSettings(uid, chartId, pointTypes, pointDefault) {
+  await updateDoc(chartDoc(uid, chartId), {
+    pointTypes,
+    pointDefault,
+    updatedAt: serverTimestamp(),
+  })
+}
+
 export async function renameChart(uid, chartId, title) {
   await updateDoc(chartDoc(uid, chartId), {
     title,
@@ -240,14 +249,16 @@ export async function setShareEnabled(uid, chartId, enabled, branding = true) {
     await setDoc(shareTokenDoc(token), { uid, chartId, createdAt: serverTimestamp() })
   }
   const allowCopy = cur?.allowCopy ?? false // 既定は複製不可。既存値は保持
+  const showPoints = cur?.showPoints ?? true // 左右ポイントの表示。既定は表示
   await setDoc(shareConfigDoc(uid, chartId), {
     enabled,
     token,
     branding,
     allowCopy,
+    showPoints,
     updatedAt: serverTimestamp(),
   })
-  return { enabled, token, branding, allowCopy }
+  return { enabled, token, branding, allowCopy, showPoints }
 }
 
 export async function regenerateShareToken(uid, chartId, branding = true) {
@@ -258,14 +269,16 @@ export async function regenerateShareToken(uid, chartId, branding = true) {
   const token = generateToken()
   await setDoc(shareTokenDoc(token), { uid, chartId, createdAt: serverTimestamp() })
   const allowCopy = cur?.allowCopy ?? false
+  const showPoints = cur?.showPoints ?? true
   await setDoc(shareConfigDoc(uid, chartId), {
     enabled: true,
     token,
     branding,
     allowCopy,
+    showPoints,
     updatedAt: serverTimestamp(),
   })
-  return { enabled: true, token, branding, allowCopy }
+  return { enabled: true, token, branding, allowCopy, showPoints }
 }
 
 // 複製許可フラグの更新（共有設定の一部）。デフォルトは false（複製不可）。
@@ -273,6 +286,16 @@ export async function setShareAllowCopy(uid, chartId, allowCopy) {
   await setDoc(
     shareConfigDoc(uid, chartId),
     { allowCopy: !!allowCopy, updatedAt: serverTimestamp() },
+    { merge: true },
+  )
+  return getShareConfig(uid, chartId)
+}
+
+// 共有ページに左右ポイントを表示するか。デフォルトは true（表示）
+export async function setShareShowPoints(uid, chartId, showPoints) {
+  await setDoc(
+    shareConfigDoc(uid, chartId),
+    { showPoints: !!showPoints, updatedAt: serverTimestamp() },
     { merge: true },
   )
   return getShareConfig(uid, chartId)

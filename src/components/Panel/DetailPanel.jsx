@@ -5,6 +5,7 @@ import { getRoleStyle, roleStyleFromColor } from '../../constants/roles.js'
 import PhotoCropModal from '../UI/PhotoCropModal.jsx'
 import DanBadge from '../Tree/DanBadge.jsx'
 import { DAN_OPTIONS, normalizeDan } from '../../constants/dan.js'
+import { usePointConfig, useLegPoints, formatPoints } from '../../lib/points.js'
 
 export default function DetailPanel() {
   const selectedId = useStore((s) => s.selectedId)
@@ -16,6 +17,8 @@ export default function DetailPanel() {
   const deleteNode = useStore((s) => s.deleteNode)
   const roles = useStore((s) => s.roles)
   const openRoleManager = useStore((s) => s.openRoleManager)
+  const pointConfig = usePointConfig()
+  const legPoints = useLegPoints()
 
   const member = selectedId ? members[selectedId] : null
   const isRoot = !!member && (!member.parentId || !members[member.parentId])
@@ -31,6 +34,7 @@ export default function DetailPanel() {
   const [role, setRole] = useState('')
   const [job, setJob]   = useState('')
   const [dan, setDan]   = useState('')
+  const [pointType, setPointType] = useState('')
   const [photo, setPhoto] = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
   const [saving, setSaving] = useState(false)
@@ -46,6 +50,7 @@ export default function DetailPanel() {
       setRole(member.role || '')
       setJob(member.job || '')
       setDan(normalizeDan(member.dan) ? String(member.dan) : '')
+      setPointType(member.pointType || '')
       setPhoto(null)
       setPhotoPreview(member.photo || null)
     }
@@ -99,6 +104,7 @@ export default function DetailPanel() {
       const updates = { name: name.trim(), role, job: job.trim() }
       if (!isRoot) updates.dan = normalizeDan(dan)
       if (photo !== null) updates.photo = photo || null
+      if (pointConfig) updates.pointType = pointType || null
       await saveNode(selectedId, updates)
       setPanelOpen(false)
     } finally {
@@ -296,6 +302,38 @@ export default function DetailPanel() {
               )}
             </div>
           </label>
+
+          {/* 会員種別（左右ポイントの設定がある組織図だけ） */}
+          {pointConfig && (
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: 'block' }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 6 }}>会員種別（ポイント）</div>
+                <select value={pointType} onChange={(e) => setPointType(e.target.value)}
+                  style={{ width: '100%', padding: '9px 10px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 14, background: 'white', color: '#1F2937' }}>
+                  <option value="">未設定（{formatPoints(pointConfig.def)}）</option>
+                  {pointConfig.types.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}（{formatPoints(t.points)}）</option>
+                  ))}
+                  {pointType && !pointConfig.types.some((t) => t.id === pointType) && (
+                    <option value={pointType}>削除された種別（{formatPoints(pointConfig.def)}として計算）</option>
+                  )}
+                </select>
+              </label>
+              {legPoints?.[member.id] && (
+                <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
+                  {['left', 'right'].map((side) => (
+                    <div key={side} style={{ flex: 1, background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 8, padding: '6px 10px' }}>
+                      <div style={{ fontSize: 11, color: '#92400E' }}>{side === 'left' ? '左の系列' : '右の系列'}</div>
+                      <div style={{ fontSize: 15, fontWeight: 700, color: '#78350F' }}>
+                        {formatPoints(legPoints[member.id][side].points)}
+                        <span style={{ fontSize: 11, fontWeight: 500, color: '#92400E', marginLeft: 6 }}>{legPoints[member.id][side].count}人</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* 操作（スマホでの追加・削除導線） */}
           <div style={{ marginTop: 24, paddingTop: 20, borderTop: '1px solid #F0F0F0' }}>

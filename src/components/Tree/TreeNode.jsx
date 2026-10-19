@@ -2,8 +2,11 @@ import { getRoleStyle, roleName } from '../../constants/roles.js'
 import { useStore } from '../../store/useStore.js'
 import { NODE_W, NODE_H } from './useTreeLayout.js'
 import DanBadge from './DanBadge.jsx'
+import { formatPoints } from '../../lib/points.js'
 
-export default function TreeNode({ member, isRoot, isDragging, forPrint = false }) {
+// legs: { left: { count, points }, right: { count, points } } を渡すと、
+// ノードの下の左右の角に左右のポイントを出す（左の線・右の線の出口に合わせる）
+export default function TreeNode({ member, isRoot, isDragging, forPrint = false, legs = null }) {
   const roles = useStore((s) => s.roles)
   const selectedId = useStore((s) => s.selectedId)
   const panelOpen = useStore((s) => s.panelOpen)
@@ -61,6 +64,13 @@ export default function TreeNode({ member, isRoot, isDragging, forPrint = false 
       {/* 段数（ルート以外）: 名前の幅を削らないよう角にはみ出して載せる */}
       {!isRoot && (
         <DanBadge dan={member.dan} style={{ position: 'absolute', top: -11, right: -10, zIndex: 1 }} />
+      )}
+
+      {legs && (
+        <>
+          <LegPill side="left" leg={legs.left} forPrint={forPrint} />
+          <LegPill side="right" leg={legs.right} forPrint={forPrint} />
+        </>
       )}
 
       {/* Photo */}
@@ -142,6 +152,22 @@ export default function TreeNode({ member, isRoot, isDragging, forPrint = false 
         )}
       </div>
     </div>
+  )
+}
+
+function LegPill({ side, leg, forPrint }) {
+  return (
+    <span
+      title={`${side === 'left' ? '左' : '右'}の系列：${leg.count}人・${formatPoints(leg.points)}`}
+      style={{
+        position: 'absolute', bottom: -9, [side]: 6, zIndex: 1,
+        fontSize: 10, fontWeight: 700, lineHeight: forPrint ? 1.45 : 1.2, whiteSpace: 'nowrap',
+        padding: '1px 6px', borderRadius: 8,
+        background: '#FFFBEB', color: '#92400E', border: '1px solid #FCD34D',
+      }}
+    >
+      {side === 'left' ? '左' : '右'} {formatPoints(leg.points)}
+    </span>
   )
 }
 

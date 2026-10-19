@@ -80,6 +80,7 @@ export function useSync() {
   const setBookmarks       = useStore((s) => s.setBookmarks)
   const setBookmarksLoaded = useStore((s) => s.setBookmarksLoaded)
   const setPlanLoaded      = useStore((s) => s.setPlanLoaded)
+  const setViewerPointConfig = useStore((s) => s.setViewerPointConfig)
 
   // ----- 1. 認証 + 組織図リストの購読、URL 解釈 -----
   // 画面遷移（?c= の付け外し）では購読をやり直さない。やり直すのは
@@ -97,6 +98,7 @@ export function useSync() {
       setViewMode('view')
       setMembers({})
       setMembersLoaded(false)
+      setViewerPointConfig(null)
       const task = retryingTask('share-view', async (isStopped) => {
         const tokenInfo = await getShareTokenInfo(token)
         if (isStopped()) return
@@ -115,7 +117,11 @@ export function useSync() {
         // chart のタイトルも取得（公開設定が有効ならルール上 chart 本体は読めない場合もあるので失敗OK）
         try {
           const chartSnap = await getDoc(doc(db, 'users', uid, 'charts', chartId))
-          if (chartSnap.exists()) setViewerChartTitle(chartSnap.data().title || null)
+          if (chartSnap.exists()) {
+            const c = chartSnap.data()
+            setViewerChartTitle(c.title || null)
+            setViewerPointConfig(Array.isArray(c.pointTypes) ? { types: c.pointTypes, def: Number(c.pointDefault) || 0 } : null)
+          }
         } catch (_) { setViewerChartTitle(null) }
         if (isStopped()) return
         viewerSubs.push(resilientSubscribe({
@@ -237,7 +243,7 @@ export function useSync() {
       authGen++
     }
   }, [setUser, setAuthReady, setMembers, setMembersLoaded, setCharts, setChartsLoaded, setViewMode, setShareConfig,
-    setViewerChartTitle, setViewerOwnerUid, setViewerChartId, setPlan, setPlanLoaded, setRoles, setBookmarks, setBookmarksLoaded])
+    setViewerChartTitle, setViewerOwnerUid, setViewerChartId, setPlan, setPlanLoaded, setRoles, setBookmarks, setBookmarksLoaded, setViewerPointConfig])
 
   // ----- 2. URLの ?c=<chartId> を store の currentChartId に反映 -----
   useEffect(() => {
