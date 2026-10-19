@@ -303,11 +303,11 @@ export default function DetailPanel() {
             </div>
           </label>
 
-          {/* 会員種別（左右ポイントの設定がある組織図だけ） */}
+          {/* 種別（左右ポイントの設定がある組織図だけ） */}
           {pointConfig && (
             <div style={{ marginBottom: 24 }}>
               <label style={{ display: 'block' }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 6 }}>会員種別（ポイント）</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: '#6B7280', marginBottom: 6 }}>種別（ポイント）</div>
                 <select value={pointType} onChange={(e) => setPointType(e.target.value)}
                   style={{ width: '100%', padding: '9px 10px', border: '1px solid #D1D5DB', borderRadius: 8, fontSize: 14, background: 'white', color: '#1F2937' }}>
                   <option value="">未設定（{formatPoints(pointConfig.def)}）</option>
