@@ -131,7 +131,7 @@ export async function createSampleChart(uid) {
   return chartId
 }
 
-// 左右ポイントの設定（会員種別ごとのポイントと、未設定のメンバーのポイント）
+// 左右ポイントの設定（種別ごとのポイントと、未設定のメンバーのポイント）
 export async function saveChartPointSettings(uid, chartId, pointTypes, pointDefault) {
   await updateDoc(chartDoc(uid, chartId), {
     pointTypes,

@@ -4,7 +4,7 @@ import { useStore } from '../../store/useStore.js'
 import { saveChartPointSettings } from '../../lib/firestore.js'
 import { MAX_POINT_TYPES } from '../../lib/points.js'
 
-// 左右ポイントの設定（組織図ごと）。会員種別とポイントを登録し、メンバーには種別を選ぶ。
+// 左右ポイントの設定（組織図ごと）。種別とポイントを登録し、メンバーには種別を選ぶ。
 const newId = () => 'pt_' + Math.random().toString(36).slice(2, 10)
 const EXAMPLE = [
   { id: 'pt_business', name: 'ビジネス会員', points: '1' },
@@ -65,13 +65,13 @@ export default function PointSettingsModal({ onClose }) {
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', padding: 0, display: 'flex' }}><X size={20} /></button>
         </div>
         <p style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.7, margin: 0 }}>
-          会員種別ごとのポイントを決めて、各メンバーに種別を選ぶと、左右の系列の合計ポイントを自動で計算します。
+          種別ごとのポイントを決めて、各メンバーに種別を選ぶと、左右の系列の合計ポイントを自動で計算します。
           ポイントを変えると全員分がすぐ再計算されます（この組織図だけの設定です）。
         </p>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', gap: 8, fontSize: 12, fontWeight: 600, color: '#6B7280' }}>
-            <div style={{ flex: 1 }}>会員種別</div>
+            <div style={{ flex: 1 }}>種別</div>
             <div style={{ width: 88 }}>ポイント</div>
             <div style={{ width: 30 }} />
           </div>
@@ -79,7 +79,7 @@ export default function PointSettingsModal({ onClose }) {
             <div key={r.id}>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                 <input value={r.name} onChange={(e) => update(i, { name: e.target.value })} maxLength={50}
-                  placeholder="例：ビジネス会員" aria-label="会員種別の名前"
+                  placeholder="例：ビジネス会員" aria-label="種別の名前"
                   style={{ ...INPUT, flex: 1, minWidth: 0, borderColor: errors[i] && !r.name.trim() ? '#F87171' : '#D1D5DB' }} />
                 <div style={{ width: 88, position: 'relative' }}>
                   <input value={r.points} onChange={(e) => update(i, { points: e.target.value })} inputMode="decimal"
