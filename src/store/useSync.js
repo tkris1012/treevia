@@ -79,6 +79,7 @@ export function useSync() {
   const setRoles           = useStore((s) => s.setRoles)
   const setBookmarks       = useStore((s) => s.setBookmarks)
   const setBookmarksLoaded = useStore((s) => s.setBookmarksLoaded)
+  const setPlanLoaded      = useStore((s) => s.setPlanLoaded)
 
   // ----- 1. 認証 + 組織図リストの購読、URL 解釈 -----
   // 画面遷移（?c= の付け外し）では購読をやり直さない。やり直すのは
@@ -173,6 +174,7 @@ export function useSync() {
           setCharts([])
           setMembers({})
           setPlan('free')
+          setPlanLoaded(true)
           setRoles([])
           setBookmarks([])
           setChartsLoaded(true)
@@ -183,6 +185,7 @@ export function useSync() {
         recordAccount(user)
         setChartsLoaded(false)
         setBookmarksLoaded(false)
+        setPlanLoaded(false)
         // 組織図リスト・プラン・役職・ブックマークをすぐ購読する（移行の確認は待たない）
         ownerSubs.push(resilientSubscribe({
           name: 'charts',
@@ -199,7 +202,7 @@ export function useSync() {
         ownerSubs.push(resilientSubscribe({
           name: 'plan',
           subscribe: (ok, err) => subscribeUserPlan(user.uid, ok, err),
-          onData: setPlan,
+          onData: (p) => { setPlan(p); setPlanLoaded(true) },
         }))
         ownerSubs.push(resilientSubscribe({
           name: 'roles',
@@ -234,7 +237,7 @@ export function useSync() {
       authGen++
     }
   }, [setUser, setAuthReady, setMembers, setMembersLoaded, setCharts, setChartsLoaded, setViewMode, setShareConfig,
-    setViewerChartTitle, setViewerOwnerUid, setViewerChartId, setPlan, setRoles, setBookmarks, setBookmarksLoaded])
+    setViewerChartTitle, setViewerOwnerUid, setViewerChartId, setPlan, setPlanLoaded, setRoles, setBookmarks, setBookmarksLoaded])
 
   // ----- 2. URLの ?c=<chartId> を store の currentChartId に反映 -----
   useEffect(() => {

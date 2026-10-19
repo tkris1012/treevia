@@ -46,6 +46,9 @@ export const useStore = create((set, get) => ({
   // --- Plan（料金プラン） ---
   plan: 'free',                        // 'free' | 'light' | 'pro'
   setPlan: (plan) => set({ plan: plan || 'free' }),
+  // プランを読み込み済みか。読み込み前に案内を出すと、ライトの人に「ライトを購入」が見えてしまう
+  planLoaded: false,
+  setPlanLoaded: (v) => set({ planLoaded: !!v }),
 
   // --- Upgrade Prompt（有料機能のロック表示） ---
   upgrade: null,                       // { feature } | null

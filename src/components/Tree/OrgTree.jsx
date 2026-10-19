@@ -153,14 +153,26 @@ export default function OrgTree() {
     if (shareAllowed) setShareOpen(true)
     else showUpgrade('share')
   }
+  // 印刷はプランに関係なくプレビューまで見せ、「PDFを作成」で上位プランを案内する
   function handlePrintClick() {
-    if (printAllowed) setPrintOpen(true)
-    else showUpgrade('print')
+    setPrintOpen(true)
   }
   function handleViewerPrintClick() {
     if (!viewerAuthUser) { navigateToList(); return }
-    if (viewerPrintAllowed) setPrintOpen(true)
-    else alert('この組織図の印刷・PDF出力は、プロプランの方のみご利用いただけます。')
+    setPrintOpen(true)
+  }
+  const printLock = isReadOnly
+    ? (viewerPlan == null ? 'checking' : viewerPrintAllowed ? null : 'pro')
+    : (printAllowed ? null : 'light')
+  function handlePrintUpgrade() {
+    if (isReadOnly) {
+      // 閲覧モードには案内の画面が無い（自分のプランも読んでいない）ので、一覧に戻ってから出す
+      setPrintOpen(false)
+      navigateToList()
+      showUpgrade('printBookmark')
+    } else {
+      showUpgrade('print')
+    }
   }
 
   const { positions, childMap, hiddenChildrenMap } = useTreeLayout()
@@ -616,7 +628,7 @@ export default function OrgTree() {
                 }}><TreeDeciduous size={15} style={{ flexShrink: 0, color: '#15A24A' }} /> {chartTitle}</div>
               ) : <div style={{ flex: 1, minWidth: 40 }} />}
               <button onClick={handleViewerPrintClick}
-                title={viewerPrintAllowed ? '印刷・PDF出力' : '印刷・PDF出力（プロ）'}
+                title="印刷・PDF出力"
                 style={ICON_BTN}>
                 <Printer size={16} />
               </button>
@@ -671,7 +683,7 @@ export default function OrgTree() {
                   <Link2 size={16} />
                 </button>
                 <button onClick={handlePrintClick}
-                  title={printAllowed ? '印刷・PDF出力' : '印刷・PDF出力（ライト/プロ）'}
+                  title="印刷・PDF出力"
                   style={ICON_BTN}>
                   <Printer size={16} />
                 </button>
@@ -935,7 +947,7 @@ export default function OrgTree() {
 
       {/* 共有モーダル */}
       {shareOpen && <ShareModal onClose={() => setShareOpen(false)} />}
-      {printOpen && <PrintModal onClose={() => setPrintOpen(false)} title={chartTitle} />}
+      {printOpen && <PrintModal onClose={() => setPrintOpen(false)} title={chartTitle} lockedPlan={printLock} onUpgrade={handlePrintUpgrade} />}
       {renameOpen && currentChartId && (
         <RenameChartModal
           chartId={currentChartId}
