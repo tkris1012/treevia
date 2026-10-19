@@ -4,6 +4,7 @@ import { useStore } from '../../store/useStore.js'
 import { auth } from '../../lib/firebase.js'
 import { PLANS, PLAN_ORDER, FREE_MEMBER_LIMIT } from '../../constants/plans.js'
 import { buildCheckoutUrl, isBillingLive, openBillingPortal } from '../../constants/billing.js'
+import Spinner from './Spinner.jsx'
 
 const FEATURE_COPY = {
   members: {
@@ -30,12 +31,17 @@ const FEATURE_COPY = {
     title: '印刷・PDF出力を使うには',
     body: '自分の組織図の印刷・PDF出力（1枚に収める／大きな組織はポスター分割）は、ライトプラン以上でご利用いただけます。ブックマークした組織図の印刷・PDF出力はプロプランのみです。',
   },
+  printBookmark: {
+    title: 'ブックマークした組織図を印刷するには',
+    body: 'ブックマーク・共有リンクで開いた組織図の印刷・PDF出力は、プロプランでご利用いただけます。',
+  },
 }
 
 export default function UpgradeModal() {
   const upgrade = useStore((s) => s.upgrade)
   const closeUpgrade = useStore((s) => s.closeUpgrade)
   const plan = useStore((s) => s.plan)
+  const planLoaded = useStore((s) => s.planLoaded)
   const user = useStore((s) => s.user)
 
   if (!upgrade) return null
@@ -67,13 +73,15 @@ export default function UpgradeModal() {
 
         {/* プラン比較 */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 18 }}>
-          <PlanRow name={PLANS.free.name}  price="¥0"    note="組織図1つ・100人・写真OK・共有可" current={plan === 'free'} />
-          <PlanRow name={PLANS.light.name} price="¥380"  note="組織図5つ・500人まで・共有・印刷/PDF（自分の組織図）" current={plan === 'light'} highlight />
-          <PlanRow name={PLANS.pro.name}   price="¥980"  note="組織図無制限・人数無制限・透かしなし共有・印刷/PDF（ブックマークも）" current={plan === 'pro'} highlight />
+          <PlanRow name={PLANS.free.name}  price="¥0"    note="組織図1つ・100人・写真OK・共有可" current={planLoaded && plan === 'free'} />
+          <PlanRow name={PLANS.light.name} price="¥380"  note="組織図5つ・500人まで・共有・印刷/PDF（自分の組織図）" current={planLoaded && plan === 'light'} highlight />
+          <PlanRow name={PLANS.pro.name}   price="¥980"  note="組織図無制限・人数無制限・透かしなし共有・印刷/PDF（ブックマークも）" current={planLoaded && plan === 'pro'} highlight />
         </div>
 
-        {/* アップグレードボタン（現プランより上のプランのみ） */}
-        <UpgradeButtons plan={plan} user={user} />
+        {/* アップグレードボタン（現プランより上のプランのみ）。今のプランが分かるまでは出さない */}
+        {planLoaded
+          ? <UpgradeButtons plan={plan} user={user} />
+          : <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0' }}><Spinner size={22} label="ご利用中のプランを確認しています…" /></div>}
 
         <button
           onClick={closeUpgrade}

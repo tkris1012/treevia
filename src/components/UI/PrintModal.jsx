@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { Printer, X, AlertTriangle } from 'lucide-react'
+import { Printer, X, AlertTriangle, Lock } from 'lucide-react'
 import { useStore } from '../../store/useStore.js'
 import { computeLayout, NODE_W, NODE_H } from '../../components/Tree/useTreeLayout.js'
 import TreeNode from '../../components/Tree/TreeNode.jsx'
@@ -24,7 +24,9 @@ function collectSubtree(all, rootId) {
   return result
 }
 
-export default function PrintModal({ onClose, title }) {
+// lockedPlan: 'light' | 'pro' を渡すと、プレビューまでは使えて「PDFを作成」で onUpgrade を呼ぶ
+// （まず仕上がりを見てもらってから上位プランを案内する）。'checking' はプラン確認中。
+export default function PrintModal({ onClose, title, lockedPlan = null, onUpgrade }) {
   const members = useStore((s) => s.members)
   const charts = useStore((s) => s.charts)
   const currentChartId = useStore((s) => s.currentChartId)
@@ -140,6 +142,8 @@ export default function PrintModal({ onClose, title }) {
   const previewH = assemblyHmm * mmToPx
 
   async function handleGenerate() {
+    if (lockedPlan === 'checking') return
+    if (lockedPlan) { onUpgrade?.(); return }
     if (busy || !printRef.current || !contentW) return
     setBusy(true)
     try {
@@ -335,16 +339,33 @@ export default function PrintModal({ onClose, title }) {
           )}
         </div>
 
+        {(lockedPlan === 'light' || lockedPlan === 'pro') && (
+          <div style={{
+            fontSize: 12, color: '#6D28D9', background: '#F5F3FF', border: '1px solid #DDD6FE',
+            borderRadius: 8, padding: '8px 12px', display: 'flex', alignItems: 'flex-start', gap: 6, lineHeight: 1.6,
+          }}>
+            <Lock size={13} style={{ flexShrink: 0, marginTop: 3 }} />
+            <span>
+              {lockedPlan === 'pro'
+                ? 'ブックマークした組織図の印刷・PDF出力はプロプランの機能です。プレビューはそのままお試しいただけます。'
+                : '印刷・PDF出力はライトプラン以上の機能です。プレビューはそのままお試しいただけます。'}
+            </span>
+          </div>
+        )}
+
         <button
           onClick={handleGenerate}
-          disabled={busy || memberCount === 0}
+          disabled={busy || memberCount === 0 || lockedPlan === 'checking'}
           style={{
             width: '100%', padding: '13px', borderRadius: 10, border: 'none',
             background: '#7C3AED', color: 'white', fontSize: 15, fontWeight: 700,
-            cursor: busy ? 'wait' : 'pointer', opacity: (busy || memberCount === 0) ? 0.6 : 1,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            cursor: busy ? 'wait' : 'pointer', opacity: (busy || memberCount === 0 || lockedPlan === 'checking') ? 0.6 : 1,
           }}
         >
-          {busy ? 'PDFを作成中…' : 'PDFを作成'}
+          {lockedPlan === 'checking' ? 'プランを確認中…'
+            : lockedPlan ? <><Lock size={15} /> PDFを作成（{lockedPlan === 'pro' ? 'プロ' : 'ライト以上'}）</>
+            : busy ? 'PDFを作成中…' : 'PDFを作成'}
         </button>
         <div style={{ fontSize: 11, color: '#9CA3AF', textAlign: 'center' }}>
           折りたたみ中のメンバーも全て展開して出力します
