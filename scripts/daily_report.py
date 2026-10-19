@@ -4,6 +4,7 @@
 標準の出力は「総ユーザー数・新規登録・有料人数（ライト/プロ）・無料人数（組織図の人数帯別）」だけ。
 総ユーザー数＝有料＋無料（集計した時点の値）。Markdown の表で出力する。
 --detail を付けると、アクティブ・メンバー追加・プラン変更・アラート・直近7日も出す。
+プランの上限を超えた使い方（アプリを通さない書き込みの疑い）があるときは、標準の出力にも警告を出す。
 
 使い方（Cloud Shell）:
     TOKEN=$(gcloud auth print-access-token) python3 scripts/daily_report.py
@@ -34,6 +35,8 @@ JST = dt.timezone(dt.timedelta(hours=9))
 DAY = 86400
 PRICE = {'light': 380, 'pro': 980}
 LIMIT = {'free': 100, 'light': 500}
+CHART_LIMIT = {'free': 1, 'light': 5}  # src/constants/plans.js と同じ（サンプル組織図は数えない）
+MISUSE_ACTIVE_DAYS = 30   # 上限超えは、この日数内に中身が動いた組織図だけ警告する（昔の偶然の超過は出さない）
 WARN_RATIO = 0.8          # 上限の80%でアラート
 PAID_IDLE_DAYS = 14       # 有料なのにこの日数使っていない
 EMPTY_AFTER_DAYS = 3      # 登録からこの日数たっても組織図が空
@@ -75,6 +78,49 @@ def fetch_members():
     return members
 
 
+def fetch_unbranded_shares():
+    # 透かしなし（branding=false）で共有中の組織図。プロ以外なら不正の疑い
+    out = []
+    for row in run_collection_group('_meta', ['branding', 'enabled']):
+        doc = row.get('document')
+        if not doc or not doc['name'].endswith('/_meta/share'):
+            continue
+        uid, key = chart_path(doc['name'])
+        f = doc.get('fields', {})
+        if key and f.get('enabled', {}).get('booleanValue') and f.get('branding', {}).get('booleanValue') is False:
+            out.append({'uid': uid, 'chart': key})
+    return out
+
+
+def misuse_alerts(users, user_docs, members, charts, shares, now):
+    """プランの上限を超えた使い方。画面では止めているので、ふつうに使っていれば起きない
+    （アプリを通さない書き込み、または解約・プラン変更の前に作ったデータの可能性）。"""
+    emails = {u['localId']: u.get('email') for u in users}
+    plan_of = lambda uid: user_docs.get(uid, {}).get('plan', 'free')
+    label = {'free': '無料', 'light': 'ライト', 'pro': 'プロ'}
+    active = {m['chart'] for m in members
+              if any(t and now - t <= MISUSE_ACTIVE_DAYS * DAY for t in (m['created'], m['updated']))}
+    by_user = {}
+    for key, c in charts.items():
+        by_user.setdefault(c['uid'], []).append(key)
+    alerts = []
+    for uid, keys in by_user.items():
+        if uid not in emails:
+            continue
+        plan = plan_of(uid)
+        lim = CHART_LIMIT.get(plan)
+        if lim and len(keys) > lim and any(k in active for k in keys):
+            alerts.append(f'⚠ 上限超え: {mask(emails[uid])}（{label[plan]}）組織図{len(keys)}つ（上限{lim}）')
+        for k in keys:
+            lim = LIMIT.get(plan)
+            if lim and charts[k]['count'] > lim and k in active:
+                alerts.append(f'⚠ 上限超え: {mask(emails[uid])}（{label[plan]}）1つの組織図に{charts[k]["count"]}人（上限{lim}）')
+    for sh in shares:
+        if sh['uid'] in emails and plan_of(sh['uid']) != 'pro':
+            alerts.append(f'⚠ プロ以外が透かしなしで共有: {mask(emails[sh["uid"]])}（{label[plan_of(sh["uid"])]}）')
+    return alerts
+
+
 def day_start(d):
     return dt.datetime.combine(d, dt.time(), JST).timestamp()
 
@@ -105,7 +151,7 @@ def diff(a, b):
     return f'{a - b:+d}' if a != b else '±0'
 
 
-def summary(day, users, user_docs, members, charts, now):
+def summary(day, users, user_docs, members, charts, now, misuse=()):
     emails = {u['localId']: u.get('email') for u in users}
     plan_of = lambda uid: user_docs.get(uid, {}).get('plan', 'free')
     new = daily_counts(users, members, day)['new']
@@ -137,10 +183,13 @@ def summary(day, users, user_docs, members, charts, now):
     over = [r for r in free if r[0] >= FREE_BANDS[-1][1]]
     if over:  # 上限を超えている人（旧データなど）がいるときだけ出す
         out.append(band_row(f'{FREE_BANDS[-1][1]}以上', over))
+    if misuse:  # ふだんは出さない。出たら --detail と同じ内容を確認する
+        out.append('')
+        out += list(misuse)
     return '\n'.join(out)
 
 
-def report(day, users, user_docs, members, charts, now):
+def report(day, users, user_docs, members, charts, now, misuse=()):
     emails = {u['localId']: u.get('email') for u in users}
     plans = {uid: v['plan'] for uid, v in user_docs.items()}
     plan_of = lambda uid: plans.get(uid, 'free')
@@ -201,10 +250,10 @@ def report(day, users, user_docs, members, charts, now):
         out.append(f'  {mask(emails.get(uid)):<26} → {label.get(plan_of(uid), plan_of(uid))}')
 
     out.append('')
-    alerts = []
+    alerts = list(misuse)
     for c in sorted(charts.values(), key=lambda c: -c['count']):
         limit = LIMIT.get(plan_of(c['uid']))
-        if limit and c['count'] >= limit * WARN_RATIO:
+        if limit and limit * WARN_RATIO <= c['count'] <= limit:
             alerts.append(f'⚠ {label[plan_of(c["uid"])]}の上限{limit}人に近い: '
                           f'{mask(emails.get(c["uid"]))}（{c["count"]}人）')
     for u in users:
@@ -246,7 +295,8 @@ if __name__ == '__main__':
         if m['chart'] in charts:
             charts[m['chart']]['count'] += 1
     user_docs = fetch_user_docs()
-    print(summary(day, users, user_docs, members, charts, now))
+    misuse = misuse_alerts(users, user_docs, members, charts, fetch_unbranded_shares(), now)
+    print(summary(day, users, user_docs, members, charts, now, misuse))
     if detail:
         print()
-        print(report(day, users, user_docs, members, charts, now))
+        print(report(day, users, user_docs, members, charts, now, misuse))
