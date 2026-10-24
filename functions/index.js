@@ -152,7 +152,17 @@ async function handleCheckoutCompleted(stripe, session) {
 
 // サブスクの内容が変わった（ポータルでのライト⇔プロの切り替えなど） → プランを合わせる
 // 解約予約（cancel_at_period_end）などでも届くが、その場合は価格が同じなので何もしない。
+// 支払いが止まった状態。Stripe の「再試行がすべて失敗した場合」の設定が
+// 「未払いとしてマーク」でも、有料のまま使えてしまわないよう無料に戻す
+// （あとで支払われて active に戻れば、下の処理でプランも元に戻る）
+const ENDED_STATUSES = ['unpaid', 'canceled', 'incomplete_expired', 'paused']
+
 async function handleSubscriptionUpdated(subscription) {
+  if (ENDED_STATUSES.includes(subscription.status)) {
+    console.log(`サブスク更新 status=${subscription.status} のため無料に戻す: sub=${subscription.id}`)
+    await handleSubscriptionEnded(subscription)
+    return
+  }
   const priceId = subscription.items?.data?.[0]?.price?.id
   const plan = planForPrice(priceId)
   if (!plan) {
@@ -190,6 +200,8 @@ async function handleSubscriptionEnded(subscription) {
     console.warn('該当ユーザーが見つからないサブスク:', subscription.id)
     return
   }
+  // 同じ状態の通知が何度来ても、すでに無料なら書き換えない（日次報告の「プラン変更」に何度も出ないように）
+  if ((snap.docs[0].data().plan || 'free') === 'free') return
   await snap.docs[0].ref.set(
     { plan: 'free', updatedAt: FieldValue.serverTimestamp() },
     { merge: true },

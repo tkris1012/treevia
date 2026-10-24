@@ -99,7 +99,7 @@ Stripe ダッシュボード →「開発者」→「Webhook」→「エンド�
 - エンドポイント URL: ステップ 6 の関数 URL
 - リッスンするイベント:
   - `checkout.session.completed`
-  - `customer.subscription.updated`（ライト⇄プロの切り替えを反映）
+  - `customer.subscription.updated`（ライト⇄プロの切り替えを反映。未払い・キャンセル状態になったら無料に戻し、支払われたら元のプランに戻す）
   - `customer.subscription.deleted`
 - 作成後に表示される「署名シークレット」(`whsec_...`) を控え、
   `firebase functions:secrets:set STRIPE_WEBHOOK_SECRET` で登録 → 再デプロイ
