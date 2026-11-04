@@ -68,8 +68,9 @@ export default function TreeNode({ member, isRoot, isDragging, forPrint = false,
 
       {legs && (
         <>
-          <LegPill side="left" leg={legs.left} forPrint={forPrint} />
-          <LegPill side="right" leg={legs.right} forPrint={forPrint} />
+          {/* 手動入力で未入力の側（points が null）は出さない */}
+          {legs.left.points != null && <LegPill side="left" leg={legs.left} forPrint={forPrint} />}
+          {legs.right.points != null && <LegPill side="right" leg={legs.right} forPrint={forPrint} />}
         </>
       )}
 

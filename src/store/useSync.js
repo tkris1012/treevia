@@ -120,7 +120,7 @@ export function useSync() {
           if (chartSnap.exists()) {
             const c = chartSnap.data()
             setViewerChartTitle(c.title || null)
-            setViewerPointConfig(Array.isArray(c.pointTypes) ? { types: c.pointTypes, def: Number(c.pointDefault) || 0 } : null)
+            setViewerPointConfig({ pointMode: c.pointMode, pointTypes: c.pointTypes, pointDefault: c.pointDefault })
           }
         } catch (_) { setViewerChartTitle(null) }
         if (isStopped()) return

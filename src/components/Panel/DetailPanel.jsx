@@ -35,6 +35,8 @@ export default function DetailPanel() {
   const [job, setJob]   = useState('')
   const [dan, setDan]   = useState('')
   const [pointType, setPointType] = useState('')
+  const [legL, setLegL] = useState('') // 手動入力の左右ポイント（入力中は文字列）
+  const [legR, setLegR] = useState('')
   const [photo, setPhoto] = useState(null)
   const [photoPreview, setPhotoPreview] = useState(null)
   const [saving, setSaving] = useState(false)
@@ -51,6 +53,8 @@ export default function DetailPanel() {
       setJob(member.job || '')
       setDan(normalizeDan(member.dan) ? String(member.dan) : '')
       setPointType(member.pointType || '')
+      setLegL(typeof member.legLeft === 'number' ? String(member.legLeft) : '')
+      setLegR(typeof member.legRight === 'number' ? String(member.legRight) : '')
       setPhoto(null)
       setPhotoPreview(member.photo || null)
     }
@@ -104,7 +108,17 @@ export default function DetailPanel() {
       const updates = { name: name.trim(), role, job: job.trim() }
       if (!isRoot) updates.dan = normalizeDan(dan)
       if (photo !== null) updates.photo = photo || null
-      if (pointConfig) updates.pointType = pointType || null
+      if (pointConfig?.mode === 'manual') {
+        const l = parseLeg(legL), r = parseLeg(legR)
+        if (l === undefined || r === undefined) { alert('左右のポイントは0以上の数字で入力してください（空欄にすると表示しません）'); return }
+        if (l !== (member.legLeft ?? null) || r !== (member.legRight ?? null)) {
+          updates.legLeft = l
+          updates.legRight = r
+          updates.legUpdatedAt = new Date() // 最終更新日（詳細画面に表示）
+        }
+      } else if (pointConfig) {
+        updates.pointType = pointType || null
+      }
       await saveNode(selectedId, updates)
       setPanelOpen(false)
     } finally {
@@ -248,8 +262,33 @@ export default function DetailPanel() {
             </Row>
           )}
 
+          {/* 左右ポイントの手動入力（方式が「手動入力」の組織図だけ） */}
+          {pointConfig?.mode === 'manual' && (
+            <>
+              <Row label="ポイント">
+                <div style={{ display: 'flex', gap: 6 }}>
+                  {[['左', legL, setLegL], ['右', legR, setLegR]].map(([side, v, set]) => (
+                    <div key={side} style={{ flex: 1, position: 'relative' }}>
+                      <span style={{ position: 'absolute', left: 9, top: 8, fontSize: 13, fontWeight: 700, color: '#92400E' }}>{side}</span>
+                      <input value={v} onChange={(e) => set(e.target.value)} inputMode="decimal" placeholder="未入力"
+                        aria-label={`${side}のポイント`}
+                        style={{ ...INPUT, paddingLeft: 26, paddingRight: 20, borderColor: parseLeg(v) === undefined ? '#F87171' : '#D1D5DB' }} />
+                      <span style={{ position: 'absolute', right: 8, top: 9, fontSize: 13, color: '#9CA3AF' }}>p</span>
+                    </div>
+                  ))}
+                </div>
+              </Row>
+              <div style={{ margin: '-4px 0 10px 62px', fontSize: 11, color: '#6B7280', display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                {legPoints?.[member.id] && (
+                  <span>左 {legPoints[member.id].left.count}人 ／ 右 {legPoints[member.id].right.count}人</span>
+                )}
+                <span>最終更新：{formatDate(member.legUpdatedAt) || '未入力'}</span>
+              </div>
+            </>
+          )}
+
           {/* 種別（左右ポイントの設定がある組織図だけ） */}
-          {pointConfig && (
+          {pointConfig && pointConfig.mode !== 'manual' && (
             <>
               <Row label="種別">
                 <select value={pointType} onChange={(e) => setPointType(e.target.value)}
@@ -397,6 +436,20 @@ function RoleChip({ label, color, active, onClick }) {
       {label}
     </button>
   )
+}
+
+// 手動入力の左右ポイント：空欄は null（表示しない）、不正な値は undefined
+function parseLeg(v) {
+  const t = String(v).trim().replace(/[０-９．]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+  if (t === '') return null
+  const n = Number(t.replace(/,/g, ''))
+  return Number.isFinite(n) && n >= 0 && n <= 1e9 ? n : undefined
+}
+
+// Firestore の Timestamp / Date を「2026/11/04」に
+function formatDate(t) {
+  const d = t?.toDate ? t.toDate() : t instanceof Date ? t : null
+  return d ? `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}` : ''
 }
 
 // 項目名を左に置いた1行（縦を詰めるため）
