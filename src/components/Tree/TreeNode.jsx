@@ -161,7 +161,7 @@ function LegPill({ side, leg, forPrint }) {
     <span
       title={`${side === 'left' ? '左' : '右'}の系列：${leg.count}人・${formatPoints(leg.points)}`}
       style={{
-        position: 'absolute', bottom: -9, [side]: 6, zIndex: 1,
+        position: 'absolute', bottom: -13, [side]: 6, zIndex: 1,
         fontSize: 10, fontWeight: 700, lineHeight: forPrint ? 1.45 : 1.2, whiteSpace: 'nowrap',
         padding: '1px 6px', borderRadius: 8,
         background: '#FFFBEB', color: '#92400E', border: '1px solid #FCD34D',
