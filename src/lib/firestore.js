@@ -131,9 +131,11 @@ export async function createSampleChart(uid) {
   return chartId
 }
 
-// 左右ポイントの設定（種別ごとのポイントと、未設定のメンバーのポイント）
-export async function saveChartPointSettings(uid, chartId, pointTypes, pointDefault) {
+// 左右ポイントの設定（方式、種別ごとのポイント、未設定のメンバーのポイント）
+// mode: 'auto'（種別から自動計算）| 'manual'（メンバーごとに左右の数字を直接入力）
+export async function saveChartPointSettings(uid, chartId, pointTypes, pointDefault, mode = 'auto') {
   await updateDoc(chartDoc(uid, chartId), {
+    pointMode: mode === 'manual' ? 'manual' : 'auto',
     pointTypes,
     pointDefault,
     updatedAt: serverTimestamp(),

@@ -4,7 +4,9 @@ import { useStore } from '../../store/useStore.js'
 import { saveChartPointSettings } from '../../lib/firestore.js'
 import { MAX_POINT_TYPES } from '../../lib/points.js'
 
-// 左右ポイントの設定（組織図ごと）。種別とポイントを登録し、メンバーには種別を選ぶ。
+// 左右ポイントの設定（組織図ごと）。方式を選ぶ:
+// - 自動計算：種別とポイントを登録し、メンバーには種別を選ぶ
+// - 手動入力：メンバー編集で左右の数字を直接入力する（種別の設定は使わないが、消さずに残す）
 const newId = () => 'pt_' + Math.random().toString(36).slice(2, 10)
 const EXAMPLE = [
   { id: 'pt_business', name: 'ビジネス', points: '' },
@@ -29,21 +31,28 @@ export default function PointSettingsModal({ onClose }) {
     ? saved.map((t) => ({ id: t.id, name: t.name, points: String(t.points) }))
     : EXAMPLE.map((t) => ({ ...t, id: newId() })))
   const [def, setDef] = useState(() => String(Number(chart?.pointDefault) || 0))
+  const [mode, setMode] = useState(() => (chart?.pointMode === 'manual' ? 'manual' : 'auto'))
   const [busy, setBusy] = useState(false)
   const [tried, setTried] = useState(false) // 未入力の注意は、保存を押してから出す
+  const manual = mode === 'manual'
 
   const update = (i, patch) => setRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)))
   const errors = rows.map((r) => (!r.name.trim() ? '名前を入力' : toNumber(r.points) == null ? '0以上の数字' : ''))
   const defError = toNumber(def) == null
-  const valid = !defError && errors.every((e) => !e)
+  const valid = manual || (!defError && errors.every((e) => !e))
 
   async function handleSave() {
     if (busy || !user || !currentChartId) return
     if (!valid) { setTried(true); return }
     setBusy(true)
     try {
-      const types = rows.map((r) => ({ id: r.id, name: r.name.trim().slice(0, 50), points: toNumber(r.points) }))
-      await saveChartPointSettings(user.uid, currentChartId, types, toNumber(def))
+      if (manual) {
+        // 手動入力では種別の設定を使わない。保存済みの種別はそのまま残す（自動に戻したとき用）
+        await saveChartPointSettings(user.uid, currentChartId, saved, Number(chart?.pointDefault) || 0, 'manual')
+      } else {
+        const types = rows.map((r) => ({ id: r.id, name: r.name.trim().slice(0, 50), points: toNumber(r.points) }))
+        await saveChartPointSettings(user.uid, currentChartId, types, toNumber(def), 'auto')
+      }
       onClose()
     } catch (e) {
       console.error('ポイント設定の保存に失敗', e)
@@ -67,11 +76,29 @@ export default function PointSettingsModal({ onClose }) {
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', padding: 0, display: 'flex' }}><X size={20} /></button>
         </div>
+        {/* 方式の切り替え */}
+        <div role="radiogroup" aria-label="ポイントの方式" style={{ display: 'flex', gap: 6, background: '#F3F4F6', borderRadius: 10, padding: 4 }}>
+          {[['auto', '自動計算'], ['manual', '手動入力']].map(([v, label]) => (
+            <button key={v} type="button" role="radio" aria-checked={mode === v} onClick={() => setMode(v)}
+              style={{
+                flex: 1, padding: '8px 6px', borderRadius: 8, border: 'none', cursor: 'pointer',
+                fontSize: 14, fontWeight: 700,
+                background: mode === v ? 'white' : 'transparent',
+                color: mode === v ? '#7C3AED' : '#6B7280',
+                boxShadow: mode === v ? '0 1px 3px rgba(0,0,0,0.12)' : 'none',
+              }}>
+              {label}
+            </button>
+          ))}
+        </div>
+
         <p style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.7, margin: 0 }}>
-          種別ごとのポイントを決めて、各メンバーに種別を選ぶと、左右の系列の合計ポイントを自動で計算します。
-          ポイントを変えると全員分がすぐ再計算されます（この組織図だけの設定です）。
+          {manual
+            ? 'メンバー編集の画面で、左右のポイントを1人ずつ直接入力します。入力した数字がそのままカードに表示されます（この組織図だけの設定です）。'
+            : '種別ごとのポイントを決めて、各メンバーに種別を選ぶと、左右の系列の合計ポイントを自動で計算します。ポイントを変えると全員分がすぐ再計算されます（この組織図だけの設定です）。'}
         </p>
 
+        {!manual && <>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           <div style={{ display: 'flex', gap: 8, fontSize: 12, fontWeight: 600, color: '#6B7280' }}>
             <div style={{ flex: 1 }}>種別</div>
@@ -115,13 +142,14 @@ export default function PointSettingsModal({ onClose }) {
           </div>
           <div style={{ width: 30 }} />
         </div>
+        </>}
 
         <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: '#374151', cursor: 'pointer' }}>
           <input type="checkbox" checked={showAllPoints} onChange={(e) => setShowAllPoints(e.target.checked)} />
           全員のノードに左右ポイントを表示する（オフのときはルートのみ）
         </label>
 
-        {rows.length === 0 && (
+        {!manual && rows.length === 0 && (
           <div style={{ fontSize: 12, color: '#B45309', background: '#FFFBEB', borderRadius: 8, padding: '8px 10px' }}>
             種別が1つもないと、ポイントは表示されません。
           </div>

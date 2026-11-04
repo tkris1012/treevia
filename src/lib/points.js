@@ -1,7 +1,8 @@
-// 左右ポイントの計算。
-// 種別（組織図ごとの設定 { id, name, points }）をメンバーに選んでおくと、
-// 各メンバーの左の系列・右の系列それぞれの「人数」と「合計ポイント」を出す。
-// 計算はその場で行い、保存はしない（設定を変えれば全員分がすぐ再計算される）。
+// 左右ポイントの計算。方式は組織図ごとに2つ:
+// - 自動計算（auto）: 種別（{ id, name, points }）をメンバーに選んでおくと、
+//   各メンバーの左の系列・右の系列それぞれの合計ポイントを出す（保存はしない）
+// - 手動入力（manual）: メンバーごとに左右の数字（legLeft / legRight）を直接入力し、そのまま出す
+// どちらの方式でも、左右の「人数」は組織図の形から数える。
 import { useMemo } from 'react'
 import { useStore } from '../store/useStore.js'
 
@@ -21,7 +22,7 @@ export function pointOf(member, typePoints, def) {
  * @returns {{ [id]: { left: { count, points }, right: { count, points } } }}
  * 折りたたみ・フィルターに関係なく、配下の全員を数える。
  */
-export function computeLegPoints(members, types = [], def = 0) {
+export function computeLegPoints(members, types = [], def = 0, mode = 'auto') {
   const typePoints = {}
   for (const t of types || []) typePoints[t.id] = Number(t.points) || 0
   const defPoints = Number(def) || 0
@@ -50,14 +51,31 @@ export function computeLegPoints(members, types = [], def = 0) {
       }
       const l = left ? total[left] : empty()
       const r = right ? total[right] : empty()
-      result[id] = { left: { ...l }, right: { ...r } }
+      result[id] = mode === 'manual'
+        // 手動入力：人数は組織図から、ポイントは入力した数字（未入力は null＝表示しない）
+        ? { left: { count: l.count, points: manualPoints(members[id].legLeft) }, right: { count: r.count, points: manualPoints(members[id].legRight) } }
+        : { left: { ...l }, right: { ...r } }
       total[id] = { count: l.count + r.count + 1, points: l.points + r.points + pointOf(members[id], typePoints, defPoints) }
     }
   }
   return result
 }
 
-// 今見ている組織図のポイント設定。種別が1つも無ければ機能はオフ（null）
+function manualPoints(v) {
+  return typeof v === 'number' && Number.isFinite(v) ? v : null
+}
+
+// 組織図の設定から { mode, types, def } を作る。機能オフなら null
+// （自動計算は種別が1つも無ければオフ、手動入力は選んだ時点でオン）
+export function pointConfigOf(c) {
+  if (!c) return null
+  const mode = c.pointMode === 'manual' ? 'manual' : 'auto'
+  const types = Array.isArray(c.pointTypes) ? c.pointTypes : []
+  if (mode === 'auto' && !types.length) return null
+  return { mode, types, def: Number(c.pointDefault) || 0 }
+}
+
+// 今見ている組織図のポイント設定。機能オフなら null
 export function usePointConfig() {
   const viewMode = useStore((s) => s.viewMode)
   const charts = useStore((s) => s.charts)
@@ -67,12 +85,10 @@ export function usePointConfig() {
   return useMemo(() => {
     if (viewMode === 'view') {
       // オーナーが共有ページでの表示をオフにしていたら見せない
-      if (!viewerPointConfig || shareConfig?.showPoints === false) return null
-      return viewerPointConfig.types?.length ? viewerPointConfig : null
+      if (shareConfig?.showPoints === false) return null
+      return pointConfigOf(viewerPointConfig)
     }
-    const chart = charts.find((c) => c.id === currentChartId)
-    const types = Array.isArray(chart?.pointTypes) ? chart.pointTypes : []
-    return types.length ? { types, def: Number(chart.pointDefault) || 0 } : null
+    return pointConfigOf(charts.find((c) => c.id === currentChartId))
   }, [viewMode, charts, currentChartId, viewerPointConfig, shareConfig])
 }
 
@@ -80,5 +96,5 @@ export function usePointConfig() {
 export function useLegPoints() {
   const members = useStore((s) => s.members)
   const config = usePointConfig()
-  return useMemo(() => (config ? computeLegPoints(members, config.types, config.def) : null), [members, config])
+  return useMemo(() => (config ? computeLegPoints(members, config.types, config.def, config.mode) : null), [members, config])
 }

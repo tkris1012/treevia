@@ -137,7 +137,7 @@ export const useStore = create((set, get) => ({
   setViewerName: (n) => set({ viewerName: n }),
   viewerChartTitle: null,              // 閲覧モード時の組織図タイトル
   setViewerChartTitle: (t) => set({ viewerChartTitle: t }),
-  viewerPointConfig: null,             // 閲覧モード時のポイント設定 { types, def }
+  viewerPointConfig: null,             // 閲覧モード時のポイント設定 { pointMode, pointTypes, pointDefault }
   setViewerPointConfig: (c) => set({ viewerPointConfig: c }),
   // 左右ポイントを全員のノードに出すか（オフならルートだけ）。端末ごとの表示の好み
   showAllPoints: (() => { try { return localStorage.getItem('treevia:points:all') === '1' } catch (_) { return false } })(),

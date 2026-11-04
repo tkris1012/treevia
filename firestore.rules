@@ -17,21 +17,28 @@ service cloud.firestore {
       let d = request.resource.data;
       return !(field in d) || d[field] == null || (d[field] is string && d[field].size() <= max);
     }
+    // 数値の項目（項目なし・null は可）
+    function numOrNull(field) {
+      let d = request.resource.data;
+      return !(field in d) || d[field] == null || d[field] is number;
+    }
     function planOf(uid) {
       let p = /databases/$(database)/documents/users/$(uid);
       return exists(p) ? get(p).data.get('plan', 'free') : 'free';
     }
     // 写真は 160px の JPEG（実データは最大 約22KB）。余裕をみて 100KB まで
     function validMember() {
-      return onlyKeys(['name', 'role', 'job', 'dan', 'photo', 'parentId', 'position', 'collapsed', 'pointType', 'createdAt', 'updatedAt'])
+      return onlyKeys(['name', 'role', 'job', 'dan', 'photo', 'parentId', 'position', 'collapsed', 'pointType',
+                       'legLeft', 'legRight', 'legUpdatedAt', 'createdAt', 'updatedAt'])
         && strMax('name', 500) && strMax('role', 200) && strMax('job', 500)
-        && strMax('photo', 100000) && strMax('parentId', 128) && strMax('position', 16) && strMax('pointType', 64);
+        && strMax('photo', 100000) && strMax('parentId', 128) && strMax('position', 16) && strMax('pointType', 64)
+        && numOrNull('legLeft') && numOrNull('legRight');
     }
     // pointTypes: 会員種別ごとのポイント [{ id, name, points }]（最大50件）
     function validChart() {
       let d = request.resource.data;
-      return onlyKeys(['title', 'isSample', 'createdAt', 'updatedAt', 'contentUpdatedAt', 'pointTypes', 'pointDefault'])
-        && strMax('title', 200)
+      return onlyKeys(['title', 'isSample', 'createdAt', 'updatedAt', 'contentUpdatedAt', 'pointMode', 'pointTypes', 'pointDefault'])
+        && strMax('title', 200) && strMax('pointMode', 16)
         && (!('pointTypes' in d) || (d.pointTypes is list && d.pointTypes.size() <= 50))
         && (!('pointDefault' in d) || d.pointDefault is number);
     }
