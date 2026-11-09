@@ -13,6 +13,10 @@ window.addEventListener('vite:preloadError', () => {
   }
 })
 
+// iPhone の Safari はビューポートの拡大禁止を無視してピンチで画面ごと拡大できてしまう。
+// 組織図の拡大縮小はアプリ側（タッチ操作）で行うので、ブラウザの画面拡大は止めておく
+document.addEventListener('gesturestart', (e) => e.preventDefault(), { passive: false })
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ErrorBoundary>
