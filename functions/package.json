@@ -8,7 +8,7 @@
   "private": true,
   "dependencies": {
     "@google-cloud/functions-framework": "^5.0.5",
-    "firebase-admin": "^14.5.0",
-    "stripe": "^23.0.0"
+    "firebase-admin": "^14.5.1",
+    "stripe": "^23.1.0"
   }
 }
